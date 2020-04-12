@@ -1,26 +1,33 @@
-import React from 'react';
-import logo from './logo.svg';
-import './App.css';
+import React from "react";
+import { makeStyles } from "@material-ui/core/styles";
+import CssBaseline from "@material-ui/core/CssBaseline";
+import CircularProgress from "@material-ui/core/CircularProgress";
 
-function App() {
+import Navigator from "./components/Navigator";
+import { useStore } from "./stores/RootStore";
+import { observer } from "mobx-react";
+
+const useStyles = makeStyles(theme => ({
+  root: {
+    height: "100%",
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center"
+  }
+}));
+
+export default observer(() => {
+  const classes = useStyles();
+  const rootStore = useStore();
+
+  React.useEffect(() => {
+    rootStore.init();
+  }, [rootStore]);
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.tsx</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+    <div className={classes.root}>
+      <CssBaseline />
+      {rootStore.isInitialized ? <Navigator /> : <CircularProgress />}
     </div>
   );
-}
-
-export default App;
+});
