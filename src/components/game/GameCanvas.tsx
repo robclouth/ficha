@@ -3,14 +3,28 @@ import { Canvas, useFrame, extend, useThree } from "react-three-fiber";
 import { observer } from "mobx-react";
 import { useStore } from "../../stores/RootStore";
 import { Mesh, Clock } from "three";
-// import DragControls from "three/examples/js/controls/DragControls";
+import * as THREE from "three";
 import CameraControls from "camera-controls";
-extend({ CameraControls });
+import { DragControls } from "three/examples/jsm/controls/DragControls";
+
+extend({ CameraControls, DragControls });
+CameraControls.install({ THREE: THREE });
 
 const Box = observer((props: { position: [number, number, number] }) => {
-  // This reference will give us direct access to the mesh
   const { gl, camera } = useThree();
+
   const mesh = useRef<Mesh>();
+  const dragControl = useRef<DragControls>();
+
+  useEffect(() => {
+    dragControl.current!.addEventListener("dragstart", function(event) {
+      event.object.material.emissive.set(0xaaaaaa);
+    });
+
+    dragControl.current!.addEventListener("dragend", function(event) {
+      event.object.material.emissive.set(0x000000);
+    });
+  }, []);
 
   // Set up state for the hovered and active state
   const [hovered, setHover] = useState(false);
@@ -25,7 +39,10 @@ const Box = observer((props: { position: [number, number, number] }) => {
       onPointerOver={e => setHover(true)}
       onPointerOut={e => setHover(false)}
     >
-      {/* <dragControls args={[[mesh], camera, gl.domElement]} /> */}
+      <dragControls
+        ref={dragControl}
+        args={[[mesh.current], camera, gl.domElement]}
+      />
       <boxBufferGeometry attach="geometry" args={[1, 1, 1]} />
       <meshStandardMaterial
         attach="material"

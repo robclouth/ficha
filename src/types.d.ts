@@ -4,24 +4,17 @@
 // declare module "fetch-readablestream";
 
 import { extend, ReactThreeFiber } from "react-three-fiber";
-// import { DragControls } from "three/examples/jsm/controls/DragControls";
 import CameraControls from "camera-controls";
-import * as THREE from "three";
-
-extend({ CameraControls });
-CameraControls.install({ THREE: THREE });
+import { DragControls } from "three/examples/jsm/controls/DragControls";
 
 declare global {
   namespace JSX {
     interface IntrinsicElements {
-      cameraControls: ReactThreeFiber.Object3DNode<
+      cameraControls: ReactThreeFiber.Node<
         CameraControls,
         typeof CameraControls
       >;
-      // dragControls: ReactThreeFiber.Node<
-      //   DragControls,
-      //   typeof DragControls
-      // >;
+      dragControls: any;
     }
   }
 }
