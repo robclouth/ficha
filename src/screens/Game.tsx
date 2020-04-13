@@ -116,7 +116,7 @@ export default observer(() => {
       <Grid container spacing={2}>
         <Grid item xs={12} className={classes.gridItem}>
           <Link
-            href={`/game/${gameStore.gameId}`}
+            href={`#/game/${gameStore.gameId}`}
             target="_blank"
           >{`Game id: ${gameStore.gameId}`}</Link>
         </Grid>
