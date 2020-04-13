@@ -2,10 +2,11 @@ import React, { useRef, useState, useEffect, useMemo } from "react";
 import { Canvas, useFrame, extend, useThree } from "react-three-fiber";
 import { observer } from "mobx-react";
 import { useStore } from "../../stores/RootStore";
-import { Mesh, Clock } from "three";
+import { Mesh, Clock, Vector3 } from "three";
 import * as THREE from "three";
 import CameraControls from "camera-controls";
 import { DragControls } from "three/examples/jsm/controls/DragControls";
+import Card from "./entities/Card";
 
 extend({ CameraControls, DragControls });
 CameraControls.install({ THREE: THREE });
@@ -53,7 +54,7 @@ const Box = observer((props: { position: [number, number, number] }) => {
 });
 
 const Scene = observer(() => {
-  const { gameStore } = useStore();
+  const { gameStore, uiState } = useStore();
   const { player, gameState } = gameStore;
 
   const { gl, camera } = useThree();
@@ -66,13 +67,16 @@ const Scene = observer(() => {
 
   return (
     <>
-      <ambientLight />
-      <pointLight position={[10, 10, 10]} />
-      {gameState.players.map(player => (
-        <Box key={player.id} position={[player.wood, 0.5, 0]} />
-      ))}
+      <ambientLight args={["white", 0.4]} />
+      <directionalLight position={[10, 10, 5]} intensity={1} />
+      <Card
+        faceUp
+        frontImageUrl="https://upload.wikimedia.org/wikipedia/commons/thumb/5/52/Playing_card_heart_5.svg/1200px-Playing_card_heart_5.svg.png"
+        backImageUrl="https://encrypted-tbn0.gstatic.com/images?q=tbn%3AANd9GcQ-Pf2ukfeBiA59STcawv01t4ybkxyNrT50nNnycKD7XQNU3HkY&usqp=CAU"
+      />
       <gridHelper args={[50, 50]} />
       <cameraControls
+        enabled={!uiState.isDraggingEntity}
         ref={ref}
         args={[camera, gl.domElement]}
         draggingDampingFactor={0.1}
@@ -97,7 +101,7 @@ export default observer(() => {
   const gameState = gameStore.gameState;
 
   return (
-    <Canvas>
+    <Canvas style={{ background: "#333333" }}>
       <Scene />
     </Canvas>
   );
