@@ -20,8 +20,17 @@ import { useHistory, useParams } from "react-router-dom";
 import { useStore } from "../stores/RootStore";
 import Player from "../models/Player";
 import { ActionType } from "../models/GameState";
+import GameCanvas from "../components/game/GameCanvas";
 
 const useStyles = makeStyles(theme => ({
+  root: {
+    width: "100%",
+    height: "100%"
+  },
+  gui: {
+    position: "absolute",
+    top: 0
+  },
   gridItem: {
     display: "flex",
     flexDirection: "column",
@@ -30,9 +39,7 @@ const useStyles = makeStyles(theme => ({
   messages: {
     minHeight: 100
   },
-  table: {
-    minWidth: 650
-  }
+  table: {}
 }));
 
 const PlayersTable = observer<React.FC<{ players: Player[] }>>(props => {
@@ -48,8 +55,8 @@ const PlayersTable = observer<React.FC<{ players: Player[] }>>(props => {
         </TableHead>
         <TableBody>
           {props.players.map((player, i) => (
-            <TableRow>
-              <TableCell key={i}>{player.name}</TableCell>
+            <TableRow key={i}>
+              <TableCell>{player.name}</TableCell>
             </TableRow>
           ))}
         </TableBody>
@@ -112,21 +119,24 @@ export default observer(() => {
   const classes = useStyles();
 
   return (
-    <Container>
-      <Grid container spacing={2}>
-        <Grid item xs={12} className={classes.gridItem}>
-          <Link
-            href={`#/game/${gameStore.gameId}`}
-            target="_blank"
-          >{`Game id: ${gameStore.gameId}`}</Link>
+    <div className={classes.root}>
+      <GameCanvas />
+      <Container className={classes.gui}>
+        <Grid container spacing={2}>
+          <Grid item xs={12} className={classes.gridItem}>
+            <Link
+              href={`#/game/${gameStore.gameId}`}
+              target="_blank"
+            >{`Game id: ${gameStore.gameId}`}</Link>
+          </Grid>
+          <Grid item xs={12} className={classes.gridItem}>
+            <PlayersTable players={gameState.players} />
+          </Grid>
+          <Grid item xs={12} className={classes.gridItem}>
+            <Chat />
+          </Grid>
         </Grid>
-        <Grid item xs={12} className={classes.gridItem}>
-          <PlayersTable players={gameState.players} />
-        </Grid>
-        <Grid item xs={12} className={classes.gridItem}>
-          <Chat />
-        </Grid>
-      </Grid>
-    </Container>
+      </Container>
+    </div>
   );
 });
