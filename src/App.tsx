@@ -1,5 +1,9 @@
 import React from "react";
-import { makeStyles } from "@material-ui/core/styles";
+import {
+  makeStyles,
+  ThemeProvider,
+  createMuiTheme
+} from "@material-ui/core/styles";
 import CssBaseline from "@material-ui/core/CssBaseline";
 import CircularProgress from "@material-ui/core/CircularProgress";
 
@@ -16,6 +20,12 @@ const useStyles = makeStyles(theme => ({
   }
 }));
 
+const darkTheme = createMuiTheme({
+  palette: {
+    type: "dark"
+  }
+});
+
 export default observer(() => {
   const classes = useStyles();
   const rootStore = useStore();
@@ -26,8 +36,10 @@ export default observer(() => {
 
   return (
     <div className={classes.root}>
-      <CssBaseline />
-      {rootStore.isInitialized ? <Navigator /> : <CircularProgress />}
+      <ThemeProvider theme={darkTheme}>
+        <CssBaseline />
+        {rootStore.isInitialized ? <Navigator /> : <CircularProgress />}
+      </ThemeProvider>
     </div>
   );
 });

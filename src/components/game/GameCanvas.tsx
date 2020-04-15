@@ -7,6 +7,7 @@ import * as THREE from "three";
 import CameraControls from "camera-controls";
 import { DragControls } from "three/examples/jsm/controls/DragControls";
 import Card from "./entities/Card";
+import Entity, { EntityType } from "../../models/game/Entity";
 
 extend({ CameraControls, DragControls });
 CameraControls.install({ THREE: THREE });
@@ -53,6 +54,10 @@ const Box = observer((props: { position: [number, number, number] }) => {
   );
 });
 
+function renderEntity(entity: Entity) {
+  if (entity.type === EntityType.Card) return <Card entity={entity} />;
+}
+
 const Scene = observer(() => {
   const { gameStore, uiState } = useStore();
   const { player, gameState } = gameStore;
@@ -69,11 +74,12 @@ const Scene = observer(() => {
     <>
       <ambientLight args={["white", 0.4]} />
       <directionalLight position={[10, 10, 5]} intensity={1} />
-      <Card
+      {gameState.entities.map(entity => renderEntity(entity))}
+      {/* <Card
         faceUp
         frontImageUrl="https://upload.wikimedia.org/wikipedia/commons/thumb/5/52/Playing_card_heart_5.svg/1200px-Playing_card_heart_5.svg.png"
         backImageUrl="https://encrypted-tbn0.gstatic.com/images?q=tbn%3AANd9GcQ-Pf2ukfeBiA59STcawv01t4ybkxyNrT50nNnycKD7XQNU3HkY&usqp=CAU"
-      />
+      /> */}
       <gridHelper args={[50, 50]} />
       <cameraControls
         enabled={!uiState.isDraggingEntity}
@@ -101,7 +107,10 @@ export default observer(() => {
   const gameState = gameStore.gameState;
 
   return (
-    <Canvas style={{ background: "#333333" }}>
+    <Canvas
+      style={{ background: "#333333", position: "absolute" }}
+      camera={{ position: [0, 5, 5] }}
+    >
       <Scene />
     </Canvas>
   );

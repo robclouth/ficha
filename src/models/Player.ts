@@ -1,20 +1,16 @@
-import { observable } from "mobx";
+import { Model, model, modelAction, prop } from "mobx-keystone";
 import { DataConnection } from "peerjs";
-import { serializable } from "serializr";
 import { generateId } from "../utils/Utils";
+import { StateData } from "./GameServer";
 
-export default class Player {
-  @serializable @observable id = "";
-  @serializable @observable name = "";
-  @serializable @observable wood = 0;
-
+@model("Player")
+export default class Player extends Model({
+  id: prop("", { setterAction: true }),
+  name: prop(() => generateId(), { setterAction: true })
+}) {
   connection?: DataConnection;
 
-  constructor() {
-    this.name = generateId();
-  }
-
-  sendGameState(state: any) {
-    this.connection && this.connection.send(state);
+  sendState(stateData: StateData) {
+    this.connection && this.connection.send(stateData);
   }
 }

@@ -2,17 +2,15 @@ import { observer } from "mobx-react";
 import React from "react";
 import Entity, { EntityProps } from "./Entity";
 import Material from "./Material";
+import Card from "../../../models/game/Card";
 
-export type CardProps = Omit<EntityProps, "geometry" | "material"> & {
-  frontImageUrl: string;
-  backImageUrl: string;
-  faceUp: boolean;
-};
+export type CardProps = Omit<EntityProps, "geometry" | "material"> & {};
 
 const height = 0.005;
 
 export default observer((props: CardProps) => {
-  const { frontImageUrl, backImageUrl } = props;
+  const { entity } = props;
+  const { frontImageUrl, backImageUrl } = entity as Card;
 
   return (
     <Entity

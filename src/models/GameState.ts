@@ -1,37 +1,35 @@
 import { observable, action } from "mobx";
 import { serializable, list, object, primitive } from "serializr";
+import { Model, model, modelAction, prop } from "mobx-keystone";
 
 import Player from "./Player";
+import Entity from "./game/Entity";
+import Card from "./game/Card";
 
-export enum ActionType {
-  SendMessage
-}
-
-export interface Action {
-  type: ActionType;
-  data: any;
-}
-
-export interface Message extends Action {
-  type: ActionType.SendMessage;
-  data: string;
-}
-
-export default class GameState {
-  @serializable(list(object(Player))) @observable players: Player[] = [];
-  @serializable(list(primitive())) @observable chatHistory: string[] = [];
-
-  @action addPlayer(player: Player) {
+@model("GameState")
+export default class GameState extends Model({
+  players: prop<Player[]>(() => []),
+  chatHistory: prop<string[]>(() => []),
+  entities: prop<Entity[]>(() => [])
+}) {
+  @modelAction
+  addPlayer(player: Player) {
     this.players.push(player);
   }
 
-  @action removePlayer(player: Player) {
+  @modelAction
+  removePlayer(player: Player) {
     this.players.splice(this.players.indexOf(player), 1);
   }
 
-  @action handleAction(action: Action) {
-    if (action.type === ActionType.SendMessage) {
-      this.chatHistory.push((action as Message).data);
-    }
+  @modelAction
+  addMessage(message: string) {
+    this.chatHistory.push(message);
+  }
+
+  @modelAction
+  addEntity() {
+    const newEntity = new Card({});
+    this.entities.push(newEntity);
   }
 }

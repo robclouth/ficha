@@ -4,13 +4,11 @@ import { BufferGeometry, Color } from "three";
 import Material from "./Material";
 import { PointerEvent } from "react-three-fiber";
 import { useStore } from "../../../stores/RootStore";
+import Entity from "../../../models/game/Entity";
 
 export type EntityProps = {
-  position?: [number, number];
+  entity: Entity;
   pivot?: [number, number, number];
-  angle?: number;
-  scale?: number;
-  color?: Color;
   geometry: React.ReactNode;
   material: React.ReactNode;
 };
@@ -18,14 +16,8 @@ export type EntityProps = {
 export default observer((props: EntityProps) => {
   const { uiState } = useStore();
 
-  const {
-    position = [0, 0],
-    pivot = [0, 0, 0],
-    angle = 0,
-    scale = 1,
-    color = new Color("white"),
-    geometry
-  } = props;
+  const { entity, geometry, pivot = [0, 0, 0] } = props;
+  const { position, angle, scale, color } = entity;
 
   const [hovered, setHover] = useState(false);
   const [active, setActive] = useState(false);
@@ -34,7 +26,7 @@ export default observer((props: EntityProps) => {
     props.material as React.ReactElement<any>,
     {
       params: {
-        color,
+        color: new Color(color[0], color[1], color[2]),
         transparent: true,
         opacity: hovered ? 0.8 : 1
       }

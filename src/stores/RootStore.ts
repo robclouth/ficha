@@ -1,22 +1,22 @@
 import React from "react";
 import { observable } from "mobx";
-import AppStore from "./AppStore";
+import AssetStore from "./AssetStore";
 import UIState from "./UIState";
 import GameStore from "./GameStore";
 
 export default class RootStore {
-  appStore!: AppStore;
+  assetStore!: AssetStore;
   gameStore!: GameStore;
   uiState!: UIState;
   @observable isInitialized = false;
 
   async init() {
-    this.appStore = new AppStore(this);
+    this.assetStore = new AssetStore(this);
     this.gameStore = new GameStore(this);
     this.uiState = new UIState(this);
 
     await Promise.all([
-      this.appStore.init(),
+      this.assetStore.init(),
       this.gameStore.init(),
       this.uiState.init()
     ]);

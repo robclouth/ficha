@@ -1,11 +1,19 @@
-import { observable, action, computed } from "mobx";
-import RootStore from "./RootStore";
+import { action, computed, observable } from "mobx";
+import {
+  applyPatches,
+  fromSnapshot,
+  onPatches,
+  OnPatchesDisposer,
+  Patch,
+  SnapshotInOf
+} from "mobx-keystone";
 import Peer, { DataConnection } from "peerjs";
-import GameServer from "../models/GameServer";
-import Player from "../models/Player";
-import { generateId, createPeer, connectToPeer } from "../utils/Utils";
+import GameServer, { StateData, StateDataType } from "../models/GameServer";
 import GameState from "../models/GameState";
-import { update } from "serializr";
+import Player from "../models/Player";
+import { connectToPeer, createPeer } from "../utils/Utils";
+import RootStore from "./RootStore";
+import GameDefinition from "../models/GameDefinition";
 
 export default class GameStore {
   @observable isInitialised = false;
@@ -14,7 +22,9 @@ export default class GameStore {
   @observable gameId?: string;
   @observable gameServer?: GameServer;
   @observable serverConnection?: DataConnection;
-  @observable gameState = new GameState();
+  @observable gameState = new GameState({});
+
+  localStatePatchDisposer: OnPatchesDisposer = () => {};
 
   constructor(private rootStore: RootStore) {}
 
@@ -41,14 +51,49 @@ export default class GameStore {
 
     this.peer = await createPeer();
     this.serverConnection = await connectToPeer(this.peer, this.gameId!);
-    this.serverConnection.on("data", data => this.handleGameStateUpdate(data));
+    this.serverConnection.on("data", stateData =>
+      this.onStateDataFromServer(stateData as StateData)
+    );
   }
 
-  @action handleGameStateUpdate(data: any) {
-    update(GameState, this.gameState, data, () => {});
+  trackLocalState(shouldTrack: boolean) {
+    if (shouldTrack) {
+      this.localStatePatchDisposer = onPatches(
+        this.gameState,
+        (patches, inversePatches) => {
+          this.sendStateToServer({
+            type: StateDataType.Partial,
+            data: patches
+          });
+        }
+      );
+    } else this.localStatePatchDisposer();
   }
 
-  @action sendActionToServer(action: any) {
-    this.serverConnection && this.serverConnection.send(action);
+  @action onStateDataFromServer(stateData: StateData) {
+    this.trackLocalState(false);
+    if (stateData.type === StateDataType.Partial) {
+      applyPatches(this.gameState, stateData.data as Patch[]);
+    } else {
+      this.gameState = fromSnapshot<GameState>(
+        stateData.data as SnapshotInOf<GameState>
+      );
+    }
+    this.trackLocalState(true);
+  }
+
+  sendStateToServer(stateData: StateData) {
+    this.serverConnection && this.serverConnection.send(stateData);
+  }
+
+  @action async loadGameFromUrl(url: string) {
+    const response = await fetch(url);
+    const json = await response.json();
+    const gameDefinition = new GameDefinition(json);
+    const checkError = gameDefinition.typeCheck();
+
+    if (checkError !== null) checkError.throw(json);
+
+    this.gameState.entities = gameDefinition.entities;
   }
 }
