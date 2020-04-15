@@ -10,6 +10,8 @@ import Peer from "peerjs";
 import { createPeer } from "../utils/Utils";
 import GameState from "./GameState";
 import Player from "./Player";
+import Deck from "./game/Deck";
+import Card from "./game/Card";
 
 export enum StateDataType {
   Full,
@@ -52,6 +54,10 @@ export default class GameServer {
     });
 
     this.peer.on("disconnected", () => this.peer.reconnect());
+
+    const deck = new Deck({});
+    deck.addCard(new Card({}));
+    this.gameState.addEntity(deck);
   }
 
   get gameId() {

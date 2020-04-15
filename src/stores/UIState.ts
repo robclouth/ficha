@@ -1,5 +1,6 @@
 import RootStore from "./RootStore";
 import { observable, action } from "mobx";
+import Entity from "../models/game/Entity";
 
 export default class UIState {
   @observable isInitialized = false;

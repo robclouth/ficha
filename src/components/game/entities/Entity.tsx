@@ -1,47 +1,90 @@
 import { observer } from "mobx-react";
-import React, { useState } from "react";
-import { BufferGeometry, Color } from "three";
-import Material from "./Material";
-import { PointerEvent } from "react-three-fiber";
+import React, { useState, Suspense } from "react";
+import {
+  BufferGeometry,
+  Color,
+  MeshStandardMaterialParameters,
+  Texture,
+  TextureLoader
+} from "three";
+import { PointerEvent, useLoader } from "react-three-fiber";
 import { useStore } from "../../../stores/RootStore";
 import Entity from "../../../models/game/Entity";
+import { ContextMenuItem } from "../../../types";
+
+export type MaterialParameters = MeshStandardMaterialParameters & {
+  textureUrl?: string;
+};
 
 export type EntityProps = {
   entity: Entity;
+  onContextMenu: (
+    event: PointerEvent,
+    contextMenuItems: ContextMenuItem[]
+  ) => void;
+  contextMenuItems?: ContextMenuItem[];
   pivot?: [number, number, number];
-  geometry: React.ReactNode;
-  material: React.ReactNode;
+  geometry: React.ReactElement<BufferGeometry>;
+  materialParams?: MaterialParameters[];
 };
 
-export default observer((props: EntityProps) => {
-  const { uiState } = useStore();
+const TexturedMaterial = observer(
+  (params: MaterialParameters & { textureUrl: string }) => {
+    const texture = useLoader<Texture>(TextureLoader, params.textureUrl!);
 
-  const { entity, geometry, pivot = [0, 0, 0] } = props;
+    return (
+      <meshStandardMaterial
+        attachArray="material"
+        args={[
+          {
+            ...params,
+            map: texture
+          }
+        ]}
+      />
+    );
+  }
+);
+
+export default observer((props: EntityProps) => {
+  const { gameStore } = useStore();
+  const { gameState } = gameStore;
+
+  const {
+    entity,
+    geometry,
+    materialParams = [{}],
+    pivot = [0, 0, 0],
+    onContextMenu
+  } = props;
   const { position, angle, scale, color } = entity;
 
   const [hovered, setHover] = useState(false);
   const [active, setActive] = useState(false);
 
-  const material = React.cloneElement(
-    props.material as React.ReactElement<any>,
+  const standardItems = [
     {
-      params: {
-        color: new Color(color[0], color[1], color[2]),
-        transparent: true,
-        opacity: hovered ? 0.8 : 1
-      }
+      label: "Delete",
+      action: () => gameState.removeEntity(entity)
     }
-  );
+  ];
+
+  const contextMenuItems = props.contextMenuItems
+    ? [...props.contextMenuItems, ...standardItems]
+    : standardItems;
 
   function onPointerDown(event: PointerEvent) {
     event.stopPropagation();
-    uiState.setDraggingEntity(true);
+
+    // uiState.setDraggingEntity(true);
   }
 
-  function onPointerUp(event: PointerEvent) {
-    event.stopPropagation();
-    uiState.setDraggingEntity(false);
-  }
+  const handlePointerUp = (event: PointerEvent) => {
+    if (event.button === 2) {
+      onContextMenu(event, contextMenuItems);
+      event.stopPropagation();
+    }
+  };
 
   return (
     <group
@@ -53,12 +96,41 @@ export default observer((props: EntityProps) => {
         position={[-pivot[0], -pivot[1], -pivot[2]]}
         onClick={e => setActive(!active)}
         onPointerDown={e => onPointerDown(e)}
-        onPointerUp={e => onPointerUp(e)}
+        onPointerUp={e => handlePointerUp(e)}
         onPointerOver={e => setHover(true)}
         onPointerOut={e => setHover(false)}
       >
         {geometry}
-        {material}
+        {materialParams.map((params, i) => {
+          const updatedParams: MaterialParameters = {
+            ...params,
+            color: new Color(color[0], color[1], color[2]),
+            transparent: true,
+            opacity: hovered ? 0.3 : 1
+          };
+
+          const textureUrl = params.textureUrl;
+          delete updatedParams["textureUrl"];
+
+          const material = (
+            <meshStandardMaterial
+              key={i}
+              attachArray="material"
+              args={[
+                {
+                  ...updatedParams
+                }
+              ]}
+            />
+          );
+          return textureUrl ? (
+            <Suspense key={i} fallback={material}>
+              <TexturedMaterial {...updatedParams} textureUrl={textureUrl} />
+            </Suspense>
+          ) : (
+            material
+          );
+        })}
       </mesh>
     </group>
   );

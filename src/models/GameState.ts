@@ -1,10 +1,8 @@
-import { observable, action } from "mobx";
-import { serializable, list, object, primitive } from "serializr";
 import { Model, model, modelAction, prop } from "mobx-keystone";
-
-import Player from "./Player";
 import Entity from "./game/Entity";
+import Player from "./Player";
 import Card from "./game/Card";
+import Deck from "./game/Deck";
 
 @model("GameState")
 export default class GameState extends Model({
@@ -28,8 +26,12 @@ export default class GameState extends Model({
   }
 
   @modelAction
-  addEntity() {
-    const newEntity = new Card({});
-    this.entities.push(newEntity);
+  addEntity(entity: Entity) {
+    this.entities.push(entity);
+  }
+
+  @modelAction
+  removeEntity(entity: Entity) {
+    this.entities.splice(this.entities.indexOf(entity), 1);
   }
 }

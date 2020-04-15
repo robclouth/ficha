@@ -87,12 +87,15 @@ export default class GameStore {
   }
 
   @action async loadGameFromUrl(url: string) {
-    const response = await fetch(url);
-    const json = await response.json();
-    const gameDefinition = new GameDefinition(json);
+    const response = await fetch(`${url}/game.json`);
+    const gameDefinitionJson = await response.json();
+    const gameDefinition = new GameDefinition({
+      ...gameDefinitionJson,
+      baseUrl: url
+    });
     const checkError = gameDefinition.typeCheck();
 
-    if (checkError !== null) checkError.throw(json);
+    if (checkError !== null) checkError.throw(gameDefinitionJson);
 
     this.gameState.entities = gameDefinition.entities;
   }
