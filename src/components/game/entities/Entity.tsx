@@ -64,6 +64,14 @@ export default observer((props: EntityProps) => {
 
   const standardItems = [
     {
+      label: "Rotate clockwise",
+      action: () => entity.rotate(Math.PI / 2)
+    },
+    {
+      label: "Rotate counter-clockwise",
+      action: () => entity.rotate(-Math.PI / 2)
+    },
+    {
       label: "Delete",
       action: () => gameState.removeEntity(entity)
     }
@@ -106,7 +114,7 @@ export default observer((props: EntityProps) => {
             ...params,
             color: new Color(color[0], color[1], color[2]),
             transparent: true,
-            opacity: hovered ? 0.3 : 1
+            opacity: hovered ? 0.5 : 1
           };
 
           const textureUrl = params.textureUrl;

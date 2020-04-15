@@ -56,7 +56,7 @@ export default class GameServer {
     this.peer.on("disconnected", () => this.peer.reconnect());
 
     const deck = new Deck({});
-    deck.addCard(new Card({}));
+    for (let i = 0; i < 52; i++) deck.addCard(new Card({}));
     this.gameState.addEntity(deck);
   }
 

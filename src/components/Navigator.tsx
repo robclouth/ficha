@@ -7,7 +7,7 @@ export default () => (
   <Router>
     <Switch>
       <Route path="/" exact component={HomeScreen} />
-      <Route path="/game/:id?" component={GameScreen} />
+      <Route path="/game/:id" exact component={GameScreen} />
     </Switch>
   </Router>
 );

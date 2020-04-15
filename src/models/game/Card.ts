@@ -16,4 +16,12 @@ export default class Card extends ExtendedModel(Entity, {
   onInit() {
     this.type = EntityType.Card;
   }
+
+  @modelAction
+  flip() {
+    this.faceUp = !this.faceUp;
+    const temp = this.frontImageUrl;
+    this.frontImageUrl = this.backImageUrl;
+    this.backImageUrl = temp;
+  }
 }

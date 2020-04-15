@@ -1,8 +1,18 @@
-import { ExtendedModel, model, prop, modelAction } from "mobx-keystone";
+import {
+  ExtendedModel,
+  model,
+  prop,
+  modelAction,
+  getParent,
+  findParent,
+  clone
+} from "mobx-keystone";
 import Card from "./Card";
 import Entity, { EntityType } from "./Entity";
 //@ts-ignore
-import shuffle from "shuffle-array";
+import shuffleArray from "shuffle-array";
+import GameState from "../GameState";
+import { computed } from "mobx";
 
 @model("Deck")
 export default class Deck extends ExtendedModel(Entity, {
@@ -24,6 +34,25 @@ export default class Deck extends ExtendedModel(Entity, {
 
   @modelAction
   shuffle() {
-    shuffle(this.cards);
+    let currentIndex = this.cards.length,
+      temporaryValue,
+      randomIndex;
+
+    const shuffledCards = [];
+    while (currentIndex !== 0) {
+      randomIndex = Math.floor(Math.random() * currentIndex);
+      currentIndex -= 1;
+      shuffledCards.push(clone(this.cards[randomIndex]));
+    }
+
+    this.cards = shuffledCards;
+  }
+
+  @modelAction
+  takeCards(count: number) {
+    const card = this.cards[this.cards.length - 1];
+    this.removeCard(card);
+    card.position[0] += 1;
+    this.gameState.addEntity(card);
   }
 }

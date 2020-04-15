@@ -8,7 +8,8 @@ import {
 } from "@material-ui/core";
 import { observer } from "mobx-react";
 import React from "react";
-import { Link as RouterLink } from "react-router-dom";
+import { Link as RouterLink, useHistory } from "react-router-dom";
+import { useStore } from "../stores/RootStore";
 
 const useStyles = makeStyles(theme => ({
   gridItem: {
@@ -19,19 +20,21 @@ const useStyles = makeStyles(theme => ({
 }));
 
 export default observer(() => {
+  const { gameStore } = useStore();
   const [gameCode, setGameCode] = React.useState("");
   const classes = useStyles();
+  const history = useHistory();
+
+  const handleCreateGameClick = async () => {
+    const gameId = await gameStore.createGame();
+    history.push(`game/${gameId}`);
+  };
 
   return (
     <Container maxWidth="xs">
       <Grid container spacing={2}>
         <Grid item xs={12} className={classes.gridItem}>
-          <Button
-            variant="outlined"
-            fullWidth
-            component={RouterLink}
-            to="/game"
-          >
+          <Button onClick={handleCreateGameClick} variant="outlined" fullWidth>
             Create Game
           </Button>
         </Grid>

@@ -40,15 +40,14 @@ export default class GameStore {
     return this.gameState.players.find(p => p.id === this.peer!.id)!;
   }
 
-  @action async createOrJoinGame(gameId?: string) {
-    if (!gameId) {
-      this.gameServer = new GameServer();
-      await this.gameServer.setup();
-      this.gameId = this.gameServer.gameId;
-    } else {
-      this.gameId = gameId;
-    }
+  @action async createGame() {
+    this.gameServer = new GameServer();
+    await this.gameServer.setup();
+    return this.gameServer.gameId;
+  }
 
+  @action async joinGame(gameId: string) {
+    this.gameId = gameId;
     this.peer = await createPeer();
     this.serverConnection = await connectToPeer(this.peer, this.gameId!);
     this.serverConnection.on("data", stateData =>

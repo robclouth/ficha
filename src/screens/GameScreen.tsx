@@ -52,30 +52,19 @@ import Card from "../models/game/Card";
 import AddEntityModal from "../components/modals/AddEntityModal";
 import LoadGameModal from "../components/modals/LoadGameModal";
 import { ContextMenuItem } from "../types";
+import { getSnapshot } from "mobx-keystone";
 
 const useStyles = makeStyles(theme => ({
   root: {
     width: "100%",
     height: "100%"
   },
-  formControl: {
-    marginTop: theme.spacing(1),
-    marginBottom: theme.spacing(1),
-    minWidth: 300
-  },
-  bottomBar: {
-    height: 300
-  },
   chat: {
     flex: 1
   },
-  selectEmpty: {
-    marginTop: theme.spacing(2)
-  },
   messages: {
     minHeight: 100
-  },
-  table: {}
+  }
 }));
 
 const PlayersTable = observer(() => {
@@ -199,6 +188,18 @@ export default observer(() => {
     action();
   };
 
+  const handleSaveGame = () => {
+    const gameStateJson = getSnapshot(gameState);
+    const blob = new Blob([JSON.stringify(gameStateJson)], {
+      type: "application/json"
+    });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `game.json`;
+    a.click();
+  };
+
   const handleContextMenu = (
     event: React.MouseEvent<HTMLDivElement>,
     items: ContextMenuItem[] | null
@@ -223,8 +224,8 @@ export default observer(() => {
   let { id: gameId } = useParams();
 
   React.useEffect(() => {
-    gameStore.createOrJoinGame(gameId);
-  }, [gameId]);
+    gameStore.joinGame(gameId!);
+  }, []);
 
   const classes = useStyles();
 
@@ -268,7 +269,9 @@ export default observer(() => {
         >
           Load game
         </MenuItem>
-        <MenuItem onClick={() => {}}>Save game</MenuItem>
+        <MenuItem onClick={() => handleTopMenuSelect(() => handleSaveGame())}>
+          Save game
+        </MenuItem>
       </Menu>
       <Menu
         onContextMenu={event => {

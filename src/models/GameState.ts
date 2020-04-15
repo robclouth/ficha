@@ -1,14 +1,13 @@
 import { Model, model, modelAction, prop } from "mobx-keystone";
 import Entity from "./game/Entity";
 import Player from "./Player";
-import Card from "./game/Card";
-import Deck from "./game/Deck";
 
 @model("GameState")
 export default class GameState extends Model({
-  players: prop<Player[]>(() => []),
-  chatHistory: prop<string[]>(() => []),
-  entities: prop<Entity[]>(() => [])
+  name: prop("", { setterAction: true }),
+  players: prop<Player[]>(() => [], { setterAction: true }),
+  chatHistory: prop<string[]>(() => [], { setterAction: true }),
+  entities: prop<Entity[]>(() => [], { setterAction: true })
 }) {
   @modelAction
   addPlayer(player: Player) {

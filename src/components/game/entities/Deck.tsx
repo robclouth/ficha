@@ -4,15 +4,28 @@ import Entity, { EntityProps, MaterialParameters } from "./Entity";
 import Deck from "../../../models/game/Deck";
 import { cardHeight } from "./Card";
 import { ContextMenuItem } from "../../../types";
+import { useStore } from "../../../stores/RootStore";
+import Card from "../../../models/game/Card";
 
 export type DeckProps = Omit<EntityProps, "geometry"> & {};
 
 export default observer((props: DeckProps) => {
+  const { gameStore } = useStore();
+  const { gameState } = gameStore;
+
   const { entity } = props;
   const deck = entity as Deck;
   const { cards } = deck;
 
   const contextMenuItems: ContextMenuItem[] = [
+    {
+      label: "Take one",
+      action: () => deck.takeCards(1)
+    },
+    {
+      label: "Draw one",
+      action: () => deck.takeCards(1)
+    },
     {
       label: "Shuffle",
       action: () => deck.shuffle()
