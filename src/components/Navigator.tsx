@@ -1,13 +1,13 @@
 import React from "react";
 import { HashRouter as Router, Switch, Route } from "react-router-dom";
-import Home from "../screens/Home";
-import Game from "../screens/Game";
+import HomeScreen from "../screens/HomeScreen";
+import GameScreen from "../screens/GameScreen";
 
 export default () => (
   <Router>
     <Switch>
-      <Route path="/" exact component={Home} />
-      <Route path="/game/:id?" component={Game} />
+      <Route path="/" exact component={HomeScreen} />
+      <Route path="/game/:id?" component={GameScreen} />
     </Switch>
   </Router>
 );
