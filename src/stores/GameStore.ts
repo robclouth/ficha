@@ -28,6 +28,7 @@ export default class GameStore {
   @observable gameServer: GameServer | null = null;
   @observable serverConnection?: DataConnection;
   @observable localGameState = new GameState({});
+  @observable connectionError: string | null = null;
 
   localStatePatchDisposer: OnPatchesDisposer = () => {};
 
@@ -45,9 +46,6 @@ export default class GameStore {
       await localforage.setItem("userName", this.userName);
     }
 
-    this.userId = nanoid();
-    this.userName = generateName();
-
     this.peer = await createPeer();
 
     this.isInitialised = true;
@@ -59,17 +57,6 @@ export default class GameStore {
 
   @computed get isHost(): boolean {
     return this.gameServer !== null;
-  }
-
-  @computed get isNextHost(): boolean {
-    return this.nextHostPeerId === this.peer!.id;
-  }
-
-  @computed get nextHostPeerId(): string | null {
-    const playersWithoutHost = this.gameState.connectedPlayers.filter(
-      p => p.peerId !== this.hostPeerId
-    );
-    return playersWithoutHost.length > 0 ? playersWithoutHost[0].peerId : null;
   }
 
   @computed get player(): Player {
@@ -104,24 +91,20 @@ export default class GameStore {
   }
 
   @action async handleHostDisconnect() {
-    if (this.isNextHost) {
-      this.trackLocalState(false);
+    this.trackLocalState(false);
 
-      // remove the old host
-      this.localGameState.players.find(
-        p => p.peerId === this.localGameState.hostPeerId
-      )!.isConnected = false;
+    this.localGameState.players.forEach(p => {
+      if (p !== this.player) p.isConnected = false;
+    });
 
-      // create a new server and pass in the old local state
-      this.gameServer = new GameServer(
-        this.player,
-        this.peer!,
-        this.localGameState
-      );
-    } else {
-      if (this.nextHostPeerId) this.joinGame(this.nextHostPeerId);
-      else this.createGame();
-    }
+    // create a new server and pass in the old local state
+    this.gameServer = new GameServer(
+      this.player,
+      this.peer!,
+      this.localGameState
+    );
+
+    this.connectionError = "The host disconnected";
   }
 
   connectToGame() {

@@ -34,6 +34,7 @@ import LoadGameModal from "../components/modals/LoadGameModal";
 import { useStore } from "../stores/RootStore";
 import { ContextMenuItem } from "../types";
 import JoinGameModal from "../components/modals/JoinGameModal";
+import { autorun, reaction } from "mobx";
 
 const useStyles = makeStyles(theme => ({
   root: {
@@ -101,7 +102,7 @@ const PlayersTable = observer(() => {
                 {player.name.charAt(0).toUpperCase()}
               </Avatar>
             }
-            label={`${player.name} ${player.peerId} ${
+            label={`${player.name} ${
               gameStore.player === player ? " (You)" : ""
             }`}
           />
@@ -234,8 +235,18 @@ export default observer(() => {
     });
   };
 
+  const snackbar = useSnackbar();
+
   React.useEffect(() => {
     gameStore.createGame();
+    autorun(() => {
+      gameStore.connectionError &&
+        snackbar.enqueueSnackbar(gameStore.connectionError, {
+          variant: "error",
+          preventDuplicate: true
+        });
+      gameStore.connectionError = null;
+    });
   }, []);
 
   const classes = useStyles();
@@ -254,7 +265,6 @@ export default observer(() => {
       >
         <PlayersTable />
         <Chat />
-        {gameStore.nextHostPeerId}
       </Box>
       <IconButton
         aria-label="more"
