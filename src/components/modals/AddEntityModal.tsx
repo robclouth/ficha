@@ -24,6 +24,7 @@ import Deck from "../../models/game/Deck";
 import { EntityType } from "../../models/game/Entity";
 import { useStore } from "../../stores/RootStore";
 import GameState from "../../models/GameState";
+import { Vector3, Plane } from "three";
 
 const useStyles = makeStyles(theme => ({
   formControl: {
@@ -39,7 +40,7 @@ export type AddEntityModalProps = {
 };
 
 export default observer(({ open, handleClose }: AddEntityModalProps) => {
-  const { gameStore } = useStore();
+  const { gameStore, uiState } = useStore();
   const { gameState } = gameStore;
 
   const [error, setError] = React.useState("");
@@ -49,9 +50,16 @@ export default observer(({ open, handleClose }: AddEntityModalProps) => {
   const entity = React.useMemo(() => {
     if (type === EntityType.Deck) return new Deck({});
     else return new Deck({});
-  }, [type]);
+  }, [type, open]);
 
   const handleAddClick = async () => {
+    const ray = uiState.contextMenuEvent?.ray;
+    if (ray) {
+      let point = new Vector3();
+      ray.intersectPlane(new Plane(new Vector3(0, 1, 0), 0), point);
+      entity.position = [point.x, point.z];
+    }
+
     gameState.addEntity(entity);
     handleClose();
   };

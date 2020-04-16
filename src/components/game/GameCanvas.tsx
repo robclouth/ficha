@@ -21,7 +21,7 @@ import { ContextMenuItem } from "../../types";
 extend({ CameraControls, DragControls });
 CameraControls.install({ THREE: THREE });
 
-const CameraControl = () => {
+const CameraControl = observer(() => {
   const { gameStore, uiState } = useStore();
 
   const { gl, camera } = useThree();
@@ -51,7 +51,7 @@ const CameraControl = () => {
       }}
     />
   );
-};
+});
 
 function renderEntity(props: Omit<EntityProps, "geometry">, index: number) {
   if (props.entity!.type === EntityType.Card)
@@ -97,11 +97,8 @@ export default observer<React.FC<GameCanvasProps>>(({ onContextMenu }) => {
 
   return (
     <Canvas
-      // onPointerDown={handlePointerDown}
-      // onPointerUp={handlePointerUp}
       style={{ background: "#333333", position: "absolute" }}
       camera={{ position: [0, 5, 5] }}
-      // onPointerMissed={handlePointerUp}
     >
       <ambientLight args={["white", 0.4]} />
       <directionalLight position={[10, 10, 5]} intensity={1} />

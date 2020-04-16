@@ -1,40 +1,35 @@
 import {
   Avatar,
+  Backdrop,
   Box,
   Chip,
+  CircularProgress,
   IconButton,
   makeStyles,
   Menu,
   MenuItem,
   TextField,
   Typography,
-  CircularProgress,
-  useTheme,
-  Modal,
-  Backdrop,
-  Fade
+  useTheme
 } from "@material-ui/core";
-import MuiAlert, { AlertProps } from "@material-ui/lab/Alert";
-
 import MoreVertIcon from "@material-ui/icons/MoreVert";
 import HostIcon from "@material-ui/icons/Router";
+import { autorun } from "mobx";
 import { getSnapshot } from "mobx-keystone";
 import { observer } from "mobx-react";
 import { useSnackbar } from "notistack";
-
 // @ts-ignore
 import randomColor from "random-material-color";
+import React from "react";
 //@ts-ignore
 import { CopyToClipboard } from "react-copy-to-clipboard";
-
-import React from "react";
+import { PointerEvent } from "react-three-fiber";
 import GameCanvas from "../components/game/GameCanvas";
 import AddEntityModal from "../components/modals/AddEntityModal";
+import JoinGameModal from "../components/modals/JoinGameModal";
 import LoadGameModal from "../components/modals/LoadGameModal";
 import { useStore } from "../stores/RootStore";
 import { ContextMenuItem } from "../types";
-import JoinGameModal from "../components/modals/JoinGameModal";
-import { autorun, reaction } from "mobx";
 
 const useStyles = makeStyles(theme => ({
   root: {
@@ -159,7 +154,7 @@ const Chat = observer(() => {
 });
 
 export default observer(() => {
-  const { gameStore } = useStore();
+  const { gameStore, uiState } = useStore();
   const { gameState } = gameStore;
 
   const theme = useTheme();
@@ -215,9 +210,10 @@ export default observer(() => {
   };
 
   const handleContextMenu = (
-    event: React.MouseEvent<HTMLDivElement>,
+    event: PointerEvent,
     items: ContextMenuItem[] | null
   ) => {
+    uiState.contextMenuEvent = event;
     setContextMenu({
       position: {
         x: event.clientX - 2,
