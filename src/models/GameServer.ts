@@ -26,13 +26,17 @@ export type StateData = {
 
 export default class GameServer {
   @observable peer!: Peer;
+  @observable hostingPlayer!: Player;
   @observable gameState!: GameState;
   @observable lastJson: any;
 
   ignorePlayerIdInStateUpdate?: string;
 
-  async setup() {
-    this.gameState = new GameState({});
+  async setup(hostingPlayer: Player, peer: Peer) {
+    this.hostingPlayer = hostingPlayer;
+    this.peer = peer;
+    this.gameState = new GameState({ hostPeerId: this.peerId });
+    this.gameState.addPlayer(this.hostingPlayer);
 
     onPatches(this.gameState, (patches, inversePatches) => {
       this.sendStateToClients(patches);
@@ -45,10 +49,6 @@ export default class GameServer {
       },
       { delay: 1000 }
     );
-
-    this.peer = await createPeer();
-
-    this.gameState.hostPeerId = this.peerId;
 
     this.peer.on("connection", connection => {
       connection.on("open", () => {

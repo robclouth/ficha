@@ -25,7 +25,7 @@ export default class GameStore {
   @observable hostPeerId?: string;
   @observable gameServer: GameServer | null = null;
   @observable serverConnection?: DataConnection;
-  @observable gameState = new GameState({});
+  @observable localGameState = new GameState({});
 
   localStatePatchDisposer: OnPatchesDisposer = () => {};
 
@@ -38,9 +38,13 @@ export default class GameStore {
       await localforage.setItem("userId", this.userId);
     }
 
-    // this.peer = await createPeer();
+    this.peer = await createPeer();
 
     this.isInitialised = true;
+  }
+
+  @computed get gameState(): GameState {
+    return this.isHost ? this.gameServer!.gameState : this.localGameState;
   }
 
   @computed get isHost(): boolean {
@@ -64,18 +68,22 @@ export default class GameStore {
 
   @action async createGame() {
     this.isConnecting = true;
+
+    const player = new Player({
+      id: this.userId!,
+      peerId: this.peer!.id
+    });
+
     this.gameServer = new GameServer();
-    await this.gameServer.setup();
-    await this.joinGame(this.gameServer.peerId, true);
+    await this.gameServer.setup(player, this.peer!);
     this.isConnecting = false;
   }
 
-  @action async joinGame(hostPeerId: string, isOwnServer: boolean = false) {
+  @action async joinGame(hostPeerId: string) {
     this.hostPeerId = hostPeerId;
     this.isConnecting = true;
-    this.peer = await createPeer();
+    this.gameServer = null;
     this.serverConnection = await this.connectToGame();
-    if (!isOwnServer) this.gameServer = null;
     this.isConnecting = false;
     this.serverConnection.on("data", stateData =>
       this.onStateDataFromServer(stateData as StateData)
@@ -111,7 +119,7 @@ export default class GameStore {
   trackLocalState(shouldTrack: boolean) {
     if (shouldTrack) {
       this.localStatePatchDisposer = onPatches(
-        this.gameState,
+        this.localGameState,
         (patches, inversePatches) => {
           this.sendStateToServer({
             type: StateDataType.Partial,
@@ -125,9 +133,9 @@ export default class GameStore {
   @action onStateDataFromServer(stateData: StateData) {
     this.trackLocalState(false);
     if (stateData.type === StateDataType.Partial) {
-      applyPatches(this.gameState, stateData.data as Patch[]);
+      applyPatches(this.localGameState, stateData.data as Patch[]);
     } else {
-      this.gameState = fromSnapshot<GameState>(
+      this.localGameState = fromSnapshot<GameState>(
         stateData.data as SnapshotInOf<GameState>
       );
     }
