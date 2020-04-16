@@ -6,6 +6,7 @@ import {
 } from "@material-ui/core/styles";
 import CssBaseline from "@material-ui/core/CssBaseline";
 import CircularProgress from "@material-ui/core/CircularProgress";
+import { SnackbarProvider } from "notistack";
 
 import Navigator from "./components/Navigator";
 import { useStore } from "./stores/RootStore";
@@ -36,10 +37,12 @@ export default observer(() => {
 
   return (
     <div className={classes.root}>
-      <ThemeProvider theme={darkTheme}>
-        <CssBaseline />
-        {rootStore.isInitialized ? <Navigator /> : <CircularProgress />}
-      </ThemeProvider>
+      <SnackbarProvider maxSnack={3}>
+        <ThemeProvider theme={darkTheme}>
+          <CssBaseline />
+          {rootStore.isInitialized ? <Navigator /> : <CircularProgress />}
+        </ThemeProvider>
+      </SnackbarProvider>
     </div>
   );
 });

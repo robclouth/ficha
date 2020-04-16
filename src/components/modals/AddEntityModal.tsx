@@ -33,12 +33,12 @@ const useStyles = makeStyles(theme => ({
   }
 }));
 
-export type AddEntityDialogProps = {
+export type AddEntityModalProps = {
   open: boolean;
   handleClose: () => void;
 };
 
-export default observer(({ open, handleClose }: AddEntityDialogProps) => {
+export default observer(({ open, handleClose }: AddEntityModalProps) => {
   const { gameStore } = useStore();
   const { gameState } = gameStore;
 

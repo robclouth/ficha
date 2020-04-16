@@ -6,11 +6,8 @@ import {
   DialogTitle,
   FormControl,
   makeStyles,
-  TextField,
-  DialogContentText
+  TextField
 } from "@material-ui/core";
-// @ts-ignore
-import isUrl from "is-url";
 import { observer } from "mobx-react";
 import React from "react";
 import { useStore } from "../../stores/RootStore";
@@ -23,57 +20,45 @@ const useStyles = makeStyles(theme => ({
   }
 }));
 
-type LoadGameDialogProps = {
+type JoinGameModalProps = {
   open: boolean;
   handleClose: () => void;
 };
 
-const gameUrl =
-  "https://raw.githubusercontent.com/robclouth/p2p-game/master/games/The%20Young%20Kings/";
-
-export default observer(({ open, handleClose }: LoadGameDialogProps) => {
+export default observer(({ open, handleClose }: JoinGameModalProps) => {
   const classes = useStyles();
 
   const { gameStore } = useStore();
   const [error, setError] = React.useState("");
 
-  const urlFieldRef = React.useRef<HTMLInputElement>();
+  const gameIdFieldRef = React.useRef<HTMLInputElement>();
 
-  const handleLoadClick = async () => {
-    const url = urlFieldRef.current!.value;
+  const handleJoinClick = async () => {
+    const gameId = gameIdFieldRef.current!.value;
 
-    if (!isUrl(url)) {
-      setError("Invalid URL");
+    if (gameId.length === 0) {
+      setError("Enter a game ID");
       return;
     }
 
     try {
-      await gameStore.loadGameStateFromUrl(url);
+      await gameStore.joinGame(gameId);
+      handleClose();
     } catch (err) {
       setError(err.message);
     }
   };
 
   return (
-    <Dialog
-      open={open}
-      onClose={handleClose}
-      aria-labelledby="load-game-dialog-title"
-    >
-      <DialogTitle id="load-game-dialog-title">Load game</DialogTitle>
+    <Dialog open={open} onClose={handleClose}>
+      <DialogTitle>Join game</DialogTitle>
       <DialogContent>
-        <DialogContentText>
-          Load a game from a definition json file.
-        </DialogContentText>
         <FormControl className={classes.formControl}>
           <TextField
-            inputRef={urlFieldRef}
+            inputRef={gameIdFieldRef}
             autoFocus
             margin="dense"
-            id="url"
-            placeholder="URL"
-            defaultValue={gameUrl}
-            type="url"
+            placeholder="Game ID"
             fullWidth
             error={error.length > 0}
             helperText={error}
@@ -84,8 +69,8 @@ export default observer(({ open, handleClose }: LoadGameDialogProps) => {
         <Button onClick={handleClose} color="primary">
           Cancel
         </Button>
-        <Button onClick={handleLoadClick} color="primary">
-          Load
+        <Button onClick={handleJoinClick} color="primary">
+          Join
         </Button>
       </DialogActions>
     </Dialog>

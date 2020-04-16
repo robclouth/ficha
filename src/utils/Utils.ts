@@ -1,7 +1,10 @@
 import { customAlphabet } from "nanoid";
-import Peer, { DataConnection } from "peerjs";
+import Peer from "peerjs";
 
-const nanoid = customAlphabet("1234567890abcdefghijklmnopqrstuvwxyz", 10);
+const nanoid = customAlphabet(
+  "1234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ",
+  10
+);
 export function generateId() {
   return nanoid();
 }
@@ -14,19 +17,6 @@ export function createPeer() {
       resolve(peer);
     });
     peer.on("error", err => {
-      reject(err);
-    });
-  });
-}
-
-export function connectToPeer(peer: Peer, id: string) {
-  return new Promise<DataConnection>((resolve, reject) => {
-    const connection = peer.connect(id);
-
-    connection.on("open", () => {
-      resolve(connection);
-    });
-    connection.on("error", err => {
       reject(err);
     });
   });

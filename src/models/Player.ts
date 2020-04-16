@@ -5,7 +5,8 @@ import { StateData } from "./GameServer";
 
 @model("Player")
 export default class Player extends Model({
-  id: prop("", { setterAction: true }),
+  id: prop<string>({ setterAction: true }),
+  peerId: prop<string>({ setterAction: true }),
   name: prop(() => generateId(), { setterAction: true })
 }) {
   connection?: DataConnection;

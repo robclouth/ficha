@@ -1,58 +1,36 @@
 import {
-  Container,
-  Divider,
-  Grid,
-  Link,
-  makeStyles,
-  Paper,
-  Chip,
-  TextField,
-  Typography,
-  Box,
-  Input,
-  AppBar,
-  Toolbar,
-  List,
-  ListItem,
-  ListItemIcon,
-  ListItemText,
-  IconButton,
-  Button,
   Avatar,
-  useTheme,
+  Box,
+  Chip,
+  IconButton,
+  makeStyles,
   Menu,
   MenuItem,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogContentText,
-  DialogActions,
-  FormControl,
-  InputLabel,
-  Select,
-  FormHelperText
+  TextField,
+  Typography,
+  Snackbar,
+  useTheme
 } from "@material-ui/core";
-import MoreVertIcon from "@material-ui/icons/MoreVert";
+import MuiAlert, { AlertProps } from "@material-ui/lab/Alert";
 
-// @ts-ignore
-import isUrl from "is-url";
+import MoreVertIcon from "@material-ui/icons/MoreVert";
+import HostIcon from "@material-ui/icons/Router";
+import { getSnapshot } from "mobx-keystone";
+import { observer } from "mobx-react";
+import { useSnackbar } from "notistack";
 
 // @ts-ignore
 import randomColor from "random-material-color";
+//@ts-ignore
+import { CopyToClipboard } from "react-copy-to-clipboard";
 
-import { observer } from "mobx-react";
 import React from "react";
-import { useParams, useHistory } from "react-router-dom";
 import GameCanvas from "../components/game/GameCanvas";
-import Player from "../models/Player";
-import { useStore } from "../stores/RootStore";
-import Entity, { EntityType } from "../models/game/Entity";
-import Deck from "../models/game/Deck";
-import Card from "../models/game/Card";
 import AddEntityModal from "../components/modals/AddEntityModal";
 import LoadGameModal from "../components/modals/LoadGameModal";
+import { useStore } from "../stores/RootStore";
 import { ContextMenuItem } from "../types";
-import { getSnapshot } from "mobx-keystone";
+import JoinGameModal from "../components/modals/JoinGameModal";
 
 const useStyles = makeStyles(theme => ({
   root: {
@@ -64,6 +42,9 @@ const useStyles = makeStyles(theme => ({
   },
   messages: {
     minHeight: 100
+  },
+  chip: {
+    marginBottom: theme.spacing(1)
   }
 }));
 
@@ -73,14 +54,35 @@ const PlayersTable = observer(() => {
   const theme = useTheme();
 
   const classes = useStyles();
+  const snackbar = useSnackbar();
 
   return (
-    <div style={{ zIndex: 1 }}>
+    <Box
+      zIndex={1}
+      display="flex"
+      flexDirection="column"
+      alignItems="flex-start"
+    >
+      {gameStore.isHost && (
+        <CopyToClipboard
+          text={gameStore.gameServer?.peerId}
+          onCopy={() => snackbar.enqueueSnackbar("Game ID copied to clipboard")}
+        >
+          <Chip
+            className={classes.chip}
+            clickable
+            icon={<HostIcon />}
+            label={"You are hosting"}
+          />
+        </CopyToClipboard>
+      )}
       {gameState.players.map((player, i) => {
         const color = randomColor.getColor({ text: player.id });
         return (
           <Chip
             key={i}
+            className={classes.chip}
+            clickable
             avatar={
               <Avatar
                 style={{
@@ -95,7 +97,7 @@ const PlayersTable = observer(() => {
           />
         );
       })}
-    </div>
+    </Box>
   );
 });
 
@@ -165,6 +167,7 @@ export default observer(() => {
 
   const [loadGameModalOpen, setLoadGameModalOpen] = React.useState(false);
   const [addEntityModalOpen, setAddEntityModalOpen] = React.useState(false);
+  const [joinGameModalOpen, setJoinGameModalOpen] = React.useState(false);
 
   const handleTopMenuClick = (event: React.MouseEvent<HTMLElement>) => {
     setTopMenuAnchorEl(event.currentTarget);
@@ -221,10 +224,8 @@ export default observer(() => {
     });
   };
 
-  let { id: gameId } = useParams();
-
   React.useEffect(() => {
-    gameStore.joinGame(gameId!);
+    gameStore.createGame();
   }, []);
 
   const classes = useStyles();
@@ -265,6 +266,11 @@ export default observer(() => {
         onClose={handleTopMenuClose}
       >
         <MenuItem
+          onClick={() => handleTopMenuSelect(() => setJoinGameModalOpen(true))}
+        >
+          Join game
+        </MenuItem>
+        <MenuItem
           onClick={() => handleTopMenuSelect(() => setLoadGameModalOpen(true))}
         >
           Load game
@@ -301,6 +307,10 @@ export default observer(() => {
       <AddEntityModal
         open={addEntityModalOpen}
         handleClose={() => setAddEntityModalOpen(false)}
+      />
+      <JoinGameModal
+        open={joinGameModalOpen}
+        handleClose={() => setJoinGameModalOpen(false)}
       />
     </Box>
   );

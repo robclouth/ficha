@@ -7,20 +7,23 @@ import {
   Patch,
   SnapshotInOf
 } from "mobx-keystone";
+import localforage from "localforage";
 import Peer, { DataConnection } from "peerjs";
 import GameServer, { StateData, StateDataType } from "../models/GameServer";
 import GameState from "../models/GameState";
 import Player from "../models/Player";
-import { connectToPeer, createPeer } from "../utils/Utils";
+import { createPeer } from "../utils/Utils";
 import RootStore from "./RootStore";
 import GameDefinition from "../models/GameDefinition";
+import { nanoid } from "nanoid";
 
 export default class GameStore {
+  userId?: string;
   @observable isInitialised = false;
   @observable isConnecting = false;
   @observable peer?: Peer;
-  @observable gameId?: string;
-  @observable gameServer?: GameServer;
+  @observable hostPeerId?: string;
+  @observable gameServer: GameServer | null = null;
   @observable serverConnection?: DataConnection;
   @observable gameState = new GameState({});
 
@@ -28,31 +31,81 @@ export default class GameStore {
 
   constructor(private rootStore: RootStore) {}
 
-  @action init() {
+  @action async init() {
+    this.userId = await localforage.getItem("userId");
+    if (!this.userId) {
+      this.userId = nanoid();
+      await localforage.setItem("userId", this.userId);
+    }
+
+    // this.peer = await createPeer();
+
     this.isInitialised = true;
   }
 
   @computed get isHost(): boolean {
-    return !!this.gameServer;
+    return this.gameServer !== null;
+  }
+
+  @computed get isNextHost(): boolean {
+    return this.nextHostPeerId === this.userId;
+  }
+
+  @computed get nextHostPeerId(): string | null {
+    const playersWithoutHost = this.gameState.players.filter(
+      p => p.peerId !== this.hostPeerId
+    );
+    return playersWithoutHost.length > 0 ? playersWithoutHost[0].id : null;
   }
 
   @computed get player(): Player {
-    return this.gameState.players.find(p => p.id === this.peer!.id)!;
+    return this.gameState.players.find(p => p.id === this.userId)!;
   }
 
   @action async createGame() {
+    this.isConnecting = true;
     this.gameServer = new GameServer();
     await this.gameServer.setup();
-    return this.gameServer.gameId;
+    await this.joinGame(this.gameServer.peerId, true);
+    this.isConnecting = false;
   }
 
-  @action async joinGame(gameId: string) {
-    this.gameId = gameId;
+  @action async joinGame(hostPeerId: string, isOwnServer: boolean = false) {
+    this.hostPeerId = hostPeerId;
+    this.isConnecting = true;
     this.peer = await createPeer();
-    this.serverConnection = await connectToPeer(this.peer, this.gameId!);
+    this.serverConnection = await this.connectToGame();
+    if (!isOwnServer) this.gameServer = null;
+    this.isConnecting = false;
     this.serverConnection.on("data", stateData =>
       this.onStateDataFromServer(stateData as StateData)
     );
+    this.serverConnection.on("close", () => {
+      this.handleHostDisconnect();
+    });
+  }
+
+  handleHostDisconnect() {
+    if (this.isNextHost) {
+    } else {
+      if (this.nextHostPeerId) this.joinGame(this.nextHostPeerId);
+      else this.createGame();
+    }
+  }
+
+  connectToGame() {
+    return new Promise<DataConnection>((resolve, reject) => {
+      const connection = this.peer!.connect(this.hostPeerId!, {
+        metadata: { userId: this.userId }
+      });
+
+      connection.on("open", () => {
+        resolve(connection);
+      });
+      connection.on("error", err => {
+        reject(err);
+      });
+    });
   }
 
   trackLocalState(shouldTrack: boolean) {
@@ -85,7 +138,7 @@ export default class GameStore {
     this.serverConnection && this.serverConnection.send(stateData);
   }
 
-  @action async loadGameFromUrl(url: string) {
+  @action async loadGameStateFromUrl(url: string) {
     const response = await fetch(`${url}/game.json`);
     const gameDefinitionJson = await response.json();
     const gameDefinition = new GameDefinition({

@@ -1,4 +1,4 @@
-import { action, observable } from "mobx";
+import { action, observable, reaction } from "mobx";
 import {
   getSnapshot,
   onPatches,
@@ -6,6 +6,7 @@ import {
   SnapshotOutOf,
   applyPatches
 } from "mobx-keystone";
+import localforage from "localforage";
 import Peer from "peerjs";
 import { createPeer } from "../utils/Utils";
 import GameState from "./GameState";
@@ -25,21 +26,36 @@ export type StateData = {
 
 export default class GameServer {
   @observable peer!: Peer;
-  @observable gameState = new GameState({});
+  @observable gameState!: GameState;
   @observable lastJson: any;
 
   ignorePlayerIdInStateUpdate?: string;
 
   async setup() {
-    const disposer = onPatches(this.gameState, (patches, inversePatches) => {
+    this.gameState = new GameState({});
+
+    onPatches(this.gameState, (patches, inversePatches) => {
       this.sendStateToClients(patches);
     });
 
+    reaction(
+      () => getSnapshot(this.gameState),
+      snapshot => {
+        localforage.setItem("serverState", snapshot);
+      },
+      { delay: 1000 }
+    );
+
     this.peer = await createPeer();
+
+    this.gameState.hostPeerId = this.peerId;
 
     this.peer.on("connection", connection => {
       connection.on("open", () => {
-        const player = new Player({ id: connection.peer });
+        const player = new Player({
+          id: connection.metadata.userId,
+          peerId: connection.peer
+        });
         player.connection = connection;
 
         this.gameState.addPlayer(player);
@@ -60,8 +76,8 @@ export default class GameServer {
     this.gameState.addEntity(deck);
   }
 
-  get gameId() {
-    return this.peer.id;
+  get peerId() {
+    return this.peer?.id;
   }
 
   @action sendStateToClients(patches: Patch[]) {

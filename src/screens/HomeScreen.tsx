@@ -27,7 +27,7 @@ export default observer(() => {
 
   const handleCreateGameClick = async () => {
     const gameId = await gameStore.createGame();
-    history.push(`game/${gameId}`);
+    history.push("game");
   };
 
   return (

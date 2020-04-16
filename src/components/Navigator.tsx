@@ -6,8 +6,8 @@ import GameScreen from "../screens/GameScreen";
 export default () => (
   <Router>
     <Switch>
-      <Route path="/" exact component={HomeScreen} />
-      <Route path="/game/:id" exact component={GameScreen} />
+      <Route path="/" exact component={GameScreen} />
+      {/* <Route path="/game" component={GameScreen} /> */}
     </Switch>
   </Router>
 );
