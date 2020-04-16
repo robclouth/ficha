@@ -17,7 +17,10 @@ export default class Entity extends Model({
   color: prop<[number, number, number]>(() => [1, 1, 1], { setterAction: true })
 }) {
   @computed get gameState() {
-    return findParent(this, parentNode => parentNode instanceof GameState);
+    return findParent<GameState>(
+      this,
+      parentNode => parentNode instanceof GameState
+    )!;
   }
 
   @modelAction

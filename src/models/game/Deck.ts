@@ -1,18 +1,6 @@
-import {
-  ExtendedModel,
-  model,
-  prop,
-  modelAction,
-  getParent,
-  findParent,
-  clone
-} from "mobx-keystone";
+import { clone, ExtendedModel, model, modelAction, prop } from "mobx-keystone";
 import Card from "./Card";
 import Entity, { EntityType } from "./Entity";
-//@ts-ignore
-import shuffleArray from "shuffle-array";
-import GameState from "../GameState";
-import { computed } from "mobx";
 
 @model("Deck")
 export default class Deck extends ExtendedModel(Entity, {
@@ -54,5 +42,19 @@ export default class Deck extends ExtendedModel(Entity, {
     this.removeCard(card);
     card.position[0] += 1;
     this.gameState.addEntity(card);
+  }
+
+  @modelAction
+  reset() {
+    const cards = this.gameState.entities.filter(
+      entity =>
+        entity.type === EntityType.Card &&
+        (entity as Card).ownerDeckId === this.$modelId
+    ) as Card[];
+    cards.forEach(card => {
+      this.gameState.removeEntity(card);
+      this.addCard(card);
+      card.faceUp = false;
+    });
   }
 }

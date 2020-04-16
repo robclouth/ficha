@@ -30,6 +30,8 @@
     "react-router-dom": "^5.1.2",
     "react-scripts": "3.4.1",
     "react-three-fiber": "^4.0.28",
+    "react-virtualized-auto-sizer": "^1.0.2",
+    "react-window": "^1.8.5",
     "serializr": "^2.0.3",
     "shuffle-array": "^1.0.1",
     "three": "^0.115.0",

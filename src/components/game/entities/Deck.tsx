@@ -34,6 +34,11 @@ export default observer((props: DeckProps) => {
             label: "Shuffle",
             type: "action",
             action: () => deck.shuffle()
+          },
+          {
+            label: "Reset",
+            type: "action",
+            action: () => deck.reset()
           }
         ]
       : [];

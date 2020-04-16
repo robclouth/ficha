@@ -16,6 +16,11 @@ import {
 } from "@material-ui/core";
 import RemoveIcon from "@material-ui/icons/RemoveCircle";
 
+//@ts-ignore
+import { FixedSizeList, ListChildComponentProps } from "react-window";
+//@ts-ignore
+import AutoSizer from "react-virtualized-auto-sizer";
+
 // @ts-ignore
 import isUrl from "is-url";
 import { observer } from "mobx-react";
@@ -55,7 +60,28 @@ const DeckEditor = observer(({ deck }: { deck: Deck }) => {
   };
 
   const handleAddCard = (frontImageUrl: string) => {
-    deck.addCard(new Card({ frontImageUrl, backImageUrl }));
+    deck.addCard(
+      new Card({ frontImageUrl, backImageUrl, ownerDeckId: deck.$modelId })
+    );
+  };
+
+  const renderRow = (props: ListChildComponentProps) => {
+    const card = deck.cards[props.index];
+    if (!card) return null;
+    return (
+      <Box display="flex">
+        <TextField
+          fullWidth
+          value={card.frontImageUrl}
+          onChange={event => (card.frontImageUrl = event.target.value)}
+          placeholder="Front image URL"
+        />
+
+        <IconButton onClick={() => deck.removeCard(card)}>
+          <RemoveIcon />
+        </IconButton>
+      </Box>
+    );
   };
 
   return (
@@ -81,6 +107,19 @@ const DeckEditor = observer(({ deck }: { deck: Deck }) => {
         gutterBottom
       >{`${deck.cards.length} cards`}</Typography>
       <Button onClick={() => handleAddCard("")}>Add card</Button>
+      {/* <AutoSizer style={{ width: "100%" }}>
+        {(size: any) => (
+          <FixedSizeList
+            className="List"
+            height={size.height}
+            itemCount={deck.cards.length}
+            itemSize={35}
+            width={size.width}
+          >
+            {renderRow}
+          </FixedSizeList>
+        )}
+      </AutoSizer> */}
       {deck.cards.map((card, i) => (
         <Box display="flex">
           <TextField
