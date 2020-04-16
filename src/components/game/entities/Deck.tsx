@@ -17,22 +17,28 @@ export default observer((props: DeckProps) => {
   const deck = entity as Deck;
   const { cards } = deck;
 
-  const contextMenuItems: ContextMenuItem[] = [
-    {
-      label: "Take one",
-      action: () => deck.takeCards(1)
-    },
-    {
-      label: "Draw one",
-      action: () => deck.takeCards(1)
-    },
-    {
-      label: "Shuffle",
-      action: () => deck.shuffle()
-    }
-  ];
+  const contextMenuItems: ContextMenuItem[] =
+    cards.length > 0
+      ? [
+          {
+            label: "Take one",
+            type: "action",
+            action: () => deck.takeCards(1)
+          },
+          {
+            label: "Draw one",
+            type: "action",
+            action: () => deck.takeCards(1)
+          },
+          {
+            label: "Shuffle",
+            type: "action",
+            action: () => deck.shuffle()
+          }
+        ]
+      : [];
 
-  let height = cardHeight * cards.length;
+  let height = cardHeight * Math.max(cards.length, 1);
 
   const edgeMaterialParams = {
     roughness: 1
@@ -44,11 +50,11 @@ export default observer((props: DeckProps) => {
     edgeMaterialParams,
     {
       roughness: 0.2,
-      textureUrl: cards[0].backImageUrl
+      textureUrl: cards.length > 0 ? cards[0].backImageUrl : undefined
     },
     {
       roughness: 0.2,
-      textureUrl: cards[0].frontImageUrl
+      textureUrl: cards.length > 0 ? cards[0].frontImageUrl : undefined
     },
     edgeMaterialParams,
     edgeMaterialParams

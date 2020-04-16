@@ -16,6 +16,7 @@ export default observer((props: CardProps) => {
   const contextMenuItems: ContextMenuItem[] = [
     {
       label: "Flip",
+      type: "action",
       action: () => card.flip()
     }
   ];
@@ -44,6 +45,7 @@ export default observer((props: CardProps) => {
     <Entity
       {...props}
       pivot={[0, -cardHeight / 2, 0]}
+      flipped={card.faceUp}
       geometry={
         <boxBufferGeometry args={[0.7, cardHeight, 1]} attach="geometry" />
       }

@@ -30,6 +30,8 @@ import JoinGameModal from "../components/modals/JoinGameModal";
 import LoadGameModal from "../components/modals/LoadGameModal";
 import { useStore } from "../stores/RootStore";
 import { ContextMenuItem } from "../types";
+import Entity from "../models/game/Entity";
+import GameSettingsModal from "../components/modals/GameSettingsModal";
 
 const useStyles = makeStyles(theme => ({
   root: {
@@ -62,6 +64,9 @@ const PlayersTable = observer(() => {
 
   return (
     <Box
+      position="absolute"
+      top={theme.spacing(1)}
+      left={theme.spacing(1)}
       zIndex={1}
       display="flex"
       flexDirection="column"
@@ -174,6 +179,9 @@ export default observer(() => {
   const [loadGameModalOpen, setLoadGameModalOpen] = React.useState(false);
   const [addEntityModalOpen, setAddEntityModalOpen] = React.useState(false);
   const [joinGameModalOpen, setJoinGameModalOpen] = React.useState(false);
+  const [gameSettingsModalOpen, setGameSettingsModalOpen] = React.useState(
+    false
+  );
 
   const handleTopMenuClick = (event: React.MouseEvent<HTMLElement>) => {
     setTopMenuAnchorEl(event.currentTarget);
@@ -192,9 +200,12 @@ export default observer(() => {
     setContextMenu(null);
   };
 
-  const handleContextMenuSelect = (action: () => void) => {
+  const handleContextMenuSelect = (item: Partial<ContextMenuItem>) => {
     handleContextMenuClose();
-    action();
+
+    if (item.type === "action") item.action && item.action();
+    else if (item.type === "edit") {
+    }
   };
 
   const handleSaveGame = () => {
@@ -209,6 +220,17 @@ export default observer(() => {
     a.click();
   };
 
+  const standardContextMenuItems: ContextMenuItem[] = [
+    {
+      label: "Add entity",
+      type: "action",
+      action: () => {
+        setAddEntityModalOpen(true);
+        handleContextMenuClose();
+      }
+    }
+  ];
+
   const handleContextMenu = (
     event: PointerEvent,
     items: ContextMenuItem[] | null
@@ -219,15 +241,7 @@ export default observer(() => {
         x: event.clientX - 2,
         y: event.clientY - 4
       },
-      items: items
-        ? items
-        : [
-            {
-              label: "Add entity",
-              action: () =>
-                handleContextMenuSelect(() => setAddEntityModalOpen(true))
-            }
-          ]
+      items: items ? items : standardContextMenuItems
     });
   };
 
@@ -250,7 +264,8 @@ export default observer(() => {
   return (
     <Box className={classes.root}>
       <GameCanvas onContextMenu={handleContextMenu} />
-      <Box
+      <PlayersTable />
+      {/* <Box
         zIndex={1}
         width={250}
         position="absolute"
@@ -261,7 +276,7 @@ export default observer(() => {
       >
         <PlayersTable />
         <Chat />
-      </Box>
+      </Box> */}
       <IconButton
         aria-label="more"
         aria-controls="long-menu"
@@ -290,10 +305,17 @@ export default observer(() => {
         <MenuItem
           onClick={() => handleTopMenuSelect(() => setLoadGameModalOpen(true))}
         >
-          Load game
+          Load from URL
         </MenuItem>
         <MenuItem onClick={() => handleTopMenuSelect(() => handleSaveGame())}>
-          Save game
+          Export
+        </MenuItem>
+        <MenuItem
+          onClick={() =>
+            handleTopMenuSelect(() => setGameSettingsModalOpen(true))
+          }
+        >
+          Game settings
         </MenuItem>
       </Menu>
       <Menu
@@ -311,8 +333,8 @@ export default observer(() => {
             : undefined
         }
       >
-        {contextMenu?.items.map(item => (
-          <MenuItem onClick={() => handleContextMenuSelect(item.action)}>
+        {contextMenu?.items.map((item, i) => (
+          <MenuItem key={i} onClick={() => handleContextMenuSelect(item)}>
             {item.label}
           </MenuItem>
         ))}
@@ -328,6 +350,10 @@ export default observer(() => {
       <JoinGameModal
         open={joinGameModalOpen}
         handleClose={() => setJoinGameModalOpen(false)}
+      />
+      <GameSettingsModal
+        open={gameSettingsModalOpen}
+        handleClose={() => setGameSettingsModalOpen(false)}
       />
       <Backdrop className={classes.loadingModal} open={gameStore.isLoading}>
         <CircularProgress color="inherit" />

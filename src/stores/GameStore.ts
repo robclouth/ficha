@@ -71,8 +71,10 @@ export default class GameStore {
       peerId: this.peer!.id,
       name: this.userName!
     });
+
     this.hostPeerId = this.peer!.id;
-    this.gameServer = new GameServer(player, this.peer!);
+    this.gameServer = new GameServer();
+    await this.gameServer.setup(player, this.peer!);
     this.isLoading = false;
   }
 
@@ -98,11 +100,8 @@ export default class GameStore {
     });
 
     // create a new server and pass in the old local state
-    this.gameServer = new GameServer(
-      this.player,
-      this.peer!,
-      this.localGameState
-    );
+    this.gameServer = new GameServer();
+    await this.gameServer.setup(this.player, this.peer!, this.localGameState);
 
     this.connectionError = "The host disconnected";
   }

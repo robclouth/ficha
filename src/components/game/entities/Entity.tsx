@@ -28,6 +28,7 @@ export type EntityProps = {
   ) => void;
   contextMenuItems?: ContextMenuItem[];
   pivot?: [number, number, number];
+  flipped?: boolean;
   geometry: React.ReactElement<BufferGeometry>;
   materialParams?: MaterialParameters[];
 };
@@ -41,6 +42,7 @@ export default observer((props: EntityProps) => {
     geometry,
     materialParams = [{}],
     pivot = [0, 0, 0],
+    flipped = false,
     onContextMenu
   } = props;
   const { position, angle, scale, color } = entity;
@@ -48,17 +50,26 @@ export default observer((props: EntityProps) => {
   const [hovered, setHover] = React.useState(false);
   const [dragging, setDragging] = React.useState(false);
 
-  const standardItems = [
+  const standardItems: ContextMenuItem[] = [
     {
       label: "Rotate clockwise",
+      type: "action",
       action: () => entity.rotate(Math.PI / 2)
     },
     {
       label: "Rotate counter-clockwise",
+      type: "action",
       action: () => entity.rotate(-Math.PI / 2)
     },
     {
+      label: "Edit",
+      type: "edit",
+      target: entity,
+      action: () => {}
+    },
+    {
       label: "Delete",
+      type: "action",
       action: () => gameState.removeEntity(entity)
     }
   ];
@@ -103,6 +114,7 @@ export default observer((props: EntityProps) => {
     >
       <mesh
         position={[-pivot[0], -pivot[1], -pivot[2]]}
+        rotation={[flipped ? Math.PI : 0, 0, 0]}
         onPointerDown={handlePointerDown}
         onPointerUp={handlePointerUp}
         onPointerMove={handlePointerMove}

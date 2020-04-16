@@ -11,17 +11,18 @@ import {
   MenuItem,
   Select,
   TextField,
-  IconButton
+  IconButton,
+  Typography
 } from "@material-ui/core";
 import RemoveIcon from "@material-ui/icons/RemoveCircle";
 
 // @ts-ignore
 import isUrl from "is-url";
 import { observer } from "mobx-react";
-import React from "react";
+import React, { useRef, useState } from "react";
 import Card from "../../models/game/Card";
 import Deck from "../../models/game/Deck";
-import { EntityType } from "../../models/game/Entity";
+import Entity, { EntityType } from "../../models/game/Entity";
 import { useStore } from "../../stores/RootStore";
 import GameState from "../../models/GameState";
 import { Vector3, Plane } from "three";
@@ -38,6 +39,65 @@ export type AddEntityModalProps = {
   open: boolean;
   handleClose: () => void;
 };
+
+const DeckEditor = observer(({ deck }: { deck: Deck }) => {
+  const classes = useStyles();
+  const [backImageUrl, setBackImageUrl] = useState("");
+
+  const handleBackImageUrlChange = (url: string) => {
+    deck.cards.forEach(card => (card.backImageUrl = url));
+    setBackImageUrl(url);
+  };
+
+  const handleBulkAdd = (text: string) => {
+    const urls = text.split(",").map(url => url.trim());
+    urls.forEach(url => handleAddCard(url));
+  };
+
+  const handleAddCard = (frontImageUrl: string) => {
+    deck.addCard(new Card({ frontImageUrl, backImageUrl }));
+  };
+
+  return (
+    <Box display="flex" flexDirection="column">
+      <FormControl className={classes.formControl}>
+        <Input
+          value={backImageUrl}
+          onChange={event => handleBackImageUrlChange(event.target.value)}
+          fullWidth
+          placeholder="Back image URL"
+        />
+      </FormControl>
+      <FormControl className={classes.formControl}>
+        <Input
+          value=""
+          fullWidth
+          placeholder="Bulk add"
+          onChange={event => handleBulkAdd(event.target.value)}
+        />
+      </FormControl>
+      <Typography
+        variant="body1"
+        gutterBottom
+      >{`${deck.cards.length} cards`}</Typography>
+      <Button onClick={() => handleAddCard("")}>Add card</Button>
+      {deck.cards.map((card, i) => (
+        <Box display="flex">
+          <TextField
+            fullWidth
+            value={card.frontImageUrl}
+            onChange={event => (card.frontImageUrl = event.target.value)}
+            placeholder="Front image URL"
+          />
+
+          <IconButton onClick={() => deck.removeCard(card)}>
+            <RemoveIcon />
+          </IconButton>
+        </Box>
+      ))}
+    </Box>
+  );
+});
 
 export default observer(({ open, handleClose }: AddEntityModalProps) => {
   const { gameStore, uiState } = useStore();
@@ -66,29 +126,7 @@ export default observer(({ open, handleClose }: AddEntityModalProps) => {
 
   let typeEditor: React.ReactNode = null;
   if (entity.type === EntityType.Deck) {
-    const deck = entity as Deck;
-    typeEditor = (
-      <Box display="flex" flexDirection="column">
-        <FormControl className={classes.formControl}>
-          <Input fullWidth placeholder="Back image URL" />
-        </FormControl>
-        <Button onClick={() => deck.addCard(new Card({}))}>Add card</Button>
-        {deck.cards.map((card, i) => (
-          <Box display="flex">
-            <TextField
-              fullWidth
-              value={card.frontImageUrl}
-              onChange={event => (card.frontImageUrl = event.target.value)}
-              placeholder="Front image URL"
-            />
-
-            <IconButton onClick={() => deck.removeCard(card)}>
-              <RemoveIcon />
-            </IconButton>
-          </Box>
-        ))}
-      </Box>
-    );
+    typeEditor = <DeckEditor deck={entity as Deck} />;
   }
 
   return (

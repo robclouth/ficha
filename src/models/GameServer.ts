@@ -5,7 +5,9 @@ import {
   Patch,
   SnapshotOutOf,
   applyPatches,
-  clone
+  clone,
+  SnapshotInOf,
+  fromSnapshot
 } from "mobx-keystone";
 import localforage from "localforage";
 import Peer, { DataConnection } from "peerjs";
@@ -28,28 +30,35 @@ export type StateData = {
 export default class GameServer {
   @observable peer!: Peer;
   @observable hostingPlayer!: Player;
-  @observable gameState!: GameState;
+  @observable gameState: GameState = new GameState({});
   @observable lastJson: any;
 
   ignorePlayerIdInStateUpdate?: string;
 
-  constructor(hostingPlayer: Player, peer: Peer, gameState?: GameState) {
-    this.setup(hostingPlayer, peer, gameState);
-  }
-
-  @action setup(hostingPlayer: Player, peer: Peer, gameState?: GameState) {
+  @action async setup(
+    hostingPlayer: Player,
+    peer: Peer,
+    gameState?: GameState
+  ) {
     this.hostingPlayer = hostingPlayer;
     this.peer = peer;
 
     if (gameState) {
       this.gameState = clone(gameState);
     } else {
-      this.gameState = new GameState({});
-      this.gameState.addPlayer(this.hostingPlayer);
+      const gameStateJson = await localforage.getItem("gameState");
+      const restoredGameState = gameStateJson
+        ? fromSnapshot<GameState>(gameStateJson as SnapshotInOf<GameState>)
+        : undefined;
+      if (restoredGameState) this.gameState = restoredGameState;
+      else {
+        this.gameState = new GameState({});
+        this.gameState.addPlayer(this.hostingPlayer);
 
-      const deck = new Deck({});
-      for (let i = 0; i < 52; i++) deck.addCard(new Card({}));
-      this.gameState.addEntity(deck);
+        const deck = new Deck({});
+        for (let i = 0; i < 52; i++) deck.addCard(new Card({}));
+        this.gameState.addEntity(deck);
+      }
     }
 
     this.gameState.hostPeerId = this.peerId;
@@ -61,7 +70,7 @@ export default class GameServer {
     reaction(
       () => getSnapshot(this.gameState),
       snapshot => {
-        localforage.setItem("serverState", snapshot);
+        localforage.setItem("gameState", snapshot);
       },
       { delay: 1000 }
     );

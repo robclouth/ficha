@@ -90,7 +90,6 @@ export default observer<React.FC<GameCanvasProps>>(({ onContextMenu }) => {
           Math.pow(event.clientY - startDragPos.y, 2)
       ) < 5
     ) {
-      // event.preventDefault();
       onContextMenu(event, null);
     }
   };
@@ -102,7 +101,7 @@ export default observer<React.FC<GameCanvasProps>>(({ onContextMenu }) => {
     >
       <ambientLight args={["white", 0.4]} />
       <directionalLight position={[10, 10, 5]} intensity={1} />
-      {gameState.entities.map((entity, i) =>
+      {gameState?.entities.map((entity, i) =>
         renderEntity(
           {
             entity,

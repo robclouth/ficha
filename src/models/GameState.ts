@@ -6,6 +6,7 @@ import { computed } from "mobx";
 @model("GameState")
 export default class GameState extends Model({
   name: prop("", { setterAction: true }),
+  assetsUrl: prop("", { setterAction: true }),
   hostPeerId: prop("", { setterAction: true }),
   players: prop<Player[]>(() => [], { setterAction: true }),
   chatHistory: prop<string[]>(() => [], { setterAction: true }),
