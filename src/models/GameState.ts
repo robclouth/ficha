@@ -1,6 +1,7 @@
 import { Model, model, modelAction, prop } from "mobx-keystone";
 import Entity from "./game/Entity";
 import Player from "./Player";
+import { computed } from "mobx";
 
 @model("GameState")
 export default class GameState extends Model({
@@ -10,6 +11,10 @@ export default class GameState extends Model({
   chatHistory: prop<string[]>(() => [], { setterAction: true }),
   entities: prop<Entity[]>(() => [], { setterAction: true })
 }) {
+  @computed get connectedPlayers() {
+    return this.players.filter(p => p.isConnected);
+  }
+
   @modelAction
   addPlayer(player: Player) {
     this.players.push(player);

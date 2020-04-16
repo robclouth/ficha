@@ -8,8 +8,11 @@ import {
   MenuItem,
   TextField,
   Typography,
-  Snackbar,
-  useTheme
+  CircularProgress,
+  useTheme,
+  Modal,
+  Backdrop,
+  Fade
 } from "@material-ui/core";
 import MuiAlert, { AlertProps } from "@material-ui/lab/Alert";
 
@@ -45,6 +48,11 @@ const useStyles = makeStyles(theme => ({
   },
   chip: {
     marginBottom: theme.spacing(1)
+  },
+  loadingModal: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center"
   }
 }));
 
@@ -76,8 +84,8 @@ const PlayersTable = observer(() => {
           />
         </CopyToClipboard>
       )}
-      {gameState.players.map((player, i) => {
-        const color = randomColor.getColor({ text: player.id });
+      {gameState.connectedPlayers.map((player, i) => {
+        const color = randomColor.getColor({ text: player.userId });
         return (
           <Chip
             key={i}
@@ -93,7 +101,9 @@ const PlayersTable = observer(() => {
                 {player.name.charAt(0).toUpperCase()}
               </Avatar>
             }
-            label={player.name}
+            label={`${player.name} ${player.peerId} ${
+              gameStore.player === player ? " (You)" : ""
+            }`}
           />
         );
       })}
@@ -244,6 +254,7 @@ export default observer(() => {
       >
         <PlayersTable />
         <Chat />
+        {gameStore.nextHostPeerId}
       </Box>
       <IconButton
         aria-label="more"
@@ -312,6 +323,9 @@ export default observer(() => {
         open={joinGameModalOpen}
         handleClose={() => setJoinGameModalOpen(false)}
       />
+      <Backdrop className={classes.loadingModal} open={gameStore.isLoading}>
+        <CircularProgress color="inherit" />
+      </Backdrop>
     </Box>
   );
 });

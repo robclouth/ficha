@@ -16,11 +16,13 @@ import { createPeer } from "../utils/Utils";
 import RootStore from "./RootStore";
 import GameDefinition from "../models/GameDefinition";
 import { nanoid } from "nanoid";
+import { generateName } from "../utils/NameGenerator";
 
 export default class GameStore {
   userId?: string;
+  userName?: string;
   @observable isInitialised = false;
-  @observable isConnecting = false;
+  @observable isLoading = false;
   @observable peer?: Peer;
   @observable hostPeerId?: string;
   @observable gameServer: GameServer | null = null;
@@ -37,6 +39,14 @@ export default class GameStore {
       this.userId = nanoid();
       await localforage.setItem("userId", this.userId);
     }
+    this.userName = await localforage.getItem("userName");
+    if (!this.userName) {
+      this.userName = generateName();
+      await localforage.setItem("userName", this.userName);
+    }
+
+    this.userId = nanoid();
+    this.userName = generateName();
 
     this.peer = await createPeer();
 
@@ -52,39 +62,39 @@ export default class GameStore {
   }
 
   @computed get isNextHost(): boolean {
-    return this.nextHostPeerId === this.userId;
+    return this.nextHostPeerId === this.peer!.id;
   }
 
   @computed get nextHostPeerId(): string | null {
-    const playersWithoutHost = this.gameState.players.filter(
+    const playersWithoutHost = this.gameState.connectedPlayers.filter(
       p => p.peerId !== this.hostPeerId
     );
-    return playersWithoutHost.length > 0 ? playersWithoutHost[0].id : null;
+    return playersWithoutHost.length > 0 ? playersWithoutHost[0].peerId : null;
   }
 
   @computed get player(): Player {
-    return this.gameState.players.find(p => p.id === this.userId)!;
+    return this.gameState.players.find(p => p.userId === this.userId)!;
   }
 
   @action async createGame() {
-    this.isConnecting = true;
+    this.isLoading = true;
 
     const player = new Player({
-      id: this.userId!,
-      peerId: this.peer!.id
+      userId: this.userId!,
+      peerId: this.peer!.id,
+      name: this.userName!
     });
-
-    this.gameServer = new GameServer();
-    await this.gameServer.setup(player, this.peer!);
-    this.isConnecting = false;
+    this.hostPeerId = this.peer!.id;
+    this.gameServer = new GameServer(player, this.peer!);
+    this.isLoading = false;
   }
 
   @action async joinGame(hostPeerId: string) {
     this.hostPeerId = hostPeerId;
-    this.isConnecting = true;
+    this.isLoading = true;
     this.gameServer = null;
     this.serverConnection = await this.connectToGame();
-    this.isConnecting = false;
+    this.isLoading = false;
     this.serverConnection.on("data", stateData =>
       this.onStateDataFromServer(stateData as StateData)
     );
@@ -93,8 +103,21 @@ export default class GameStore {
     });
   }
 
-  handleHostDisconnect() {
+  @action async handleHostDisconnect() {
     if (this.isNextHost) {
+      this.trackLocalState(false);
+
+      // remove the old host
+      this.localGameState.players.find(
+        p => p.peerId === this.localGameState.hostPeerId
+      )!.isConnected = false;
+
+      // create a new server and pass in the old local state
+      this.gameServer = new GameServer(
+        this.player,
+        this.peer!,
+        this.localGameState
+      );
     } else {
       if (this.nextHostPeerId) this.joinGame(this.nextHostPeerId);
       else this.createGame();
@@ -104,7 +127,7 @@ export default class GameStore {
   connectToGame() {
     return new Promise<DataConnection>((resolve, reject) => {
       const connection = this.peer!.connect(this.hostPeerId!, {
-        metadata: { userId: this.userId }
+        metadata: { userId: this.userId, userName: this.userName }
       });
 
       connection.on("open", () => {
