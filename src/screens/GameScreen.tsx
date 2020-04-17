@@ -168,7 +168,7 @@ const Chat = observer(() => {
 
 export default observer(() => {
   const { gameStore, uiState } = useStore();
-  const { contextMenu } = uiState;
+  const { contextMenu, isContextMenuOpen } = uiState;
 
   const { gameState } = gameStore;
 
@@ -311,7 +311,7 @@ export default observer(() => {
       <Menu
         keepMounted
         className={classes.contextMenu}
-        open={contextMenu !== undefined}
+        open={isContextMenuOpen}
         onClose={handleContextMenuClose}
         anchorReference="anchorPosition"
         anchorPosition={

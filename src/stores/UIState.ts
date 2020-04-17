@@ -22,6 +22,7 @@ export default class UIState {
   @observable isInitialized = false;
   @observable draggingEntity?: Entity;
   @observable contextMenu?: ContextMenu;
+  @observable isContextMenuOpen = false;
 
   constructor(private rootStore: RootStore) {}
 
@@ -52,10 +53,12 @@ export default class UIState {
       items,
       target
     };
+
+    this.isContextMenuOpen = true;
   }
 
   @action closeContextMenu() {
-    this.contextMenu = undefined;
+    this.isContextMenuOpen = false;
   }
 
   @action handleKeyPress(e: React.KeyboardEvent<HTMLDivElement>) {}
