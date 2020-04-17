@@ -1,6 +1,7 @@
 import { observable, computed } from "mobx";
 import { Model, model, modelAction, prop, findParent } from "mobx-keystone";
 import GameState from "../GameState";
+import { Box3 } from "three";
 
 export enum EntityType {
   Deck,
@@ -16,6 +17,8 @@ export default class Entity extends Model({
   scale: prop(1, { setterAction: true }),
   color: prop<[number, number, number]>(() => [1, 1, 1], { setterAction: true })
 }) {
+  boundingBox: Box3 = new Box3();
+
   @computed get gameState() {
     return findParent<GameState>(
       this,

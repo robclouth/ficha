@@ -50,14 +50,19 @@ export default class GameServer {
       const restoredGameState = gameStateJson
         ? fromSnapshot<GameState>(gameStateJson as SnapshotInOf<GameState>)
         : undefined;
+
       if (restoredGameState) this.gameState = restoredGameState;
       else {
         this.gameState = new GameState({});
         this.gameState.addPlayer(this.hostingPlayer);
 
-        const deck = new Deck({});
-        for (let i = 0; i < 52; i++) deck.addCard(new Card({}));
-        this.gameState.addEntity(deck);
+        const deck1 = new Deck({});
+        for (let i = 0; i < 52; i++) deck1.addCard(new Card({}));
+        this.gameState.addEntity(deck1);
+
+        const deck2 = new Deck({ position: [1, 0] });
+        for (let i = 0; i < 52; i++) deck2.addCard(new Card({}));
+        this.gameState.addEntity(deck2);
       }
     }
 

@@ -1,18 +1,17 @@
 import { observer } from "mobx-react";
-import React, { Suspense } from "react";
+import React, { useRef, useState, useEffect, useMemo } from "react";
+import { PointerEvent } from "react-three-fiber";
 import {
+  Box3,
   BufferGeometry,
   Color,
+  Mesh,
   MeshStandardMaterialParameters,
-  Texture,
-  TextureLoader,
   Plane,
-  Vector3,
-  MeshStandardMaterial
+  Vector3
 } from "three";
-import { PointerEvent, useLoader } from "react-three-fiber";
-import { useStore } from "../../../stores/RootStore";
 import Entity from "../../../models/game/Entity";
+import { useStore } from "../../../stores/RootStore";
 import { ContextMenuItem } from "../../../types";
 import Material from "../Material";
 
@@ -47,8 +46,8 @@ export default observer((props: EntityProps) => {
   } = props;
   const { position, angle, scale, color } = entity;
 
-  const [hovered, setHover] = React.useState(false);
-  const [dragging, setDragging] = React.useState(false);
+  const [hovered, setHover] = useState(false);
+  const [dragging, setDragging] = useState(false);
 
   const standardItems: ContextMenuItem[] = [
     {
@@ -106,20 +105,58 @@ export default observer((props: EntityProps) => {
     }
   };
 
+  const handlePointerHoverOver = (event: PointerEvent) => {
+    setHover(true);
+    event.stopPropagation();
+  };
+
+  const handlePointerHoverOut = (event: PointerEvent) => {
+    setHover(false);
+    event.stopPropagation();
+  };
+
+  const mesh = useRef<Mesh>();
+
+  useEffect(() => {
+    if (mesh.current) {
+      entity.boundingBox.setFromObject(mesh.current);
+      entity.boundingBox.min.y = 0;
+    }
+  }, [mesh, position]);
+
+  const minHeight = useMemo(() => {
+    let minHeight = 0;
+    if (entity.boundingBox) {
+      for (const otherEntity of gameState.entities) {
+        if (otherEntity !== entity && otherEntity.boundingBox) {
+          const collision = entity.boundingBox.intersectsBox(
+            otherEntity.boundingBox
+          );
+          if (collision && otherEntity.boundingBox.max.y > minHeight) {
+            minHeight = otherEntity.boundingBox.max.y;
+          }
+        }
+      }
+    }
+
+    return minHeight;
+  }, [position[0], position[1]]);
+
   return (
     <group
-      position={[position[0], 0, position[1]]}
+      position={[position[0], minHeight, position[1]]}
       rotation={[0, angle, 0]}
       scale={[scale, scale, scale]}
     >
       <mesh
+        ref={mesh}
         position={[-pivot[0], -pivot[1], -pivot[2]]}
         rotation={[flipped ? Math.PI : 0, 0, 0]}
         onPointerDown={handlePointerDown}
         onPointerUp={handlePointerUp}
         onPointerMove={handlePointerMove}
-        onPointerOver={e => setHover(true)}
-        onPointerOut={e => setHover(false)}
+        onPointerOver={handlePointerHoverOver}
+        onPointerOut={handlePointerHoverOut}
       >
         {geometry}
         {materialParams.map((params, i) => {
