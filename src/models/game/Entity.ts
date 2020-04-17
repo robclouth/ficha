@@ -1,7 +1,18 @@
 import { observable, computed } from "mobx";
-import { Model, model, modelAction, prop, findParent } from "mobx-keystone";
+import {
+  Model,
+  model,
+  modelAction,
+  prop,
+  findParent,
+  getRootPath,
+  getRoot,
+  getRootStore
+} from "mobx-keystone";
 import GameState from "../GameState";
 import { Box3 } from "three";
+import UIState from "../../stores/UIState";
+import RootStore from "../../stores/RootStore";
 
 export enum EntityType {
   Deck,
@@ -18,15 +29,24 @@ export default class Entity extends Model({
   color: prop<[number, number, number]>(() => [1, 1, 1], {
     setterAction: true
   }),
-  locked: prop(false, { setterAction: true })
+  locked: prop(false, { setterAction: true }),
+  faceUp: prop(false, { setterAction: true })
 }) {
-  boundingBox: Box3 = new Box3();
+  @observable boundingBox: Box3 = new Box3();
 
   @computed get gameState() {
     return findParent<GameState>(
       this,
       parentNode => parentNode instanceof GameState
     )!;
+  }
+
+  @computed get uiState() {
+    return getRootStore<RootStore>(this)?.uiState;
+  }
+
+  @computed get isDragging() {
+    return this.uiState?.draggingEntity === this;
   }
 
   @modelAction
@@ -37,5 +57,10 @@ export default class Entity extends Model({
   @modelAction
   toggleLocked() {
     this.locked = !this.locked;
+  }
+
+  @modelAction
+  flip() {
+    this.faceUp = !this.faceUp;
   }
 }

@@ -21,9 +21,9 @@ export type MaterialParameters = MeshStandardMaterialParameters & {
 
 export type EntityProps = {
   entity: Entity;
+  dragAction?: (e: PointerEvent) => void;
   contextMenuItems?: ContextMenuItem[];
   pivot?: [number, number, number];
-  flipped?: boolean;
   geometry: React.ReactElement<BufferGeometry>;
   materialParams?: MaterialParameters[];
 };
@@ -35,14 +35,13 @@ export default observer((props: EntityProps) => {
   const {
     entity,
     geometry,
+    dragAction,
     materialParams = [{}],
-    pivot = [0, 0, 0],
-    flipped = false
+    pivot = [0, 0, 0]
   } = props;
-  const { position, angle, scale, color, locked } = entity;
+  const { position, angle, scale, color, locked, boundingBox, faceUp } = entity;
 
   const [hovered, setHover] = useState(false);
-  const [dragging, setDragging] = useState(false);
 
   const standardItems: ContextMenuItem[] = [
     {
@@ -82,28 +81,23 @@ export default observer((props: EntityProps) => {
       if (!locked) {
         e.stopPropagation();
         uiState.setDraggingEntity(entity);
-        setDragging(true);
+        e.target.setPointerCapture(e.pointerId);
+      } else {
+        if (dragAction) {
+          dragAction(e);
+        } else {
+        }
       }
     }
-    e.target.setPointerCapture(e.pointerId);
   };
 
   const handlePointerUp = (e: any) => {
     if (e.button === 0) {
       uiState.setDraggingEntity();
       e.target.releasePointerCapture(e.pointerId);
-      setDragging(false);
     } else if (e.button === 2) {
       uiState.openContextMenu(e, contextMenuItems, entity);
       e.stopPropagation();
-    }
-  };
-
-  const handlePointerMove = (e: PointerEvent) => {
-    if (dragging) {
-      let point = new Vector3();
-      e.ray.intersectPlane(new Plane(new Vector3(0, 1, 0), 0), point);
-      entity.position = [point.x, point.z];
     }
   };
 
@@ -121,19 +115,17 @@ export default observer((props: EntityProps) => {
 
   useEffect(() => {
     if (mesh.current) {
-      entity.boundingBox.setFromObject(mesh.current);
-      entity.boundingBox.min.y = 0;
+      boundingBox.setFromObject(mesh.current);
+      boundingBox.min.y = 0;
     }
-  }, [mesh, position]);
+  }, [mesh, position, geometry, angle, scale]);
 
   const minHeight = useMemo(() => {
     let minHeight = 0;
-    if (entity.boundingBox) {
+    if (boundingBox) {
       for (const otherEntity of gameState.entities) {
         if (otherEntity !== entity && otherEntity.boundingBox) {
-          const collision = entity.boundingBox.intersectsBox(
-            otherEntity.boundingBox
-          );
+          const collision = boundingBox.intersectsBox(otherEntity.boundingBox);
           if (collision && otherEntity.boundingBox.max.y > minHeight) {
             minHeight = otherEntity.boundingBox.max.y;
           }
@@ -142,7 +134,7 @@ export default observer((props: EntityProps) => {
     }
 
     return minHeight;
-  }, [position[0], position[1]]);
+  }, [position, boundingBox]);
 
   return (
     <group
@@ -153,10 +145,9 @@ export default observer((props: EntityProps) => {
       <mesh
         ref={mesh}
         position={[-pivot[0], -pivot[1], -pivot[2]]}
-        rotation={[flipped ? Math.PI : 0, 0, 0]}
+        rotation={[faceUp ? Math.PI : 0, 0, 0]}
         onPointerDown={handlePointerDown}
         onPointerUp={handlePointerUp}
-        onPointerMove={handlePointerMove}
         onPointerOver={handlePointerHoverOver}
         onPointerOut={handlePointerHoverOut}
       >

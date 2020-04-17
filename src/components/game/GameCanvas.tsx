@@ -9,7 +9,7 @@ import {
   useThree
 } from "react-three-fiber";
 import * as THREE from "three";
-import { Clock } from "three";
+import { Clock, Vector3, Plane } from "three";
 import { DragControls } from "three/examples/jsm/controls/DragControls";
 import { EntityType } from "../../models/game/Entity";
 import { useStore } from "../../stores/RootStore";
@@ -63,7 +63,7 @@ export type GameCanvasProps = {};
 
 export default observer<React.FC<GameCanvasProps>>(() => {
   const { gameStore, uiState } = useStore();
-  const { openContextMenu } = uiState;
+  const { draggingEntity, isDraggingEntity } = uiState;
 
   const gameState = gameStore.gameState;
 
@@ -90,6 +90,14 @@ export default observer<React.FC<GameCanvasProps>>(() => {
     }
   };
 
+  const handlePointerMove = (e: any) => {
+    if (isDraggingEntity) {
+      let point = new Vector3();
+      e.ray.intersectPlane(new Plane(new Vector3(0, 1, 0), 0), point);
+      draggingEntity!.position = [point.x, point.z];
+    }
+  };
+
   return (
     <Canvas
       style={{ background: "#333333", position: "absolute" }}
@@ -109,6 +117,7 @@ export default observer<React.FC<GameCanvasProps>>(() => {
         args={[50, 50]}
         onPointerDown={handlePointerDown}
         onPointerUp={handlePointerUp}
+        onPointerMove={handlePointerMove}
       />
       <CameraControl />
     </Canvas>

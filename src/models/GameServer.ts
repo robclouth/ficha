@@ -7,7 +7,13 @@ import {
   applyPatches,
   clone,
   SnapshotInOf,
-  fromSnapshot
+  fromSnapshot,
+  model,
+  Model,
+  modelFlow,
+  _async,
+  _await,
+  prop
 } from "mobx-keystone";
 import localforage from "localforage";
 import Peer, { DataConnection } from "peerjs";
@@ -27,15 +33,19 @@ export type StateData = {
   data: SnapshotOutOf<GameState> | Patch[];
 };
 
-export default class GameServer {
+@model("GameServer")
+export default class GameServer extends Model({
+  gameState: prop<GameState>(() => new GameState({}), { setterAction: true })
+}) {
   @observable peer!: Peer;
   @observable hostingPlayer!: Player;
-  @observable gameState: GameState = new GameState({});
   @observable lastJson: any;
 
   ignorePlayerIdInStateUpdate?: string;
 
-  @action async setup(
+  @modelFlow
+  setup = _async(function*(
+    this: GameServer,
     hostingPlayer: Player,
     peer: Peer,
     gameState?: GameState
@@ -46,7 +56,7 @@ export default class GameServer {
     if (gameState) {
       this.gameState = clone(gameState);
     } else {
-      const gameStateJson = await localforage.getItem("gameState");
+      const gameStateJson = yield* _await(localforage.getItem("gameState"));
       const restoredGameState = gameStateJson
         ? fromSnapshot<GameState>(gameStateJson as SnapshotInOf<GameState>)
         : undefined;
@@ -87,7 +97,7 @@ export default class GameServer {
     });
 
     this.peer.on("disconnected", () => this.peer.reconnect());
-  }
+  });
 
   @action handleConnectionOpened(connection: DataConnection) {
     // if the user was previously in game, they take control of that player

@@ -17,7 +17,7 @@ export default observer((props: CardProps) => {
     {
       label: "Flip",
       type: "action",
-      action: () => card.flip()
+      action: () => entity.flip()
     }
   ];
 
@@ -45,7 +45,6 @@ export default observer((props: CardProps) => {
     <Entity
       {...props}
       pivot={[0, -cardHeight / 2, 0]}
-      flipped={card.faceUp}
       geometry={
         <boxBufferGeometry args={[0.7, cardHeight, 1]} attach="geometry" />
       }

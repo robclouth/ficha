@@ -26,14 +26,15 @@ import { nanoid } from "nanoid";
 import { generateName } from "../utils/NameGenerator";
 
 @model("GameStore")
-export default class GameStore extends Model({}) {
+export default class GameStore extends Model({
+  gameServer: prop<GameServer | null>(null, { setterAction: true })
+}) {
   userId?: string;
   userName?: string;
   @observable isInitialised = false;
   @observable isLoading = false;
   @observable peer?: Peer;
   @observable hostPeerId?: string;
-  @observable gameServer: GameServer | null = null;
   @observable serverConnection?: DataConnection;
   @observable localGameState = new GameState({});
   @observable connectionError: string | null = null;
@@ -81,7 +82,7 @@ export default class GameStore extends Model({}) {
       name: this.userName!
     });
 
-    this.gameServer = new GameServer();
+    this.gameServer = new GameServer({});
     yield* _await(this.gameServer.setup(player, this.peer!));
     this.isLoading = false;
   });
@@ -110,7 +111,7 @@ export default class GameStore extends Model({}) {
     });
 
     // create a new server and pass in the old local state
-    this.gameServer = new GameServer();
+    this.gameServer = new GameServer({});
     yield* _await(
       this.gameServer.setup(this.player, this.peer!, this.localGameState)
     );

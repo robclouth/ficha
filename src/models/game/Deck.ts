@@ -38,10 +38,13 @@ export default class Deck extends ExtendedModel(Entity, {
 
   @modelAction
   takeCards(count: number) {
-    const card = this.cards[this.cards.length - 1];
+    const card = this.cards[this.faceUp ? 0 : this.cards.length - 1];
     this.removeCard(card);
-    card.position[0] += 1;
+    card.position[0] = this.position[0];
+    card.position[1] = this.position[1];
+    card.faceUp = this.faceUp;
     this.gameState.addEntity(card);
+    return card;
   }
 
   @modelAction

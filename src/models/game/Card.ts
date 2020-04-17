@@ -11,7 +11,6 @@ import {
 
 @model("Card")
 export default class Card extends ExtendedModel(Entity, {
-  faceUp: prop(false, { setterAction: true }),
   frontImageUrl: prop<string>("", { setterAction: true }),
   backImageUrl: prop<string>("", { setterAction: true }),
   ownerDeckId: prop<string>("", { setterAction: true })
@@ -25,10 +24,5 @@ export default class Card extends ExtendedModel(Entity, {
       entity =>
         entity.type === EntityType.Deck && entity.$modelId == this.ownerDeckId
     );
-  }
-
-  @modelAction
-  flip() {
-    this.faceUp = !this.faceUp;
   }
 }
