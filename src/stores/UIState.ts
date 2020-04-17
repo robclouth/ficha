@@ -21,4 +21,6 @@ export default class UIState {
   @action setDraggingEntity(entity: Entity | null) {
     this.draggingEntity = entity;
   }
+
+  @action handleKeyPress(e: React.KeyboardEvent<HTMLDivElement>) {}
 }

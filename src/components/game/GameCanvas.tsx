@@ -61,10 +61,7 @@ function renderEntity(props: Omit<EntityProps, "geometry">, index: number) {
 }
 
 export type GameCanvasProps = {
-  onContextMenu: (
-    event: PointerEvent,
-    menuItems: ContextMenuItem[] | null
-  ) => void;
+  onContextMenu: (e: PointerEvent, menuItems: ContextMenuItem[] | null) => void;
 };
 
 export default observer<React.FC<GameCanvasProps>>(({ onContextMenu }) => {
@@ -73,24 +70,24 @@ export default observer<React.FC<GameCanvasProps>>(({ onContextMenu }) => {
 
   const [startDragPos, setStartDragPos] = React.useState({ x: 0, y: 0 });
 
-  const handlePointerDown = (event: PointerEvent) => {
-    if (event.button === 2) {
+  const handlePointerDown = (e: PointerEvent) => {
+    if (e.button === 2) {
       setStartDragPos({
-        x: event.clientX,
-        y: event.clientY
+        x: e.clientX,
+        y: e.clientY
       });
     }
   };
 
-  const handlePointerUp = (event: PointerEvent) => {
+  const handlePointerUp = (e: PointerEvent) => {
     if (
-      event.button === 2 &&
+      e.button === 2 &&
       Math.sqrt(
-        Math.pow(event.clientX - startDragPos.x, 2) +
-          Math.pow(event.clientY - startDragPos.y, 2)
+        Math.pow(e.clientX - startDragPos.x, 2) +
+          Math.pow(e.clientY - startDragPos.y, 2)
       ) < 5
     ) {
-      onContextMenu(event, null);
+      onContextMenu(e, null);
     }
   };
 

@@ -119,8 +119,8 @@ const Chat = observer(() => {
 
   const classes = useStyles();
 
-  const handleKeyPress = (event: React.KeyboardEvent) => {
-    if (event.which === 13) {
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.which === 13) {
       gameState.addMessage(`${player.name}: ${message}`);
       setMessage("");
     }
@@ -150,7 +150,7 @@ const Chat = observer(() => {
           fullWidth
           value={message}
           placeholder="Type something"
-          onChange={event => setMessage(event.target.value)}
+          onChange={e => setMessage(e.target.value)}
           onKeyPress={handleKeyPress}
         ></TextField>
       </div>
@@ -183,8 +183,8 @@ export default observer(() => {
     false
   );
 
-  const handleTopMenuClick = (event: React.MouseEvent<HTMLElement>) => {
-    setTopMenuAnchorEl(event.currentTarget);
+  const handleTopMenuClick = (e: React.MouseEvent<HTMLElement>) => {
+    setTopMenuAnchorEl(e.currentTarget);
   };
 
   const handleTopMenuClose = () => {
@@ -232,14 +232,14 @@ export default observer(() => {
   ];
 
   const handleContextMenu = (
-    event: PointerEvent,
+    e: PointerEvent,
     items: ContextMenuItem[] | null
   ) => {
-    uiState.contextMenuEvent = event;
+    uiState.contextMenuEvent = e;
     setContextMenu({
       position: {
-        x: event.clientX - 2,
-        y: event.clientY - 4
+        x: e.clientX - 2,
+        y: e.clientY - 4
       },
       items: items ? items : standardContextMenuItems
     });
@@ -319,9 +319,9 @@ export default observer(() => {
         </MenuItem>
       </Menu>
       <Menu
-        onContextMenu={event => {
-          event.preventDefault();
-          // handleContextMenu(event);
+        onContextMenu={e => {
+          e.preventDefault();
+          // handleContextMenu(e);
         }}
         keepMounted
         open={contextMenu !== null}

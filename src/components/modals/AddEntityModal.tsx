@@ -73,7 +73,7 @@ const DeckEditor = observer(({ deck }: { deck: Deck }) => {
         <TextField
           fullWidth
           value={card.frontImageUrl}
-          onChange={event => (card.frontImageUrl = event.target.value)}
+          onChange={e => (card.frontImageUrl = e.target.value)}
           placeholder="Front image URL"
         />
 
@@ -89,7 +89,7 @@ const DeckEditor = observer(({ deck }: { deck: Deck }) => {
       <FormControl className={classes.formControl}>
         <Input
           value={backImageUrl}
-          onChange={event => handleBackImageUrlChange(event.target.value)}
+          onChange={e => handleBackImageUrlChange(e.target.value)}
           fullWidth
           placeholder="Back image URL"
         />
@@ -99,7 +99,7 @@ const DeckEditor = observer(({ deck }: { deck: Deck }) => {
           value=""
           fullWidth
           placeholder="Bulk add"
-          onChange={event => handleBulkAdd(event.target.value)}
+          onChange={e => handleBulkAdd(e.target.value)}
         />
       </FormControl>
       <Typography
@@ -125,7 +125,7 @@ const DeckEditor = observer(({ deck }: { deck: Deck }) => {
           <TextField
             fullWidth
             value={card.frontImageUrl}
-            onChange={event => (card.frontImageUrl = event.target.value)}
+            onChange={e => (card.frontImageUrl = e.target.value)}
             placeholder="Front image URL"
           />
 
@@ -186,7 +186,7 @@ export default observer(({ open, handleClose }: AddEntityModalProps) => {
           <Select
             fullWidth
             value={type}
-            onChange={event => setType(event.target.value as EntityType)}
+            onChange={e => setType(e.target.value as EntityType)}
           >
             <MenuItem value={EntityType.Deck}>Deck</MenuItem>
           </Select>
@@ -194,7 +194,7 @@ export default observer(({ open, handleClose }: AddEntityModalProps) => {
         <FormControl className={classes.formControl}>
           <Input
             value={entity.name}
-            onChange={event => (entity.name = event.target.value)}
+            onChange={e => (entity.name = e.target.value)}
             fullWidth
             placeholder="Name"
           />

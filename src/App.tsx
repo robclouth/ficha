@@ -30,13 +30,14 @@ const darkTheme = createMuiTheme({
 export default observer(() => {
   const classes = useStyles();
   const rootStore = useStore();
+  const { uiState } = rootStore;
 
   React.useEffect(() => {
     rootStore.init();
   }, [rootStore]);
 
   return (
-    <div className={classes.root}>
+    <div className={classes.root} onKeyPress={e => uiState.handleKeyPress(e)}>
       <SnackbarProvider maxSnack={3}>
         <ThemeProvider theme={darkTheme}>
           <CssBaseline />

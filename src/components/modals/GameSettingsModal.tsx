@@ -64,7 +64,7 @@ export default observer(({ open, handleClose }: ModalProps) => {
         <FormControl className={classes.formControl}>
           <Input
             value={name}
-            onChange={event => setName(event.target.value)}
+            onChange={e => setName(e.target.value)}
             fullWidth
             placeholder="Game title"
           />
@@ -72,7 +72,7 @@ export default observer(({ open, handleClose }: ModalProps) => {
         <FormControl className={classes.formControl}>
           <Input
             value={assetsUrl}
-            onChange={event => setAssetsUrl(event.target.value)}
+            onChange={e => setAssetsUrl(e.target.value)}
             fullWidth
             placeholder="Assets URL"
           />

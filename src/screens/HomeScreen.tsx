@@ -49,7 +49,7 @@ export default observer(() => {
             fullWidth
             label="Game code"
             value={gameCode}
-            onChange={event => setGameCode(event.target.value)}
+            onChange={e => setGameCode(e.target.value)}
           ></TextField>
         </Grid>
         <Grid item xs={12} className={classes.gridItem}>

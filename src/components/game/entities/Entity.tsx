@@ -21,10 +21,7 @@ export type MaterialParameters = MeshStandardMaterialParameters & {
 
 export type EntityProps = {
   entity: Entity;
-  onContextMenu: (
-    event: PointerEvent,
-    contextMenuItems: ContextMenuItem[]
-  ) => void;
+  onContextMenu: (e: PointerEvent, contextMenuItems: ContextMenuItem[]) => void;
   contextMenuItems?: ContextMenuItem[];
   pivot?: [number, number, number];
   flipped?: boolean;
@@ -44,7 +41,7 @@ export default observer((props: EntityProps) => {
     flipped = false,
     onContextMenu
   } = props;
-  const { position, angle, scale, color } = entity;
+  const { position, angle, scale, color, locked } = entity;
 
   const [hovered, setHover] = useState(false);
   const [dragging, setDragging] = useState(false);
@@ -70,6 +67,11 @@ export default observer((props: EntityProps) => {
       label: "Delete",
       type: "action",
       action: () => gameState.removeEntity(entity)
+    },
+    {
+      label: locked ? "Unlock" : "Lock",
+      type: "action",
+      action: () => entity.toggleLocked()
     }
   ];
 
@@ -77,42 +79,44 @@ export default observer((props: EntityProps) => {
     ? [...props.contextMenuItems, ...standardItems]
     : standardItems;
 
-  const handlePointerDown = (event: any) => {
-    if (event.button === 0) {
-      event.stopPropagation();
-      uiState.setDraggingEntity(entity);
-      setDragging(true);
+  const handlePointerDown = (e: any) => {
+    if (e.button === 0) {
+      if (!locked) {
+        e.stopPropagation();
+        uiState.setDraggingEntity(entity);
+        setDragging(true);
+      }
     }
-    event.target.setPointerCapture(event.pointerId);
+    e.target.setPointerCapture(e.pointerId);
   };
 
-  const handlePointerUp = (event: any) => {
-    if (event.button === 0) {
+  const handlePointerUp = (e: any) => {
+    if (e.button === 0) {
       uiState.setDraggingEntity(null);
-      event.target.releasePointerCapture(event.pointerId);
+      e.target.releasePointerCapture(e.pointerId);
       setDragging(false);
-    } else if (event.button === 2) {
-      onContextMenu(event, contextMenuItems);
-      event.stopPropagation();
+    } else if (e.button === 2) {
+      onContextMenu(e, contextMenuItems);
+      e.stopPropagation();
     }
   };
 
-  const handlePointerMove = (event: PointerEvent) => {
+  const handlePointerMove = (e: PointerEvent) => {
     if (dragging) {
       let point = new Vector3();
-      event.ray.intersectPlane(new Plane(new Vector3(0, 1, 0), 0), point);
+      e.ray.intersectPlane(new Plane(new Vector3(0, 1, 0), 0), point);
       entity.position = [point.x, point.z];
     }
   };
 
-  const handlePointerHoverOver = (event: PointerEvent) => {
+  const handlePointerHoverOver = (e: PointerEvent) => {
     setHover(true);
-    event.stopPropagation();
+    e.stopPropagation();
   };
 
-  const handlePointerHoverOut = (event: PointerEvent) => {
+  const handlePointerHoverOut = (e: PointerEvent) => {
     setHover(false);
-    event.stopPropagation();
+    e.stopPropagation();
   };
 
   const mesh = useRef<Mesh>();
@@ -164,7 +168,7 @@ export default observer((props: EntityProps) => {
             ...params,
             color: new Color(color[0], color[1], color[2]),
             transparent: true,
-            opacity: hovered ? 0.5 : 1
+            opacity: hovered ? 0.7 : 1
           };
 
           const material = <Material key={i} {...updatedParams} />;
