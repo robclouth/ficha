@@ -1,30 +1,36 @@
 import React from "react";
 import { observable } from "mobx";
-import AssetStore from "./AssetStore";
 import UIState from "./UIState";
 import GameStore from "./GameStore";
+import {
+  createContext,
+  registerRootStore,
+  model,
+  Model,
+  prop,
+  modelAction,
+  modelFlow,
+  _async,
+  _await
+} from "mobx-keystone";
 
-export default class RootStore {
-  assetStore!: AssetStore;
-  gameStore!: GameStore;
-  uiState!: UIState;
-  @observable isInitialized = false;
-
-  async init() {
-    this.assetStore = new AssetStore(this);
-    this.gameStore = new GameStore(this);
-    this.uiState = new UIState(this);
-
-    await Promise.all([
-      this.assetStore.init(),
-      this.gameStore.init(),
-      this.uiState.init()
-    ]);
+@model("RootStore")
+export default class RootStore extends Model({
+  gameStore: prop<GameStore>(() => new GameStore({}), { setterAction: true }),
+  uiState: prop<UIState>(() => new UIState({}), { setterAction: true }),
+  isInitialized: prop(false, { setterAction: true })
+}) {
+  @modelFlow
+  init = _async(function*(this: RootStore) {
+    yield* _await(Promise.all([this.gameStore.init(), this.uiState.init()]));
     this.isInitialized = true;
-  }
+  });
 }
 
-const context = React.createContext<RootStore>(new RootStore());
+const rootStore = new RootStore({});
+registerRootStore(rootStore);
+
+const context = React.createContext<RootStore>(rootStore);
 
 export const useStore = () => {
   return React.useContext(context);

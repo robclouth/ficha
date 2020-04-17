@@ -1,11 +1,18 @@
-import { action, computed, observable } from "mobx";
+import { computed, observable } from "mobx";
 import {
   applyPatches,
   fromSnapshot,
   onPatches,
   OnPatchesDisposer,
   Patch,
-  SnapshotInOf
+  SnapshotInOf,
+  modelFlow,
+  _async,
+  _await,
+  model,
+  Model,
+  prop,
+  modelAction
 } from "mobx-keystone";
 import localforage from "localforage";
 import Peer, { DataConnection } from "peerjs";
@@ -18,7 +25,8 @@ import GameDefinition from "../models/GameDefinition";
 import { nanoid } from "nanoid";
 import { generateName } from "../utils/NameGenerator";
 
-export default class GameStore {
+@model("GameStore")
+export default class GameStore extends Model({}) {
   userId?: string;
   userName?: string;
   @observable isInitialised = false;
@@ -32,22 +40,21 @@ export default class GameStore {
 
   localStatePatchDisposer: OnPatchesDisposer = () => {};
 
-  constructor(private rootStore: RootStore) {}
-
-  @action async init() {
-    this.userId = await localforage.getItem("userId");
+  @modelFlow
+  init = _async(function*(this: GameStore) {
+    this.userId = yield* _await(localforage.getItem<string>("userId"));
     if (!this.userId) {
       this.userId = nanoid();
-      await localforage.setItem("userId", this.userId);
+      yield* _await(localforage.setItem("userId", this.userId));
     }
-    this.userName = await localforage.getItem("userName");
+    this.userName = yield* _await(localforage.getItem<string>("userName"));
     if (!this.userName) {
       this.userName = generateName();
-      await localforage.setItem("userName", this.userName);
+      yield* _await(localforage.setItem("userName", this.userName));
     }
 
     this.isInitialised = true;
-  }
+  });
 
   @computed get gameState(): GameState {
     return this.isHost ? this.gameServer!.gameState : this.localGameState;
@@ -61,10 +68,11 @@ export default class GameStore {
     return this.gameState.players.find(p => p.userId === this.userId)!;
   }
 
-  @action async createGame() {
+  @modelFlow
+  createGame = _async(function*(this: GameStore) {
     this.isLoading = true;
 
-    this.peer = await createPeer();
+    this.peer = yield* _await(createPeer());
     this.hostPeerId = this.peer!.id;
 
     const player = new Player({
@@ -74,15 +82,16 @@ export default class GameStore {
     });
 
     this.gameServer = new GameServer();
-    await this.gameServer.setup(player, this.peer!);
+    yield* _await(this.gameServer.setup(player, this.peer!));
     this.isLoading = false;
-  }
+  });
 
-  @action async joinGame(hostPeerId: string) {
+  @modelFlow
+  joinGame = _async(function*(this: GameStore, hostPeerId: string) {
     this.hostPeerId = hostPeerId;
     this.isLoading = true;
     this.gameServer = null;
-    this.serverConnection = await this.connectToGame();
+    this.serverConnection = yield* _await(this.connectToGame());
     this.isLoading = false;
     this.serverConnection.on("data", stateData =>
       this.onStateDataFromServer(stateData as StateData)
@@ -90,9 +99,10 @@ export default class GameStore {
     this.serverConnection.on("close", () => {
       this.handleHostDisconnect();
     });
-  }
+  });
 
-  @action async handleHostDisconnect() {
+  @modelFlow
+  handleHostDisconnect = _async(function*(this: GameStore) {
     this.trackLocalState(false);
 
     this.localGameState.players.forEach(p => {
@@ -101,10 +111,12 @@ export default class GameStore {
 
     // create a new server and pass in the old local state
     this.gameServer = new GameServer();
-    await this.gameServer.setup(this.player, this.peer!, this.localGameState);
+    yield* _await(
+      this.gameServer.setup(this.player, this.peer!, this.localGameState)
+    );
 
     this.connectionError = "The host disconnected";
-  }
+  });
 
   connectToGame() {
     return new Promise<DataConnection>((resolve, reject) => {
@@ -135,7 +147,8 @@ export default class GameStore {
     } else this.localStatePatchDisposer();
   }
 
-  @action onStateDataFromServer(stateData: StateData) {
+  @modelAction
+  onStateDataFromServer(stateData: StateData) {
     this.trackLocalState(false);
     if (stateData.type === StateDataType.Partial) {
       applyPatches(this.localGameState, stateData.data as Patch[]);
@@ -151,9 +164,10 @@ export default class GameStore {
     this.serverConnection && this.serverConnection.send(stateData);
   }
 
-  @action async loadGameStateFromUrl(url: string) {
-    const response = await fetch(`${url}/game.json`);
-    const gameDefinitionJson = await response.json();
+  @modelFlow
+  loadGameStateFromUrl = _async(function*(this: GameStore, url: string) {
+    const response = yield* _await(fetch(`${url}/game.json`));
+    const gameDefinitionJson = yield* _await(response.json());
     const gameDefinition = new GameDefinition({
       ...gameDefinitionJson,
       baseUrl: url
@@ -163,5 +177,5 @@ export default class GameStore {
     if (checkError !== null) checkError.throw(gameDefinitionJson);
 
     this.gameState.entities = gameDefinition.entities;
-  }
+  });
 }

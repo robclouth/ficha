@@ -3,6 +3,15 @@ import { observable, action, computed } from "mobx";
 import Entity from "../models/game/Entity";
 import { PointerEvent } from "react-three-fiber";
 import { Vector3, Plane } from "three";
+import {
+  model,
+  Model,
+  prop,
+  modelAction,
+  modelFlow,
+  _async,
+  _await
+} from "mobx-keystone";
 
 export type ContextMenuItem = {
   label?: string;
@@ -18,31 +27,35 @@ export type ContextMenu = {
   target?: Entity;
 };
 
-export default class UIState {
+@model("UIState")
+export default class UIState extends Model({
+  // isInitialized: prop(false, { setterAction: true }),
+  // draggingEntity: prop<Entity | undefined>(undefined, { setterAction: true }),
+  // contextMenu: prop<ContextMenu | undefined>(undefined, { setterAction: true }),
+  // isContextMenuOpen: prop(false, { setterAction: true })
+}) {
   @observable isInitialized = false;
   @observable draggingEntity?: Entity;
   @observable contextMenu?: ContextMenu;
   @observable isContextMenuOpen = false;
 
-  constructor(private rootStore: RootStore) {}
-
-  async init() {
+  @modelFlow
+  init = _async(function*(this: UIState) {
     this.isInitialized = true;
-  }
+  });
 
-  @computed get isDraggingEntity() {
+  @computed
+  get isDraggingEntity() {
     return this.draggingEntity !== undefined;
   }
 
-  @action setDraggingEntity(entity?: Entity) {
+  @modelAction
+  setDraggingEntity(entity?: Entity) {
     this.draggingEntity = entity;
   }
 
-  @action openContextMenu(
-    e: PointerEvent,
-    items?: ContextMenuItem[],
-    target?: Entity
-  ) {
+  @modelAction
+  openContextMenu(e: PointerEvent, items?: ContextMenuItem[], target?: Entity) {
     let point = new Vector3();
     e.ray.intersectPlane(new Plane(new Vector3(0, 1, 0), 0), point);
     const positionGroundPlane: [number, number] = [point.x, point.z];
@@ -57,9 +70,11 @@ export default class UIState {
     this.isContextMenuOpen = true;
   }
 
-  @action closeContextMenu() {
+  @modelAction
+  closeContextMenu() {
     this.isContextMenuOpen = false;
   }
 
-  @action handleKeyPress(e: React.KeyboardEvent<HTMLDivElement>) {}
+  @modelAction
+  handleKeyPress(e: React.KeyboardEvent<HTMLDivElement>) {}
 }
