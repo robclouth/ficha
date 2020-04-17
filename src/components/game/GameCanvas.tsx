@@ -1,22 +1,21 @@
-import React, { useRef, useState, useEffect, useMemo } from "react";
+import CameraControls from "camera-controls";
+import { observer } from "mobx-react";
+import React, { useMemo, useRef } from "react";
 import {
   Canvas,
-  useFrame,
   extend,
-  useThree,
-  PointerEvent
+  PointerEvent,
+  useFrame,
+  useThree
 } from "react-three-fiber";
-import { observer } from "mobx-react";
-import { useStore } from "../../stores/RootStore";
-import { Mesh, Clock, Color } from "three";
 import * as THREE from "three";
-import CameraControls from "camera-controls";
+import { Clock } from "three";
 import { DragControls } from "three/examples/jsm/controls/DragControls";
+import { EntityType } from "../../models/game/Entity";
+import { useStore } from "../../stores/RootStore";
 import Card from "./entities/Card";
-import Entity, { EntityType } from "../../models/game/Entity";
 import Deck from "./entities/Deck";
 import { EntityProps } from "./entities/Entity";
-import { ContextMenuItem } from "../../types";
 
 extend({ CameraControls, DragControls });
 CameraControls.install({ THREE: THREE });
@@ -60,12 +59,12 @@ function renderEntity(props: Omit<EntityProps, "geometry">, index: number) {
     return <Deck key={index} {...props} />;
 }
 
-export type GameCanvasProps = {
-  onContextMenu: (e: PointerEvent, menuItems: ContextMenuItem[] | null) => void;
-};
+export type GameCanvasProps = {};
 
-export default observer<React.FC<GameCanvasProps>>(({ onContextMenu }) => {
+export default observer<React.FC<GameCanvasProps>>(() => {
   const { gameStore, uiState } = useStore();
+  const { openContextMenu } = uiState;
+
   const gameState = gameStore.gameState;
 
   const [startDragPos, setStartDragPos] = React.useState({ x: 0, y: 0 });
@@ -87,7 +86,7 @@ export default observer<React.FC<GameCanvasProps>>(({ onContextMenu }) => {
           Math.pow(e.clientY - startDragPos.y, 2)
       ) < 5
     ) {
-      onContextMenu(e, null);
+      uiState.openContextMenu(e);
     }
   };
 
@@ -101,8 +100,7 @@ export default observer<React.FC<GameCanvasProps>>(({ onContextMenu }) => {
       {gameState?.entities.map((entity, i) =>
         renderEntity(
           {
-            entity,
-            onContextMenu
+            entity
           },
           i
         )

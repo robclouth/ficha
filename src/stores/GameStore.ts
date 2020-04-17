@@ -46,8 +46,6 @@ export default class GameStore {
       await localforage.setItem("userName", this.userName);
     }
 
-    this.peer = await createPeer();
-
     this.isInitialised = true;
   }
 
@@ -66,13 +64,15 @@ export default class GameStore {
   @action async createGame() {
     this.isLoading = true;
 
+    this.peer = await createPeer();
+    this.hostPeerId = this.peer!.id;
+
     const player = new Player({
       userId: this.userId!,
       peerId: this.peer!.id,
       name: this.userName!
     });
 
-    this.hostPeerId = this.peer!.id;
     this.gameServer = new GameServer();
     await this.gameServer.setup(player, this.peer!);
     this.isLoading = false;

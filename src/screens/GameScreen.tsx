@@ -19,6 +19,8 @@ import { getSnapshot } from "mobx-keystone";
 import { observer } from "mobx-react";
 import { useSnackbar } from "notistack";
 // @ts-ignore
+import EventListener from "react-event-listener";
+// @ts-ignore
 import randomColor from "random-material-color";
 import React from "react";
 //@ts-ignore
@@ -51,6 +53,12 @@ const useStyles = makeStyles(theme => ({
     display: "flex",
     alignItems: "center",
     justifyContent: "center"
+  },
+  contextMenu: {
+    pointerEvents: "none",
+    "& .MuiPaper-root": {
+      pointerEvents: "auto"
+    }
   }
 }));
 
@@ -160,6 +168,8 @@ const Chat = observer(() => {
 
 export default observer(() => {
   const { gameStore, uiState } = useStore();
+  const { contextMenu } = uiState;
+
   const { gameState } = gameStore;
 
   const theme = useTheme();
@@ -167,14 +177,6 @@ export default observer(() => {
     topMenuAnchorEl,
     setTopMenuAnchorEl
   ] = React.useState<null | HTMLElement>(null);
-
-  const [contextMenu, setContextMenu] = React.useState<{
-    position: {
-      x: number;
-      y: number;
-    };
-    items: ContextMenuItem[];
-  } | null>(null);
 
   const [loadGameModalOpen, setLoadGameModalOpen] = React.useState(false);
   const [addEntityModalOpen, setAddEntityModalOpen] = React.useState(false);
@@ -197,7 +199,7 @@ export default observer(() => {
   };
 
   const handleContextMenuClose = () => {
-    setContextMenu(null);
+    uiState.closeContextMenu();
   };
 
   const handleContextMenuSelect = (item: Partial<ContextMenuItem>) => {
@@ -220,30 +222,18 @@ export default observer(() => {
     a.click();
   };
 
-  const standardContextMenuItems: ContextMenuItem[] = [
-    {
-      label: "Add entity",
-      type: "action",
-      action: () => {
-        setAddEntityModalOpen(true);
-        handleContextMenuClose();
+  if (contextMenu && !contextMenu.items) {
+    contextMenu.items = [
+      {
+        label: "Add entity",
+        type: "action",
+        action: () => {
+          setAddEntityModalOpen(true);
+          handleContextMenuClose();
+        }
       }
-    }
-  ];
-
-  const handleContextMenu = (
-    e: PointerEvent,
-    items: ContextMenuItem[] | null
-  ) => {
-    uiState.contextMenuEvent = e;
-    setContextMenu({
-      position: {
-        x: e.clientX - 2,
-        y: e.clientY - 4
-      },
-      items: items ? items : standardContextMenuItems
-    });
-  };
+    ];
+  }
 
   const snackbar = useSnackbar();
 
@@ -262,8 +252,8 @@ export default observer(() => {
   const classes = useStyles();
 
   return (
-    <Box className={classes.root}>
-      <GameCanvas onContextMenu={handleContextMenu} />
+    <Box className={classes.root} onClick={handleContextMenuClose}>
+      <GameCanvas />
       <PlayersTable />
       {/* <Box
         zIndex={1}
@@ -319,25 +309,26 @@ export default observer(() => {
         </MenuItem>
       </Menu>
       <Menu
-        onContextMenu={e => {
-          e.preventDefault();
-          // handleContextMenu(e);
-        }}
         keepMounted
-        open={contextMenu !== null}
+        className={classes.contextMenu}
+        open={contextMenu !== undefined}
         onClose={handleContextMenuClose}
         anchorReference="anchorPosition"
         anchorPosition={
-          contextMenu !== null
-            ? { top: contextMenu.position.y, left: contextMenu.position.x }
+          contextMenu
+            ? {
+                top: contextMenu?.positionScreen[1],
+                left: contextMenu?.positionScreen[0]
+              }
             : undefined
         }
       >
-        {contextMenu?.items.map((item, i) => (
+        {contextMenu?.items?.map((item, i) => (
           <MenuItem key={i} onClick={() => handleContextMenuSelect(item)}>
             {item.label}
           </MenuItem>
         ))}
+        <EventListener target="window" onResize={handleContextMenuClose} />
       </Menu>
       <LoadGameModal
         open={loadGameModalOpen}
@@ -345,6 +336,7 @@ export default observer(() => {
       />
       <AddEntityModal
         open={addEntityModalOpen}
+        positionGroundPlane={contextMenu?.positionGroundPlane}
         handleClose={() => setAddEntityModalOpen(false)}
       />
       <JoinGameModal

@@ -21,7 +21,6 @@ export type MaterialParameters = MeshStandardMaterialParameters & {
 
 export type EntityProps = {
   entity: Entity;
-  onContextMenu: (e: PointerEvent, contextMenuItems: ContextMenuItem[]) => void;
   contextMenuItems?: ContextMenuItem[];
   pivot?: [number, number, number];
   flipped?: boolean;
@@ -38,8 +37,7 @@ export default observer((props: EntityProps) => {
     geometry,
     materialParams = [{}],
     pivot = [0, 0, 0],
-    flipped = false,
-    onContextMenu
+    flipped = false
   } = props;
   const { position, angle, scale, color, locked } = entity;
 
@@ -92,11 +90,11 @@ export default observer((props: EntityProps) => {
 
   const handlePointerUp = (e: any) => {
     if (e.button === 0) {
-      uiState.setDraggingEntity(null);
+      uiState.setDraggingEntity();
       e.target.releasePointerCapture(e.pointerId);
       setDragging(false);
     } else if (e.button === 2) {
-      onContextMenu(e, contextMenuItems);
+      uiState.openContextMenu(e, contextMenuItems, entity);
       e.stopPropagation();
     }
   };
