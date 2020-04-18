@@ -116,7 +116,7 @@ const DeckEditor = observer(({ deck }: { deck: Deck }) => {
         )}
       </AutoSizer> */}
       {deck.cards.map((card, i) => (
-        <Box display="flex">
+        <Box key={i} display="flex">
           <TextField
             fullWidth
             value={card.frontImageUrl}
@@ -133,14 +133,15 @@ const DeckEditor = observer(({ deck }: { deck: Deck }) => {
   );
 });
 
-export type AddEntityModalProps = {
+export type ModalProps = {
   open: boolean;
   positionGroundPlane?: [number, number];
+  entity?: Entity;
   handleClose: () => void;
 };
 
 export default observer(
-  ({ open, handleClose, positionGroundPlane }: AddEntityModalProps) => {
+  ({ open, handleClose, positionGroundPlane, entity }: ModalProps) => {
     const { gameStore, uiState } = useStore();
     const { gameState } = gameStore;
 
@@ -148,29 +149,31 @@ export default observer(
     const [type, setType] = React.useState(EntityType.Deck);
     const classes = useStyles();
 
-    const entity = React.useMemo(() => {
+    const isEditing = !!entity;
+
+    const targetEntity = React.useMemo(() => {
+      if (isEditing) return entity!;
+
       if (type === EntityType.Deck) return new Deck({});
       else return new Deck({});
     }, [type, open]);
 
-    const handleAddClick = async () => {
-      if (positionGroundPlane) entity.position = positionGroundPlane;
-      gameState.addEntity(entity);
+    const handleSaveClick = async () => {
+      if (!isEditing) {
+        if (positionGroundPlane) targetEntity.position = positionGroundPlane;
+        gameState.addEntity(targetEntity);
+      }
       handleClose();
     };
 
     let typeEditor: React.ReactNode = null;
-    if (entity.type === EntityType.Deck) {
+    if (targetEntity.type === EntityType.Deck) {
       typeEditor = <DeckEditor deck={entity as Deck} />;
     }
 
     return (
-      <Dialog
-        open={open}
-        onClose={handleClose}
-        aria-labelledby="add-entity-dialog-title"
-      >
-        <DialogTitle id="add-entity-dialog-title">Add entity</DialogTitle>
+      <Dialog open={open} onClose={handleClose}>
+        <DialogTitle>{`${isEditing ? "Edit" : "Add"} entity`}</DialogTitle>
         <DialogContent
           style={{
             flexDirection: "column",
@@ -189,8 +192,8 @@ export default observer(
           </FormControl>
           <FormControl className={classes.formControl}>
             <Input
-              value={entity.name}
-              onChange={e => (entity.name = e.target.value)}
+              value={targetEntity.name}
+              onChange={e => (targetEntity.name = e.target.value)}
               fullWidth
               placeholder="Name"
             />
@@ -201,8 +204,8 @@ export default observer(
           <Button onClick={handleClose} color="primary">
             Cancel
           </Button>
-          <Button onClick={handleAddClick} color="primary">
-            Add
+          <Button onClick={handleSaveClick} color="primary">
+            {isEditing ? "Save" : "Add"}
           </Button>
         </DialogActions>
       </Dialog>

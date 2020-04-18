@@ -27,9 +27,9 @@ import React from "react";
 import { CopyToClipboard } from "react-copy-to-clipboard";
 import { PointerEvent } from "react-three-fiber";
 import GameCanvas from "../components/game/GameCanvas";
-import AddEntityModal from "../components/modals/AddEntityModal";
+import EditEntityModal from "../components/modals/EditEntityModal";
 import JoinGameModal from "../components/modals/JoinGameModal";
-import LoadGameModal from "../components/modals/LoadGameModal";
+import ImportGameModal from "../components/modals/ImportGameModal";
 import { useStore } from "../stores/RootStore";
 import { ContextMenuItem } from "../types";
 import Entity from "../models/game/Entity";
@@ -179,7 +179,7 @@ export default observer(() => {
   ] = React.useState<null | HTMLElement>(null);
 
   const [loadGameModalOpen, setLoadGameModalOpen] = React.useState(false);
-  const [addEntityModalOpen, setAddEntityModalOpen] = React.useState(false);
+  const [editEntityModalOpen, setEditEntityModalOpen] = React.useState(false);
   const [joinGameModalOpen, setJoinGameModalOpen] = React.useState(false);
   const [gameSettingsModalOpen, setGameSettingsModalOpen] = React.useState(
     false
@@ -207,6 +207,7 @@ export default observer(() => {
 
     if (item.type === "action") item.action && item.action();
     else if (item.type === "edit") {
+      setEditEntityModalOpen(true);
     }
   };
 
@@ -228,7 +229,7 @@ export default observer(() => {
         label: "Add entity",
         type: "action",
         action: () => {
-          setAddEntityModalOpen(true);
+          setEditEntityModalOpen(true);
           handleContextMenuClose();
         }
       }
@@ -288,6 +289,11 @@ export default observer(() => {
         onClose={handleTopMenuClose}
       >
         <MenuItem
+          onClick={() => handleTopMenuSelect(() => gameState.removeAll())}
+        >
+          New game
+        </MenuItem>
+        <MenuItem
           onClick={() => handleTopMenuSelect(() => setJoinGameModalOpen(true))}
         >
           Join game
@@ -295,7 +301,7 @@ export default observer(() => {
         <MenuItem
           onClick={() => handleTopMenuSelect(() => setLoadGameModalOpen(true))}
         >
-          Load from URL
+          Import
         </MenuItem>
         <MenuItem onClick={() => handleTopMenuSelect(() => handleSaveGame())}>
           Export
@@ -330,14 +336,15 @@ export default observer(() => {
         ))}
         <EventListener target="window" onResize={handleContextMenuClose} />
       </Menu>
-      <LoadGameModal
+      <ImportGameModal
         open={loadGameModalOpen}
         handleClose={() => setLoadGameModalOpen(false)}
       />
-      <AddEntityModal
-        open={addEntityModalOpen}
+      <EditEntityModal
+        open={editEntityModalOpen}
         positionGroundPlane={contextMenu?.positionGroundPlane}
-        handleClose={() => setAddEntityModalOpen(false)}
+        entity={contextMenu?.target as Entity}
+        handleClose={() => setEditEntityModalOpen(false)}
       />
       <JoinGameModal
         open={joinGameModalOpen}

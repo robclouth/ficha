@@ -23,7 +23,7 @@ const useStyles = makeStyles(theme => ({
   }
 }));
 
-type LoadGameDialogProps = {
+type DialogProps = {
   open: boolean;
   handleClose: () => void;
 };
@@ -31,7 +31,7 @@ type LoadGameDialogProps = {
 const gameUrl =
   "https://raw.githubusercontent.com/robclouth/p2p-game/master/games/The%20Young%20Kings/";
 
-export default observer(({ open, handleClose }: LoadGameDialogProps) => {
+export default observer(({ open, handleClose }: DialogProps) => {
   const classes = useStyles();
 
   const { gameStore } = useStore();

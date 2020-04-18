@@ -40,4 +40,9 @@ export default class GameState extends Model({
   removeEntity(entity: Entity) {
     this.entities.splice(this.entities.indexOf(entity), 1);
   }
+
+  @modelAction
+  removeAll() {
+    this.entities = [];
+  }
 }
