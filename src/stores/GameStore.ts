@@ -1,4 +1,4 @@
-import { computed, observable } from "mobx";
+import { computed, observable, reaction } from "mobx";
 import {
   applyPatches,
   fromSnapshot,
@@ -12,7 +12,13 @@ import {
   model,
   Model,
   prop,
-  modelAction
+  modelAction,
+  undoMiddleware,
+  UndoManager,
+  getSnapshot,
+  UndoStore,
+  applySnapshot,
+  SnapshotOutOf
 } from "mobx-keystone";
 import localforage from "localforage";
 import Peer, { DataConnection } from "peerjs";
@@ -24,10 +30,16 @@ import RootStore from "./RootStore";
 import GameDefinition from "../models/GameDefinition";
 import { nanoid } from "nanoid";
 import { generateName } from "../utils/NameGenerator";
+import Deck from "../models/game/Deck";
+import Card from "../models/game/Card";
 
 @model("GameStore")
 export default class GameStore extends Model({
-  gameServer: prop<GameServer | null>(null, { setterAction: true })
+  gameServer: prop<GameServer | null>(null, { setterAction: true }),
+  gameState: prop<GameState>(() => new GameState({}), {
+    setterAction: true
+  }),
+  undoData: prop<UndoStore>(() => new UndoStore({}))
 }) {
   userId?: string;
   userName?: string;
@@ -36,8 +48,8 @@ export default class GameStore extends Model({
   @observable peer?: Peer;
   @observable hostPeerId?: string;
   @observable serverConnection?: DataConnection;
-  @observable localGameState = new GameState({});
   @observable connectionError: string | null = null;
+  @observable undoManager?: UndoManager;
 
   localStatePatchDisposer: OnPatchesDisposer = () => {};
 
@@ -54,12 +66,45 @@ export default class GameStore extends Model({
       yield* _await(localforage.setItem("userName", this.userName));
     }
 
+    yield* _await(localforage.removeItem("gameStore"));
+    const gameStoreJson = yield* _await(
+      localforage.getItem<SnapshotOutOf<GameStore>>("gameStore")
+    );
+    if (gameStoreJson) {
+      applySnapshot(this, gameStoreJson);
+    } else {
+      this.gameState = new GameState({});
+
+      this.gameState.addPlayer(
+        new Player({
+          userId: this.userId!,
+          name: this.userName!
+        })
+      );
+
+      const deck1 = new Deck({});
+      for (let i = 0; i < 52; i++) deck1.addCard(new Card({}));
+      this.gameState.addEntity(deck1);
+
+      const deck2 = new Deck({ position: [1, 0] });
+      for (let i = 0; i < 52; i++) deck2.addCard(new Card({}));
+      this.gameState.addEntity(deck2);
+    }
+
+    reaction(
+      () => getSnapshot(this),
+      snapshot => {
+        localforage.setItem("gameStore", snapshot);
+      },
+      { delay: 1000 }
+    );
+
+    this.trackLocalState(true);
+
+    this.undoManager = undoMiddleware(this.gameState, this.undoData);
+
     this.isInitialised = true;
   });
-
-  @computed get gameState(): GameState {
-    return this.isHost ? this.gameServer!.gameState : this.localGameState;
-  }
 
   @computed get isHost(): boolean {
     return this.gameServer !== null;
@@ -75,15 +120,14 @@ export default class GameStore extends Model({
 
     this.peer = yield* _await(createPeer());
     this.hostPeerId = this.peer!.id;
-
-    const player = new Player({
-      userId: this.userId!,
-      peerId: this.peer!.id,
-      name: this.userName!
-    });
+    this.gameState.players.find(
+      p => p.userId === this.userId
+    )!.peerId = this.peer!.id;
 
     this.gameServer = new GameServer({});
-    yield* _await(this.gameServer.setup(player, this.peer!));
+
+    yield* _await(this.gameServer.setup(this.peer!, this.gameState));
+
     this.isLoading = false;
   });
 
@@ -93,6 +137,7 @@ export default class GameStore extends Model({
     this.isLoading = true;
     this.gameServer = null;
     this.serverConnection = yield* _await(this.connectToGame());
+
     this.isLoading = false;
     this.serverConnection.on("data", stateData =>
       this.onStateDataFromServer(stateData as StateData)
@@ -104,17 +149,13 @@ export default class GameStore extends Model({
 
   @modelFlow
   handleHostDisconnect = _async(function*(this: GameStore) {
-    this.trackLocalState(false);
-
-    this.localGameState.players.forEach(p => {
+    this.gameState.players.forEach(p => {
       if (p !== this.player) p.isConnected = false;
     });
 
     // create a new server and pass in the old local state
     this.gameServer = new GameServer({});
-    yield* _await(
-      this.gameServer.setup(this.player, this.peer!, this.localGameState)
-    );
+    yield* _await(this.gameServer.setup(this.peer!, this.gameState));
 
     this.connectionError = "The host disconnected";
   });
@@ -137,12 +178,14 @@ export default class GameStore extends Model({
   trackLocalState(shouldTrack: boolean) {
     if (shouldTrack) {
       this.localStatePatchDisposer = onPatches(
-        this.localGameState,
+        this.gameState,
         (patches, inversePatches) => {
-          this.sendStateToServer({
-            type: StateDataType.Partial,
-            data: patches
-          });
+          if (this.isHost) this.gameServer!.sendStateToClients(patches);
+          else
+            this.sendStateToServer({
+              type: StateDataType.Partial,
+              data: patches
+            });
         }
       );
     } else this.localStatePatchDisposer();
@@ -152,9 +195,9 @@ export default class GameStore extends Model({
   onStateDataFromServer(stateData: StateData) {
     this.trackLocalState(false);
     if (stateData.type === StateDataType.Partial) {
-      applyPatches(this.localGameState, stateData.data as Patch[]);
+      applyPatches(this.gameState, stateData.data as Patch[]);
     } else {
-      this.localGameState = fromSnapshot<GameState>(
+      this.gameState = fromSnapshot<GameState>(
         stateData.data as SnapshotInOf<GameState>
       );
     }

@@ -1,7 +1,7 @@
+import { computed } from "mobx";
 import { Model, model, modelAction, prop } from "mobx-keystone";
 import Entity from "./game/Entity";
 import Player from "./Player";
-import { computed } from "mobx";
 
 @model("GameState")
 export default class GameState extends Model({

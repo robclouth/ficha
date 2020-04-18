@@ -34,61 +34,22 @@ export type StateData = {
 };
 
 @model("GameServer")
-export default class GameServer extends Model({
-  gameState: prop<GameState>(() => new GameState({}), { setterAction: true })
-}) {
+export default class GameServer extends Model({}) {
   @observable peer!: Peer;
-  @observable hostingPlayer!: Player;
   @observable lastJson: any;
+  @observable gameState!: GameState;
 
   ignorePlayerIdInStateUpdate?: string;
 
   @modelFlow
-  setup = _async(function*(
-    this: GameServer,
-    hostingPlayer: Player,
-    peer: Peer,
-    gameState?: GameState
-  ) {
-    this.hostingPlayer = hostingPlayer;
+  setup = _async(function*(this: GameServer, peer: Peer, gameState: GameState) {
     this.peer = peer;
-
-    if (gameState) {
-      this.gameState = clone(gameState);
-    } else {
-      const gameStateJson = yield* _await(localforage.getItem("gameState"));
-      const restoredGameState = gameStateJson
-        ? fromSnapshot<GameState>(gameStateJson as SnapshotInOf<GameState>)
-        : undefined;
-
-      if (restoredGameState) this.gameState = restoredGameState;
-      else {
-        this.gameState = new GameState({});
-        this.gameState.addPlayer(this.hostingPlayer);
-
-        const deck1 = new Deck({});
-        for (let i = 0; i < 52; i++) deck1.addCard(new Card({}));
-        this.gameState.addEntity(deck1);
-
-        const deck2 = new Deck({ position: [1, 0] });
-        for (let i = 0; i < 52; i++) deck2.addCard(new Card({}));
-        this.gameState.addEntity(deck2);
-      }
-    }
-
+    this.gameState = gameState;
     this.gameState.hostPeerId = this.peerId;
 
-    onPatches(this.gameState, (patches, inversePatches) => {
-      this.sendStateToClients(patches);
-    });
-
-    reaction(
-      () => getSnapshot(this.gameState),
-      snapshot => {
-        localforage.setItem("gameState", snapshot);
-      },
-      { delay: 1000 }
-    );
+    // onPatches(this.gameState, (patches, inversePatches) => {
+    //   this.sendStateToClients(patches);
+    // });
 
     this.peer.on("connection", connection => {
       connection.on("open", () => {
@@ -102,19 +63,21 @@ export default class GameServer extends Model({
   @action handleConnectionOpened(connection: DataConnection) {
     // if the user was previously in game, they take control of that player
     const { userId, userName } = connection.metadata;
+
     let player = this.gameState.players.find(p => p.userId === userId);
 
     if (player) {
       player.isConnected = true;
     } else {
       player = new Player({
-        userId: userId,
+        userId,
         name: userName,
         peerId: connection.peer,
         isConnected: true
       });
       this.gameState.addPlayer(player);
     }
+
     player.connection = connection;
 
     player.sendState({
@@ -132,7 +95,11 @@ export default class GameServer extends Model({
 
   @action sendStateToClients(patches: Patch[]) {
     for (let player of this.gameState.connectedPlayers) {
-      if (player.userId === this.ignorePlayerIdInStateUpdate) continue;
+      if (
+        player.peerId === this.peerId ||
+        player.userId === this.ignorePlayerIdInStateUpdate
+      )
+        continue;
       player.sendState({
         type: StateDataType.Partial,
         data: patches
