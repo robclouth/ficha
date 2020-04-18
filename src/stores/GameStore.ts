@@ -114,6 +114,10 @@ export default class GameStore extends Model({
     return this.gameState.players.find(p => p.userId === this.userId)!;
   }
 
+  @computed get peerId(): string | undefined {
+    return this.peer?.id;
+  }
+
   @modelFlow
   createGame = _async(function*(this: GameStore) {
     this.isLoading = true;
@@ -149,8 +153,15 @@ export default class GameStore extends Model({
 
   @modelFlow
   handleHostDisconnect = _async(function*(this: GameStore) {
+    // set all other players to disconnected
     this.gameState.players.forEach(p => {
       if (p !== this.player) p.isConnected = false;
+    });
+
+    // remove entity control of all players
+    this.gameState.entities.forEach(entity => {
+      if (entity.controllingPeerId !== this.peerId)
+        entity.controllingPeerId = undefined;
     });
 
     // create a new server and pass in the old local state

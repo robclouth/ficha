@@ -39,7 +39,16 @@ export default observer((props: EntityProps) => {
     materialParams = [{}],
     pivot = [0, 0, 0]
   } = props;
-  const { position, angle, scale, color, locked, boundingBox, faceUp } = entity;
+  const {
+    position,
+    angle,
+    scale,
+    color,
+    locked,
+    boundingBox,
+    faceUp,
+    isOtherPlayerControlling
+  } = entity;
 
   const [hovered, setHover] = useState(false);
 
@@ -78,14 +87,16 @@ export default observer((props: EntityProps) => {
 
   const handlePointerDown = (e: any) => {
     if (e.button === 0) {
-      if (!locked) {
-        e.stopPropagation();
-        uiState.setDraggingEntity(entity);
-        e.target.setPointerCapture(e.pointerId);
-      } else {
-        if (dragAction) {
-          dragAction(e);
+      if (!isOtherPlayerControlling) {
+        if (!locked) {
+          e.stopPropagation();
+          uiState.setDraggingEntity(entity);
+          e.target.setPointerCapture(e.pointerId);
         } else {
+          if (dragAction) {
+            dragAction(e);
+          } else {
+          }
         }
       }
     }

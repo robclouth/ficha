@@ -86,11 +86,20 @@ export default class GameServer extends Model({}) {
     });
 
     connection.on("data", data => this.onStateDataFromClient(data, player!));
-    connection.on("close", () => (player!.isConnected = false));
+    connection.on("close", () => this.handlePlayerDisconnect(player!));
   }
 
   get peerId() {
     return this.peer?.id;
+  }
+
+  @action handlePlayerDisconnect(player: Player) {
+    // remove control of all entities they were controlling
+    this.gameState.entities.forEach(entity => {
+      if (entity.controllingPeerId === player.peerId)
+        entity.controllingPeerId = undefined;
+    });
+    player.isConnected = false;
   }
 
   @action sendStateToClients(patches: Patch[]) {

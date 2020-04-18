@@ -30,7 +30,8 @@ export default class Entity extends Model({
     setterAction: true
   }),
   locked: prop(false, { setterAction: true }),
-  faceUp: prop(false, { setterAction: true })
+  faceUp: prop(false, { setterAction: true }),
+  controllingPeerId: prop<string | undefined>(undefined, { setterAction: true })
 }) {
   @observable boundingBox: Box3 = new Box3();
 
@@ -43,6 +44,15 @@ export default class Entity extends Model({
 
   @computed get uiState() {
     return getRootStore<RootStore>(this)?.uiState;
+  }
+
+  @computed get gameStore() {
+    return getRootStore<RootStore>(this)?.gameStore;
+  }
+
+  @computed get isOtherPlayerControlling() {
+    if (!this.controllingPeerId) return false;
+    return this.controllingPeerId !== this.gameStore?.peer?.id;
   }
 
   @computed get isDragging() {

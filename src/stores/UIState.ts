@@ -10,7 +10,8 @@ import {
   modelAction,
   modelFlow,
   _async,
-  _await
+  _await,
+  getRootStore
 } from "mobx-keystone";
 
 export type ContextMenuItem = {
@@ -44,6 +45,10 @@ export default class UIState extends Model({
     this.isInitialized = true;
   });
 
+  @computed get gameStore() {
+    return getRootStore<RootStore>(this)?.gameStore;
+  }
+
   @computed
   get isDraggingEntity() {
     return this.draggingEntity !== undefined;
@@ -51,6 +56,9 @@ export default class UIState extends Model({
 
   @modelAction
   setDraggingEntity(entity?: Entity) {
+    if (entity) entity.controllingPeerId = this.gameStore?.peerId;
+    else if (this.draggingEntity)
+      this.draggingEntity.controllingPeerId = undefined;
     this.draggingEntity = entity;
   }
 
