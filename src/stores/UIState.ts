@@ -11,7 +11,8 @@ import {
   modelFlow,
   _async,
   _await,
-  getRootStore
+  getRootStore,
+  withoutUndo
 } from "mobx-keystone";
 
 export type ContextMenuItem = {
@@ -37,6 +38,7 @@ export default class UIState extends Model({
 }) {
   @observable isInitialized = false;
   @observable draggingEntity?: Entity;
+  @observable isDraggingEntity = false;
   @observable contextMenu?: ContextMenu;
   @observable isContextMenuOpen = false;
 
@@ -49,17 +51,18 @@ export default class UIState extends Model({
     return getRootStore<RootStore>(this)?.gameStore;
   }
 
-  @computed
-  get isDraggingEntity() {
-    return this.draggingEntity !== undefined;
-  }
-
   @modelAction
   setDraggingEntity(entity?: Entity) {
-    if (entity) entity.controllingPeerId = this.gameStore?.peerId;
-    else if (this.draggingEntity)
-      this.draggingEntity.controllingPeerId = undefined;
-    this.draggingEntity = entity;
+    if (entity) {
+      this.isDraggingEntity = true;
+      entity.controllingPeerId = this.gameStore?.peerId;
+      this.draggingEntity = entity;
+    } else {
+      this.isDraggingEntity = false;
+      if (this.draggingEntity) {
+        this.draggingEntity.controllingPeerId = undefined;
+      }
+    }
   }
 
   @modelAction

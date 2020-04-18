@@ -38,7 +38,7 @@ export default observer(() => {
 
   return (
     <div className={classes.root} onKeyPress={e => uiState.handleKeyPress(e)}>
-      <SnackbarProvider maxSnack={3}>
+      <SnackbarProvider autoHideDuration={3000} maxSnack={3}>
         <ThemeProvider theme={darkTheme}>
           <CssBaseline />
           {rootStore.isInitialized ? <Navigator /> : <CircularProgress />}

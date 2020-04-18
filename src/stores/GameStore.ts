@@ -18,7 +18,8 @@ import {
   getSnapshot,
   UndoStore,
   applySnapshot,
-  SnapshotOutOf
+  SnapshotOutOf,
+  withoutUndo
 } from "mobx-keystone";
 import localforage from "localforage";
 import Peer, { DataConnection } from "peerjs";
@@ -38,8 +39,7 @@ export default class GameStore extends Model({
   gameServer: prop<GameServer | null>(null, { setterAction: true }),
   gameState: prop<GameState>(() => new GameState({}), {
     setterAction: true
-  }),
-  undoData: prop<UndoStore>(() => new UndoStore({}))
+  })
 }) {
   userId?: string;
   userName?: string;
@@ -49,7 +49,7 @@ export default class GameStore extends Model({
   @observable hostPeerId?: string;
   @observable serverConnection?: DataConnection;
   @observable connectionError: string | null = null;
-  @observable undoManager?: UndoManager;
+  @observable undoManager!: UndoManager;
 
   localStatePatchDisposer: OnPatchesDisposer = () => {};
 
@@ -66,12 +66,21 @@ export default class GameStore extends Model({
       yield* _await(localforage.setItem("userName", this.userName));
     }
 
-    yield* _await(localforage.removeItem("gameStore"));
+    // yield* _await(localforage.removeItem("gameStore"));
     const gameStoreJson = yield* _await(
       localforage.getItem<SnapshotOutOf<GameStore>>("gameStore")
     );
     if (gameStoreJson) {
-      applySnapshot(this, gameStoreJson);
+      const restoredGameStore = fromSnapshot<GameStore>(gameStoreJson);
+      this.gameState = fromSnapshot<GameState>(
+        getSnapshot(restoredGameStore.gameState)
+      );
+
+      // applySnapshot(this, gameStoreJson);
+
+      this.gameState.players.forEach(player => {
+        if (player.userId !== this.userId) player.isConnected = false;
+      });
     } else {
       this.gameState = new GameState({});
 
@@ -101,7 +110,7 @@ export default class GameStore extends Model({
 
     this.trackLocalState(true);
 
-    this.undoManager = undoMiddleware(this.gameState, this.undoData);
+    this.undoManager = undoMiddleware(this.gameState.entities);
 
     this.isInitialised = true;
   });
@@ -143,6 +152,7 @@ export default class GameStore extends Model({
     this.serverConnection = yield* _await(this.connectToGame());
 
     this.isLoading = false;
+
     this.serverConnection.on("data", stateData =>
       this.onStateDataFromServer(stateData as StateData)
     );
@@ -205,18 +215,37 @@ export default class GameStore extends Model({
   @modelAction
   onStateDataFromServer(stateData: StateData) {
     this.trackLocalState(false);
-    if (stateData.type === StateDataType.Partial) {
-      applyPatches(this.gameState, stateData.data as Patch[]);
-    } else {
-      this.gameState = fromSnapshot<GameState>(
-        stateData.data as SnapshotInOf<GameState>
-      );
-    }
+    withoutUndo(() => {
+      if (stateData.type === StateDataType.Partial) {
+        applyPatches(this.gameState, stateData.data as Patch[]);
+      } else {
+        this.gameState = fromSnapshot<GameState>(
+          stateData.data as SnapshotInOf<GameState>
+        );
+        this.undoManager = undoMiddleware(this.gameState.entities);
+      }
+    });
     this.trackLocalState(true);
   }
 
   sendStateToServer(stateData: StateData) {
     this.serverConnection && this.serverConnection.send(stateData);
+  }
+
+  undo() {
+    if (this.undoManager.canUndo) this.undoManager.undo();
+  }
+
+  redo() {
+    if (this.undoManager.canRedo) this.undoManager.redo();
+  }
+
+  @computed get canUndo() {
+    return this.undoManager.canUndo;
+  }
+
+  @computed get canRedo() {
+    return this.undoManager.canRedo;
   }
 
   @modelFlow

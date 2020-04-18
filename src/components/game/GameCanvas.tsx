@@ -16,6 +16,7 @@ import { useStore } from "../../stores/RootStore";
 import Card from "./entities/Card";
 import Deck from "./entities/Deck";
 import { EntityProps } from "./entities/Entity";
+import { withoutUndo } from "mobx-keystone";
 
 extend({ CameraControls, DragControls });
 CameraControls.install({ THREE: THREE });
@@ -79,7 +80,8 @@ export default observer<React.FC<GameCanvasProps>>(() => {
   };
 
   const handlePointerUp = (e: PointerEvent) => {
-    if (
+    if (e.button === 0) {
+    } else if (
       e.button === 2 &&
       Math.sqrt(
         Math.pow(e.clientX - startDragPos.x, 2) +
@@ -94,7 +96,10 @@ export default observer<React.FC<GameCanvasProps>>(() => {
     if (isDraggingEntity) {
       let point = new Vector3();
       e.ray.intersectPlane(new Plane(new Vector3(0, 1, 0), 0), point);
-      draggingEntity!.position = [point.x, point.z];
+
+      withoutUndo(() => {
+        draggingEntity!.position = [point.x, point.z];
+      });
     }
   };
 

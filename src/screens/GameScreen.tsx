@@ -13,6 +13,8 @@ import {
   useTheme
 } from "@material-ui/core";
 import MoreVertIcon from "@material-ui/icons/MoreVert";
+import UndoIcon from "@material-ui/icons/Undo";
+import RedoIcon from "@material-ui/icons/Redo";
 import HostIcon from "@material-ui/icons/Router";
 import { autorun } from "mobx";
 import { getSnapshot } from "mobx-keystone";
@@ -68,7 +70,7 @@ const PlayersTable = observer(() => {
   const theme = useTheme();
 
   const classes = useStyles();
-  const snackbar = useSnackbar();
+  const { enqueueSnackbar, closeSnackbar } = useSnackbar();
 
   return (
     <Box
@@ -83,7 +85,11 @@ const PlayersTable = observer(() => {
       {gameStore.isHost && (
         <CopyToClipboard
           text={gameStore.gameServer?.peerId}
-          onCopy={() => snackbar.enqueueSnackbar("Game ID copied to clipboard")}
+          onCopy={() => {
+            const key = enqueueSnackbar("Game ID copied to clipboard", {
+              onClick: () => closeSnackbar(key)
+            });
+          }}
         >
           <Chip
             className={classes.chip}
@@ -170,7 +176,7 @@ export default observer(() => {
   const { gameStore, uiState } = useStore();
   const { contextMenu, isContextMenuOpen } = uiState;
 
-  const { gameState } = gameStore;
+  const { gameState, canUndo, canRedo } = gameStore;
 
   const theme = useTheme();
   const [
@@ -268,6 +274,28 @@ export default observer(() => {
         <PlayersTable />
         <Chat />
       </Box> */}
+      <Box
+        position="absolute"
+        bottom={theme.spacing(1)}
+        left={theme.spacing(1)}
+        display="flex"
+      >
+        <IconButton
+          aria-label="undo"
+          onClick={() => gameStore.undo()}
+          disabled={!canUndo}
+          style={{ marginRight: theme.spacing(1) }}
+        >
+          <UndoIcon />
+        </IconButton>
+        <IconButton
+          aria-label="redo"
+          onClick={() => gameStore.redo()}
+          disabled={!canRedo}
+        >
+          <RedoIcon />
+        </IconButton>
+      </Box>
       <IconButton
         aria-label="more"
         aria-controls="long-menu"

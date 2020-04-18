@@ -156,7 +156,7 @@ export default observer(
 
       if (type === EntityType.Deck) return new Deck({});
       else return new Deck({});
-    }, [type, open]);
+    }, [type, entity, open]);
 
     const handleSaveClick = async () => {
       if (!isEditing) {
@@ -168,7 +168,7 @@ export default observer(
 
     let typeEditor: React.ReactNode = null;
     if (targetEntity.type === EntityType.Deck) {
-      typeEditor = <DeckEditor deck={entity as Deck} />;
+      typeEditor = <DeckEditor deck={targetEntity as Deck} />;
     }
 
     return (

@@ -2,6 +2,7 @@ import { Model, model, prop } from "mobx-keystone";
 import { DataConnection } from "peerjs";
 import { generateName } from "../utils/NameGenerator";
 import { StateData } from "./GameServer";
+import { computed } from "mobx";
 
 @model("Player")
 export default class Player extends Model({
