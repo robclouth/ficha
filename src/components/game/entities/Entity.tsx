@@ -49,6 +49,7 @@ export default observer((props: EntityProps) => {
     locked,
     boundingBox,
     faceUp,
+    isDragging,
     isOtherPlayerControlling
   } = entity;
 
@@ -121,12 +122,10 @@ export default observer((props: EntityProps) => {
 
   const handlePointerHoverOver = (e: PointerEvent) => {
     setHover(true);
-    e.stopPropagation();
   };
 
   const handlePointerHoverOut = (e: PointerEvent) => {
     setHover(false);
-    e.stopPropagation();
   };
 
   const mesh = useRef<Mesh>();
