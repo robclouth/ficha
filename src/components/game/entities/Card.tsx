@@ -18,6 +18,11 @@ export default observer((props: CardProps) => {
       label: "Flip",
       type: "action",
       action: () => entity.flip()
+    },
+    {
+      label: "Return to deck",
+      type: "action",
+      action: () => card.returnToDeck()
     }
   ];
 
@@ -50,6 +55,7 @@ export default observer((props: CardProps) => {
       }
       materialParams={materialParams}
       contextMenuItems={contextMenuItems}
+      deletable={false}
     />
   );
 });

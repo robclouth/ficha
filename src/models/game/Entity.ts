@@ -7,7 +7,8 @@ import {
   findParent,
   getRootPath,
   getRoot,
-  getRootStore
+  getRootStore,
+  clone
 } from "mobx-keystone";
 import GameState from "../GameState";
 import { Box3 } from "three";
@@ -72,5 +73,12 @@ export default class Entity extends Model({
   @modelAction
   flip() {
     this.faceUp = !this.faceUp;
+  }
+
+  @modelAction
+  duplicate() {
+    const clonedEntity = clone(this);
+    clonedEntity.position[0] += 1;
+    this.gameState.addEntity(clonedEntity);
   }
 }

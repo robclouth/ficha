@@ -100,7 +100,7 @@ const DeckEditor = observer(({ deck }: { deck: Deck }) => {
       <Typography
         variant="body1"
         gutterBottom
-      >{`${deck.cards.length} cards`}</Typography>
+      >{`${deck.allCards.length} cards`}</Typography>
       <Button onClick={() => handleAddCard("")}>Add card</Button>
       {/* <AutoSizer style={{ width: "100%" }}>
         {(size: any) => (
@@ -115,7 +115,7 @@ const DeckEditor = observer(({ deck }: { deck: Deck }) => {
           </FixedSizeList>
         )}
       </AutoSizer> */}
-      {deck.cards.map((card, i) => (
+      {deck.allCards.map((card, i) => (
         <Box key={i} display="flex">
           <TextField
             fullWidth

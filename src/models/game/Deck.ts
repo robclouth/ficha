@@ -1,6 +1,14 @@
-import { clone, ExtendedModel, model, modelAction, prop } from "mobx-keystone";
-import Card from "./Card";
+import {
+  clone,
+  ExtendedModel,
+  model,
+  modelAction,
+  prop,
+  Ref
+} from "mobx-keystone";
+import Card, { cardRef } from "./Card";
 import Entity, { EntityType } from "./Entity";
+import { computed } from "mobx";
 
 @model("Deck")
 export default class Deck extends ExtendedModel(Entity, {
@@ -8,6 +16,19 @@ export default class Deck extends ExtendedModel(Entity, {
 }) {
   onInit() {
     this.type = EntityType.Deck;
+  }
+
+  @computed get looseCards() {
+    if (!this.gameState) return [];
+    return this.gameState.entities.filter(
+      entity =>
+        entity.type === EntityType.Card &&
+        (entity as Card).ownerDeckId === this.$modelId
+    ) as Card[];
+  }
+
+  @computed get allCards() {
+    return [...this.cards, ...this.looseCards];
   }
 
   @modelAction
@@ -49,15 +70,10 @@ export default class Deck extends ExtendedModel(Entity, {
 
   @modelAction
   reset() {
-    const cards = this.gameState.entities.filter(
-      entity =>
-        entity.type === EntityType.Card &&
-        (entity as Card).ownerDeckId === this.$modelId
-    ) as Card[];
-    cards.forEach(card => {
+    this.looseCards.forEach(card => {
       this.gameState.removeEntity(card);
       this.addCard(card);
-      card.faceUp = false;
+      card.faceUp = this.faceUp;
     });
   }
 }

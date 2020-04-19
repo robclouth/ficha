@@ -26,6 +26,7 @@ export type EntityProps = {
   pivot?: [number, number, number];
   geometry: React.ReactElement<BufferGeometry>;
   materialParams?: MaterialParameters[];
+  deletable?: boolean;
 };
 
 export default observer((props: EntityProps) => {
@@ -37,7 +38,8 @@ export default observer((props: EntityProps) => {
     geometry,
     dragAction,
     materialParams = [{}],
-    pivot = [0, 0, 0]
+    pivot = [0, 0, 0],
+    deletable = true
   } = props;
   const {
     position,
@@ -68,6 +70,11 @@ export default observer((props: EntityProps) => {
       type: "edit",
       target: entity,
       action: () => {}
+    },
+    {
+      label: "Duplicate",
+      type: "action",
+      action: () => entity.duplicate()
     },
     {
       label: "Delete",
