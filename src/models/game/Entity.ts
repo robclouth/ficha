@@ -26,6 +26,7 @@ export enum EntityType {
   Dice,
   Piece,
   PieceSet,
+  Board,
   Any,
   HandArea
 }

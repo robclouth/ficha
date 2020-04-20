@@ -94,15 +94,8 @@ function PreviewControls() {
 const Preview = observer(
   ({ entity, active }: { entity: Entity; active: boolean }) => {
     return (
-      <Box
-        display="flex"
-        alignItems="center"
-        marginLeft={2}
-        width={280}
-        // height={300}
-      >
+      <Box display="flex" alignItems="center" marginLeft={2} width={280}>
         <Canvas
-          // style={{ width: 300, height: 300 }}
           invalidateFrameloop={!active}
           noEvents
           camera={{ position: [0, 3, 3], fov: 30 }}
@@ -318,8 +311,9 @@ const PieceEditor = observer(({ piece }: { piece: Piece }) => {
           value={piece.scale.x}
           onChange={(e, value) => piece.setScaleX(value as number)}
           valueLabelDisplay="auto"
-          min={1}
+          min={0.1}
           max={10}
+          step={0.1}
         />
       </FormControl>
       <FormControl className={classes.formControl}>
@@ -328,8 +322,9 @@ const PieceEditor = observer(({ piece }: { piece: Piece }) => {
           value={piece.scale.y}
           onChange={(e, value) => piece.setScaleY(value as number)}
           valueLabelDisplay="auto"
-          min={1}
+          min={0.1}
           max={10}
+          step={0.1}
         />
       </FormControl>
       <FormControl className={classes.formControl}>
@@ -338,8 +333,9 @@ const PieceEditor = observer(({ piece }: { piece: Piece }) => {
           value={piece.scale.z}
           onChange={(e, value) => piece.setScaleZ(value as number)}
           valueLabelDisplay="auto"
-          min={1}
+          min={0.1}
           max={10}
+          step={0.1}
         />
       </FormControl>
       <FormControl className={classes.formControl}>
