@@ -13,20 +13,28 @@ export default observer((props: CardProps) => {
   const { assetCache } = useStore();
   const { entity } = props;
   const card = entity as Card;
-  const { frontImageUrl, backImageUrl } = card;
+  const { frontImageUrl, backImageUrl, ownerDeck } = card;
 
   const contextMenuItems: ContextMenuItem[] = [
     {
       label: "Flip",
       type: "action",
       action: () => entity.flip()
-    },
-    {
+    }
+  ];
+
+  if (ownerDeck) {
+    contextMenuItems.push({
       label: "Return to deck",
       type: "action",
       action: () => card.returnToDeck()
-    }
-  ];
+    });
+    contextMenuItems.push({
+      label: "Remove from deck",
+      type: "action",
+      action: () => card.removeFromDeck()
+    });
+  }
 
   const edgeMaterialParams = {
     roughness: 1
@@ -57,7 +65,8 @@ export default observer((props: CardProps) => {
       }
       materialParams={materialParams}
       contextMenuItems={contextMenuItems}
-      deletable={false}
+      deletable={ownerDeck ? false : true}
+      doubleClickAction={() => card.flip()}
     />
   );
 });

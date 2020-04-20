@@ -34,7 +34,7 @@ const CameraControl = observer(() => {
 
   return (
     <cameraControls
-      enabled={!uiState.isDraggingEntity}
+      enabled={uiState.canMoveCamera}
       ref={cameraControlsRef}
       args={[camera, gl.domElement]}
       draggingDampingFactor={0.1}

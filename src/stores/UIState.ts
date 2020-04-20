@@ -33,11 +33,16 @@ export type ContextMenu = {
 export default class UIState extends Model({}) {
   @observable draggingEntity?: Entity;
   @observable isDraggingEntity = false;
+  @observable isStartingDrag = false;
   @observable contextMenu?: ContextMenu;
   @observable isContextMenuOpen = false;
 
   @computed get gameStore() {
     return getRootStore<RootStore>(this)?.gameStore;
+  }
+
+  @computed get canMoveCamera() {
+    return !this.isDraggingEntity && !this.isStartingDrag;
   }
 
   @modelAction

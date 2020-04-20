@@ -36,4 +36,9 @@ export default class Card extends ExtendedModel(Entity, {
       this.faceUp = deck.faceUp;
     }
   }
+
+  @modelAction
+  removeFromDeck() {
+    this.ownerDeck = undefined;
+  }
 }

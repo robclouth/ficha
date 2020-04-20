@@ -19,12 +19,16 @@ export type MaterialParameters = MeshStandardMaterialParameters;
 export type EntityProps = {
   entity: Entity;
   dragAction?: (e: PointerEvent) => void;
+  doubleClickAction?: (e: PointerEvent) => void;
   contextMenuItems?: ContextMenuItem[];
   pivot?: [number, number, number];
   geometry: React.ReactElement<BufferGeometry>;
   materialParams?: MaterialParameters[];
   deletable?: boolean;
 };
+
+let clickCount = 0;
+let singleClickTimer: any;
 
 export default observer((props: EntityProps) => {
   const { gameStore, uiState } = useStore();
@@ -34,6 +38,7 @@ export default observer((props: EntityProps) => {
     entity,
     geometry,
     dragAction,
+    doubleClickAction,
     materialParams = [{}],
     pivot = [0, 0, 0],
     deletable = true
@@ -50,7 +55,10 @@ export default observer((props: EntityProps) => {
     isOtherPlayerControlling
   } = entity;
 
-  const [hovered, setHover] = useState(false);
+  const [hovered, setHovered] = useState(false);
+  const [pressed, setPressed] = useState(false);
+
+  const [pointerDownPos, setPointerDownPos] = React.useState({ x: 0, y: 0 });
 
   const standardItems: ContextMenuItem[] = [
     {
@@ -96,16 +104,11 @@ export default observer((props: EntityProps) => {
   const handlePointerDown = (e: any) => {
     if (e.button === 0) {
       if (!isOtherPlayerControlling) {
-        if (!locked) {
-          e.stopPropagation();
-          uiState.setDraggingEntity(entity);
-          e.target.setPointerCapture(e.pointerId);
-        } else {
-          if (dragAction) {
-            dragAction(e);
-          } else {
-          }
-        }
+        setPressed(true);
+        setPointerDownPos({
+          x: e.clientX,
+          y: e.clientY
+        });
       }
     }
   };
@@ -114,18 +117,66 @@ export default observer((props: EntityProps) => {
     if (e.button === 0) {
       uiState.setDraggingEntity();
       e.target.releasePointerCapture(e.pointerId);
+
+      uiState.isDraggingEntity = false;
+      setPressed(false);
     } else if (e.button === 2) {
       uiState.openContextMenu(e, contextMenuItems, entity);
       e.stopPropagation();
     }
   };
 
+  const handlePointerMove = (e: any) => {
+    if (!isDragging && pressed) {
+      if (!locked) {
+        e.stopPropagation();
+        uiState.setDraggingEntity(entity);
+        e.target.setPointerCapture(e.pointerId);
+      } else {
+        uiState.isStartingDrag = true;
+        const distance = Math.sqrt(
+          Math.pow(e.clientX - pointerDownPos.x, 2) +
+            Math.pow(e.clientY - pointerDownPos.y, 2)
+        );
+
+        if (distance > 5 && dragAction) {
+          dragAction(e);
+          uiState.isStartingDrag = false;
+
+          setPressed(false);
+          e.target.setPointerCapture(e.pointerId);
+        } else {
+        }
+      }
+    }
+  };
+
+  const handleSingleClick = (e: PointerEvent) => {};
+
+  const handleDoubleClick = (e: PointerEvent) => {
+    doubleClickAction && doubleClickAction(e);
+  };
+
+  const handleClick = (e: PointerEvent) => {
+    clickCount++;
+    if (clickCount === 1) {
+      singleClickTimer = setTimeout(() => {
+        clickCount = 0;
+        handleSingleClick(e);
+      }, 400);
+    } else if (clickCount === 2) {
+      clearTimeout(singleClickTimer);
+      clickCount = 0;
+      handleDoubleClick(e);
+    }
+  };
+
   const handlePointerHoverOver = (e: PointerEvent) => {
-    setHover(true);
+    setHovered(true);
   };
 
   const handlePointerHoverOut = (e: PointerEvent) => {
-    setHover(false);
+    setHovered(false);
   };
 
   const mesh = useRef<Mesh>();
@@ -165,8 +216,10 @@ export default observer((props: EntityProps) => {
         rotation={[faceUp ? Math.PI : 0, 0, 0]}
         onPointerDown={handlePointerDown}
         onPointerUp={handlePointerUp}
+        onPointerMove={handlePointerMove}
         onPointerOver={handlePointerHoverOver}
         onPointerOut={handlePointerHoverOut}
+        onClick={handleClick}
       >
         {geometry}
         {materialParams.map((params, i) => {

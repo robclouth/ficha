@@ -23,6 +23,9 @@ export default class Deck extends ExtendedModel(Entity, {
 }) {
   onInit() {
     this.type = EntityType.Deck;
+
+    // claim ownership of all the cards
+    this.cards.forEach(card => (card.ownerDeck = deckRef(this)));
   }
 
   @computed get looseCards() {

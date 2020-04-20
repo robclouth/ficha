@@ -66,7 +66,9 @@ export default class Entity extends Model({
   }
 
   @computed get isDragging() {
-    return this.uiState?.draggingEntity === this;
+    return (
+      this.uiState?.isDraggingEntity && this.uiState?.draggingEntity === this
+    );
   }
 
   @modelAction
