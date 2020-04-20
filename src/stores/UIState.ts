@@ -30,22 +30,11 @@ export type ContextMenu = {
 };
 
 @model("UIState")
-export default class UIState extends Model({
-  // isInitialized: prop(false, { setterAction: true }),
-  // draggingEntity: prop<Entity | undefined>(undefined, { setterAction: true }),
-  // contextMenu: prop<ContextMenu | undefined>(undefined, { setterAction: true }),
-  // isContextMenuOpen: prop(false, { setterAction: true })
-}) {
-  @observable isInitialized = false;
+export default class UIState extends Model({}) {
   @observable draggingEntity?: Entity;
   @observable isDraggingEntity = false;
   @observable contextMenu?: ContextMenu;
   @observable isContextMenuOpen = false;
-
-  @modelFlow
-  init = _async(function*(this: UIState) {
-    this.isInitialized = true;
-  });
 
   @computed get gameStore() {
     return getRootStore<RootStore>(this)?.gameStore;

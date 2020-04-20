@@ -14,6 +14,7 @@ import GameState from "../GameState";
 import { Box3 } from "three";
 import UIState from "../../stores/UIState";
 import RootStore from "../../stores/RootStore";
+import { nanoid } from "nanoid";
 
 export enum EntityType {
   Deck,
@@ -22,14 +23,18 @@ export enum EntityType {
 
 @model("Entity")
 export default class Entity extends Model({
+  id: prop(nanoid(), { setterAction: true }),
   name: prop("", { setterAction: true }),
   type: prop<EntityType>(EntityType.Card, { setterAction: true }),
   position: prop<[number, number]>(() => [0, 0], { setterAction: true }),
   angle: prop(0, { setterAction: true }),
   scale: prop(1, { setterAction: true }),
-  color: prop<[number, number, number]>(() => [1, 1, 1], {
-    setterAction: true
-  }),
+  color: prop<{ r: number; g: number; b: number }>(
+    () => ({ r: 1, g: 1, b: 1 }),
+    {
+      setterAction: true
+    }
+  ),
   locked: prop(false, { setterAction: true }),
   faceUp: prop(false, { setterAction: true }),
   controllingPeerId: prop<string | undefined>(undefined, { setterAction: true })
@@ -41,6 +46,10 @@ export default class Entity extends Model({
       this,
       parentNode => parentNode instanceof GameState
     )!;
+  }
+
+  @computed get assetCache() {
+    return getRootStore<RootStore>(this)?.assetCache;
   }
 
   @computed get uiState() {

@@ -13,11 +13,8 @@ import {
 import Entity from "../../../models/game/Entity";
 import { useStore } from "../../../stores/RootStore";
 import { ContextMenuItem } from "../../../types";
-import Material from "../Material";
 
-export type MaterialParameters = MeshStandardMaterialParameters & {
-  textureUrl?: string;
-};
+export type MaterialParameters = MeshStandardMaterialParameters;
 
 export type EntityProps = {
   entity: Entity;
@@ -78,16 +75,19 @@ export default observer((props: EntityProps) => {
       action: () => entity.duplicate()
     },
     {
-      label: "Delete",
-      type: "action",
-      action: () => gameState.removeEntity(entity)
-    },
-    {
       label: locked ? "Unlock" : "Lock",
       type: "action",
       action: () => entity.toggleLocked()
     }
   ];
+
+  if (deletable) {
+    standardItems.push({
+      label: "Delete",
+      type: "action",
+      action: () => gameState.removeEntity(entity)
+    });
+  }
 
   const contextMenuItems = props.contextMenuItems
     ? [...props.contextMenuItems, ...standardItems]
@@ -172,12 +172,18 @@ export default observer((props: EntityProps) => {
         {materialParams.map((params, i) => {
           const updatedParams: MaterialParameters = {
             ...params,
-            color: new Color(color[0], color[1], color[2]),
+            color: new Color(color.r, color.g, color.b),
             transparent: true,
             opacity: hovered ? 0.7 : 1
           };
 
-          const material = <Material key={i} {...updatedParams} />;
+          const material = (
+            <meshStandardMaterial
+              key={i}
+              attachArray="material"
+              {...(updatedParams as any)}
+            />
+          );
 
           return material;
         })}

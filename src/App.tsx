@@ -18,6 +18,17 @@ const useStyles = makeStyles(theme => ({
     display: "flex",
     justifyContent: "center",
     alignItems: "center"
+  },
+  "@global": {
+    "*::-webkit-scrollbar": {
+      // width: 10
+    },
+    "*::-webkit-scrollbar-track": {
+      backgroundColor: "transparent"
+    },
+    "*::-webkit-scrollbar-thumb": {
+      backgroundColor: "rgba(1,1,1,.1)"
+    }
   }
 }));
 

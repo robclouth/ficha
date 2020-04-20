@@ -25,6 +25,7 @@
     "peerjs": "^1.2.0",
     "random-material-color": "^1.0.5",
     "react": "^16.13.1",
+    "react-color": "^2.18.0",
     "react-copy-to-clipboard": "^5.0.2",
     "react-dom": "^16.13.1",
     "react-event-listener": "^0.6.6",
@@ -61,6 +62,7 @@
     ]
   },
   "devDependencies": {
+    "@types/react-color": "^3.0.1",
     "@types/react-router-dom": "^5.1.4",
     "source-map-explorer": "^2.4.2"
   }

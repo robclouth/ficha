@@ -12,9 +12,15 @@ import {
   Select,
   TextField,
   IconButton,
-  Typography
+  Typography,
+  FormHelperText,
+  FormLabel,
+  useTheme,
+  Paper,
+  Divider
 } from "@material-ui/core";
 import RemoveIcon from "@material-ui/icons/RemoveCircle";
+import { CirclePicker } from "react-color";
 
 //@ts-ignore
 import { FixedSizeList, ListChildComponentProps } from "react-window";
@@ -26,22 +32,153 @@ import isUrl from "is-url";
 import { observer } from "mobx-react";
 import React, { useRef, useState } from "react";
 import Card from "../../models/game/Card";
-import Deck from "../../models/game/Deck";
+import Deck, { deckRef } from "../../models/game/Deck";
 import Entity, { EntityType } from "../../models/game/Entity";
 import { useStore } from "../../stores/RootStore";
 import GameState from "../../models/GameState";
 import { Vector3, Plane } from "three";
 
+const colorOptions = [
+  "#f44336",
+  "#e91e63",
+  "#9c27b0",
+  "#673ab7",
+  "#3f51b5",
+  "#2196f3",
+  "#03a9f4",
+  "#00bcd4",
+  "#009688",
+  "#4caf50",
+  "#8bc34a",
+  "#cddc39",
+  "#ffeb3b",
+  "#ffc107",
+  "#ff9800",
+  "#ff5722",
+  "#000000",
+  "#ffffff"
+];
+
 const useStyles = makeStyles(theme => ({
   formControl: {
     marginTop: theme.spacing(1),
-    marginBottom: theme.spacing(1),
-    minWidth: 300
+    marginBottom: theme.spacing(1)
+    // minWidth: 300
   }
 }));
 
+const CardEditor = observer(
+  ({ card, showBackInput = true }: { card: Card; showBackInput?: boolean }) => {
+    const classes = useStyles();
+
+    const {
+      frontImageUrl,
+      backImageUrl,
+      title,
+      subtitle,
+      body,
+      value,
+      color
+    } = card;
+
+    return (
+      <Box display="flex" flexDirection="column">
+        <FormControl className={classes.formControl}>
+          <Input
+            value={frontImageUrl}
+            onChange={e => (card.frontImageUrl = e.target.value)}
+            fullWidth
+            placeholder="Front image URL"
+          />
+        </FormControl>
+        {showBackInput && (
+          <FormControl className={classes.formControl}>
+            <Input
+              value={backImageUrl}
+              disabled={!!card.ownerDeck}
+              onChange={e => (card.backImageUrl = e.target.value)}
+              fullWidth
+              placeholder={"Back image URL"}
+            />
+            {card.ownerDeck && (
+              <FormHelperText>
+                The back image must be edited in the deck
+              </FormHelperText>
+            )}
+          </FormControl>
+        )}
+        <FormControl className={classes.formControl}>
+          <Input
+            value={title}
+            onChange={e => (card.title = e.target.value)}
+            fullWidth
+            placeholder="Title"
+          />
+        </FormControl>
+        <FormControl className={classes.formControl}>
+          <Input
+            value={subtitle}
+            onChange={e => (card.subtitle = e.target.value)}
+            fullWidth
+            placeholder="Subtitle"
+          />
+        </FormControl>
+        <FormControl className={classes.formControl}>
+          <Input
+            value={body}
+            onChange={e => (card.body = e.target.value)}
+            fullWidth
+            placeholder="Body"
+          />
+        </FormControl>
+        <FormControl className={classes.formControl}>
+          <Input
+            value={value}
+            onChange={e => (card.value = e.target.value)}
+            fullWidth
+            placeholder="Value"
+          />
+        </FormControl>
+        <FormControl className={classes.formControl}>
+          <FormLabel>Color</FormLabel>
+          <div
+            style={{
+              padding: 10,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center"
+            }}
+          >
+            <CirclePicker
+              colors={colorOptions}
+              circleSpacing={5}
+              circleSize={20}
+              color={{
+                r: Math.floor(color.r * 255),
+                g: Math.floor(color.g * 255),
+                b: Math.floor(color.b * 255)
+              }}
+              onChange={color =>
+                (card.color = {
+                  r: color.rgb.r / 255,
+                  g: color.rgb.g / 255,
+                  b: color.rgb.b / 255
+                })
+              }
+              width={"240px"}
+            />
+          </div>
+        </FormControl>
+      </Box>
+    );
+  }
+);
+
+const cardComponentHeight = 500;
+
 const DeckEditor = observer(({ deck }: { deck: Deck }) => {
   const classes = useStyles();
+  const theme = useTheme();
   const [backImageUrl, setBackImageUrl] = useState("");
 
   const handleBackImageUrlChange = (url: string) => {
@@ -56,25 +193,20 @@ const DeckEditor = observer(({ deck }: { deck: Deck }) => {
 
   const handleAddCard = (frontImageUrl: string) => {
     deck.addCard(
-      new Card({ frontImageUrl, backImageUrl, ownerDeckId: deck.$modelId })
+      new Card({ frontImageUrl, backImageUrl, ownerDeck: deckRef(deck) })
     );
   };
 
-  const renderRow = (props: ListChildComponentProps) => {
-    const card = deck.cards[props.index];
+  const renderRow = ({ data, index, style }: ListChildComponentProps) => {
+    const card = deck.cards[index];
     if (!card) return null;
     return (
-      <Box display="flex">
-        <TextField
-          fullWidth
-          value={card.frontImageUrl}
-          onChange={e => (card.frontImageUrl = e.target.value)}
-          placeholder="Front image URL"
-        />
-
-        <IconButton onClick={() => deck.removeCard(card)}>
-          <RemoveIcon />
-        </IconButton>
+      <Box style={style}>
+        <CardEditor card={card} />
+        <Button fullWidth onClick={() => deck.removeCard(card)}>
+          Remove
+        </Button>
+        <Divider />
       </Box>
     );
   };
@@ -102,6 +234,21 @@ const DeckEditor = observer(({ deck }: { deck: Deck }) => {
         gutterBottom
       >{`${deck.allCards.length} cards`}</Typography>
       <Button onClick={() => handleAddCard("")}>Add card</Button>
+      <AutoSizer disableHeight>
+        {(size: any) => (
+          <FixedSizeList
+            style={{ maxHeight: 400 }}
+            className="List"
+            height={deck.cards.length > 0 ? cardComponentHeight : 0}
+            itemCount={deck.cards.length}
+            itemSize={cardComponentHeight}
+            width={size.width}
+          >
+            {renderRow}
+          </FixedSizeList>
+        )}
+      </AutoSizer>
+
       {/* <AutoSizer style={{ width: "100%" }}>
         {(size: any) => (
           <FixedSizeList
@@ -115,20 +262,25 @@ const DeckEditor = observer(({ deck }: { deck: Deck }) => {
           </FixedSizeList>
         )}
       </AutoSizer> */}
-      {deck.allCards.map((card, i) => (
-        <Box key={i} display="flex">
-          <TextField
-            fullWidth
-            value={card.frontImageUrl}
-            onChange={e => (card.frontImageUrl = e.target.value)}
-            placeholder="Front image URL"
-          />
-
-          <IconButton onClick={() => deck.removeCard(card)}>
-            <RemoveIcon />
-          </IconButton>
-        </Box>
-      ))}
+      {
+        // deck.allCards.map((card, i) => (
+        //   <Box key={i}>
+        //     <Paper
+        //       variant="outlined"
+        //       style={{
+        //         marginBottom: theme.spacing(3),
+        //         paddingLeft: theme.spacing(3),
+        //         paddingRight: theme.spacing(3),
+        //         paddingTop: theme.spacing(1),
+        //         paddingBottom: theme.spacing(1)
+        //       }}
+        //     >
+        //       <CardEditor card={card} />
+        //     </Paper>
+        //     {/* <Divider /> */}
+        //   </Box>
+        // ))
+      }
     </Box>
   );
 });
@@ -155,6 +307,7 @@ export default observer(
       if (isEditing) return entity!;
 
       if (type === EntityType.Deck) return new Deck({});
+      else if (type === EntityType.Card) return new Card({});
       else return new Deck({});
     }, [type, entity, open]);
 
@@ -169,6 +322,8 @@ export default observer(
     let typeEditor: React.ReactNode = null;
     if (targetEntity.type === EntityType.Deck) {
       typeEditor = <DeckEditor deck={targetEntity as Deck} />;
+    } else if (targetEntity.type === EntityType.Card) {
+      typeEditor = <CardEditor card={targetEntity as Card} />;
     }
 
     return (
@@ -178,7 +333,8 @@ export default observer(
           style={{
             flexDirection: "column",
             display: "flex",
-            alignItems: "stretch"
+            alignItems: "stretch",
+            minWidth: 300
           }}
         >
           <FormControl className={classes.formControl}>
@@ -188,6 +344,7 @@ export default observer(
               onChange={e => setType(e.target.value as EntityType)}
             >
               <MenuItem value={EntityType.Deck}>Deck</MenuItem>
+              <MenuItem value={EntityType.Card}>Card</MenuItem>
             </Select>
           </FormControl>
           <FormControl className={classes.formControl}>

@@ -3,12 +3,14 @@ import React from "react";
 import Card from "../../../models/game/Card";
 import Entity, { EntityProps, MaterialParameters } from "./Entity";
 import { ContextMenuItem } from "../../../types";
+import { useStore } from "../../../stores/RootStore";
 
 export type CardProps = Omit<EntityProps, "geometry"> & {};
 
 export const cardHeight = 0.005;
 
 export default observer((props: CardProps) => {
+  const { assetCache } = useStore();
   const { entity } = props;
   const card = entity as Card;
   const { frontImageUrl, backImageUrl } = card;
@@ -36,11 +38,11 @@ export default observer((props: CardProps) => {
     edgeMaterialParams,
     {
       roughness: 0.2,
-      textureUrl: backImageUrl
+      map: assetCache.getTexture(backImageUrl)
     },
     {
       roughness: 0.2,
-      textureUrl: frontImageUrl
+      map: assetCache.getTexture(frontImageUrl)
     },
     edgeMaterialParams,
     edgeMaterialParams

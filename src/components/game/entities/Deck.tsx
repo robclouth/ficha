@@ -11,7 +11,7 @@ import { PointerEvent } from "react-three-fiber";
 export type DeckProps = Omit<EntityProps, "geometry"> & {};
 
 export default observer((props: DeckProps) => {
-  const { gameStore, uiState } = useStore();
+  const { gameStore, uiState, assetCache } = useStore();
   const { setDraggingEntity } = uiState;
   const { gameState } = gameStore;
 
@@ -62,11 +62,17 @@ export default observer((props: DeckProps) => {
     edgeMaterialParams,
     {
       roughness: 0.2,
-      textureUrl: cards.length > 0 ? cards[0].backImageUrl : undefined
+      map:
+        cards.length > 0
+          ? assetCache.getTexture(cards[0].backImageUrl)
+          : undefined
     },
     {
       roughness: 0.2,
-      textureUrl: cards.length > 0 ? cards[0].frontImageUrl : undefined
+      map:
+        cards.length > 0
+          ? assetCache.getTexture(cards[0].frontImageUrl)
+          : undefined
     },
     edgeMaterialParams,
     edgeMaterialParams

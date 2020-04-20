@@ -1,14 +1,21 @@
+import { computed } from "mobx";
 import {
   clone,
+  detach,
   ExtendedModel,
   model,
   modelAction,
   prop,
-  Ref
+  rootRef
 } from "mobx-keystone";
-import Card, { cardRef } from "./Card";
+import Card from "./Card";
 import Entity, { EntityType } from "./Entity";
-import { computed } from "mobx";
+
+export const deckRef = rootRef<Deck>("DeckRef", {
+  onResolvedValueChange(ref, newDeck, oldDeck) {
+    if (oldDeck && !newDeck) detach(ref);
+  }
+});
 
 @model("Deck")
 export default class Deck extends ExtendedModel(Entity, {
@@ -23,7 +30,7 @@ export default class Deck extends ExtendedModel(Entity, {
     return this.gameState.entities.filter(
       entity =>
         entity.type === EntityType.Card &&
-        (entity as Card).ownerDeckId === this.$modelId
+        (entity as Card).ownerDeck?.current === this
     ) as Card[];
   }
 
@@ -33,7 +40,7 @@ export default class Deck extends ExtendedModel(Entity, {
 
   @modelAction
   addCard(card: Card) {
-    this.cards.push(card);
+    this.cards.unshift(card);
   }
 
   @modelAction
