@@ -32,7 +32,7 @@ let clickCount = 0;
 let singleClickTimer: any;
 
 export default observer((props: EntityProps) => {
-  const { gameStore, uiState } = useStore();
+  const { gameStore, uiState, entityLibrary } = useStore();
   const { gameState } = gameStore;
 
   const {
@@ -56,7 +56,6 @@ export default observer((props: EntityProps) => {
     isDragging,
     isOtherPlayerControlling
   } = entity;
-
   const [hovered, setHovered] = useState(false);
   const [pressed, setPressed] = useState(false);
 
@@ -85,6 +84,11 @@ export default observer((props: EntityProps) => {
       action: () => entity.duplicate()
     },
     {
+      label: "Add to library",
+      type: "action",
+      action: () => entityLibrary.addEntity(entity)
+    },
+    {
       label: locked ? "Unlock" : "Lock",
       type: "action",
       action: () => entity.toggleLocked()
@@ -105,8 +109,10 @@ export default observer((props: EntityProps) => {
 
   const handlePointerDown = (e: any) => {
     if (e.button === 0) {
+      setPressed(true);
+      e.target.setPointerCapture(e.pointerId);
+
       if (!isOtherPlayerControlling) {
-        setPressed(true);
         setPointerDownPos({
           x: e.clientX,
           y: e.clientY
@@ -117,11 +123,9 @@ export default observer((props: EntityProps) => {
 
   const handlePointerUp = (e: any) => {
     if (e.button === 0) {
-      uiState.setDraggingEntity();
-      e.target.releasePointerCapture(e.pointerId);
-
-      uiState.isDraggingEntity = false;
+      if (isDragging) uiState.setDraggingEntity();
       setPressed(false);
+      e.target.releasePointerCapture(e.pointerId);
     } else if (e.button === 2) {
       uiState.openContextMenu(e, contextMenuItems, entity);
       e.stopPropagation();
@@ -133,21 +137,18 @@ export default observer((props: EntityProps) => {
       if (!locked) {
         e.stopPropagation();
         uiState.setDraggingEntity(entity);
-        e.target.setPointerCapture(e.pointerId);
-      } else {
+      } else if (dragAction) {
         uiState.isStartingDrag = true;
         const distance = Math.sqrt(
           Math.pow(e.clientX - pointerDownPos.x, 2) +
             Math.pow(e.clientY - pointerDownPos.y, 2)
         );
 
-        if (distance > 5 && dragAction) {
+        if (distance > 5) {
           dragAction(e);
           uiState.isStartingDrag = false;
-
           setPressed(false);
-          e.target.setPointerCapture(e.pointerId);
-        } else {
+          e.target.releasePointerCapture(e.pointerId);
         }
       }
     }
@@ -229,14 +230,14 @@ export default observer((props: EntityProps) => {
         {materialParams.map((params, i) => {
           const updatedParams: MaterialParameters = {
             ...params,
-            color: new Color(color.r, color.g, color.b),
             transparent: true,
             opacity: hovered ? 0.7 : 1
           };
-
+          const key = i;
+          // console.log(key);
           const material = (
             <meshStandardMaterial
-              key={i}
+              key={key}
               attachArray="material"
               {...(updatedParams as any)}
             />

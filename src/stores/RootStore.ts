@@ -14,11 +14,15 @@ import {
   _await
 } from "mobx-keystone";
 import AssetCache from "./AssetCache";
+import EntityLibrary from "./EntityLibrary";
 
 @model("RootStore")
 export default class RootStore extends Model({
   gameStore: prop<GameStore>(() => new GameStore({}), { setterAction: true }),
   uiState: prop<UIState>(() => new UIState({}), { setterAction: true }),
+  entityLibrary: prop<EntityLibrary>(() => new EntityLibrary({}), {
+    setterAction: true
+  }),
   assetCache: prop<AssetCache>(() => new AssetCache({}), {
     setterAction: true
   }),
@@ -26,7 +30,9 @@ export default class RootStore extends Model({
 }) {
   @modelFlow
   init = _async(function*(this: RootStore) {
-    yield* _await(Promise.all([this.gameStore.init()]));
+    yield* _await(
+      Promise.all([this.entityLibrary.init(), this.gameStore.init()])
+    );
     this.isInitialized = true;
   });
 }

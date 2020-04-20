@@ -4,6 +4,8 @@ import Card from "../../../models/game/Card";
 import Entity, { EntityProps, MaterialParameters } from "./Entity";
 import { ContextMenuItem } from "../../../types";
 import { useStore } from "../../../stores/RootStore";
+import defaultCardBack from "../../../assets/default-back.png";
+import { Color } from "three";
 
 export type CardProps = Omit<EntityProps, "geometry"> & {};
 
@@ -13,7 +15,7 @@ export default observer((props: CardProps) => {
   const { assetCache } = useStore();
   const { entity } = props;
   const card = entity as Card;
-  const { frontImageUrl, backImageUrl, ownerDeck } = card;
+  const { frontImageUrl, backImageUrl, ownerDeck, color } = card;
 
   const contextMenuItems: ContextMenuItem[] = [
     {
@@ -40,17 +42,21 @@ export default observer((props: CardProps) => {
     roughness: 1
     // color: "white"
   };
+  const backTexture = backImageUrl
+    ? assetCache.getTexture(backImageUrl)
+    : assetCache.getTexture(defaultCardBack, false);
 
   const materialParams: MaterialParameters[] = [
     edgeMaterialParams,
     edgeMaterialParams,
     {
       roughness: 0.2,
-      map: assetCache.getTexture(backImageUrl)
+      map: backTexture
     },
     {
       roughness: 0.2,
-      map: assetCache.getTexture(frontImageUrl)
+      map: frontImageUrl ? assetCache.getTexture(frontImageUrl) : undefined,
+      color: new Color(color.r, color.g, color.b)
     },
     edgeMaterialParams,
     edgeMaterialParams

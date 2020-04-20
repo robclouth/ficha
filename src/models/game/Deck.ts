@@ -6,7 +6,9 @@ import {
   model,
   modelAction,
   prop,
-  rootRef
+  rootRef,
+  applySnapshot,
+  getSnapshot
 } from "mobx-keystone";
 import Card from "./Card";
 import Entity, { EntityType } from "./Entity";
@@ -65,6 +67,32 @@ export default class Deck extends ExtendedModel(Entity, {
     }
 
     this.cards = shuffledCards;
+  }
+
+  @modelAction
+  shufflePlaced() {
+    let currentIndex = this.allCards.length,
+      randomIndex;
+
+    const shuffledCards = [];
+    while (currentIndex !== 0) {
+      randomIndex = Math.floor(Math.random() * currentIndex);
+      currentIndex -= 1;
+      shuffledCards.push(this.allCards[randomIndex]);
+    }
+
+    shuffledCards.forEach((shuffledCard, i) => {
+      const snapshot = getSnapshot(shuffledCard);
+
+      const card = this.allCards[i];
+      applySnapshot(card, {
+        ...snapshot,
+        $modelId: card.$modelId,
+        position: card.position,
+        faceUp: card.faceUp,
+        angle: card.angle
+      });
+    });
   }
 
   @modelAction

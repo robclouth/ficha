@@ -18,11 +18,13 @@ export default class Card extends ExtendedModel(Entity, {
   onInit() {
     this.type = EntityType.Card;
 
+    this.stackable = true;
+
     when(
       () => this.assetCache !== undefined,
       () => {
-        this.assetCache!.addTexture(this.frontImageUrl);
-        this.assetCache!.addTexture(this.backImageUrl);
+        this.frontImageUrl && this.assetCache!.addTexture(this.frontImageUrl);
+        this.backImageUrl && this.assetCache!.addTexture(this.backImageUrl);
       }
     );
   }

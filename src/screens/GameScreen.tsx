@@ -36,6 +36,7 @@ import { useStore } from "../stores/RootStore";
 import { ContextMenuItem } from "../types";
 import Entity from "../models/game/Entity";
 import GameSettingsModal from "../components/modals/GameSettingsModal";
+import EntityLibraryModal from "../components/modals/EntityLibraryModal";
 
 const useStyles = makeStyles(theme => ({
   root: {
@@ -186,6 +187,10 @@ export default observer(() => {
 
   const [loadGameModalOpen, setLoadGameModalOpen] = React.useState(false);
   const [editEntityModalOpen, setEditEntityModalOpen] = React.useState(false);
+  const [entityLibraryModalOpen, setEntityLibraryModalOpen] = React.useState(
+    false
+  );
+
   const [joinGameModalOpen, setJoinGameModalOpen] = React.useState(false);
   const [gameSettingsModalOpen, setGameSettingsModalOpen] = React.useState(
     false
@@ -232,10 +237,18 @@ export default observer(() => {
   if (contextMenu && !contextMenu.items) {
     contextMenu.items = [
       {
-        label: "Add entity",
+        label: "New entity",
         type: "action",
         action: () => {
           setEditEntityModalOpen(true);
+          handleContextMenuClose();
+        }
+      },
+      {
+        label: "Add entity from library",
+        type: "action",
+        action: () => {
+          setEntityLibraryModalOpen(true);
           handleContextMenuClose();
         }
       }
@@ -373,6 +386,11 @@ export default observer(() => {
         positionGroundPlane={contextMenu?.positionGroundPlane}
         entity={contextMenu?.target as Entity}
         handleClose={() => setEditEntityModalOpen(false)}
+      />
+      <EntityLibraryModal
+        open={entityLibraryModalOpen}
+        positionGroundPlane={contextMenu?.positionGroundPlane}
+        handleClose={() => setEntityLibraryModalOpen(false)}
       />
       <JoinGameModal
         open={joinGameModalOpen}

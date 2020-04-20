@@ -19,9 +19,10 @@ import { nanoid } from "nanoid";
 export enum EntityType {
   Deck,
   Card,
+  Tile,
   Dice,
   Piece,
-  PlayerArea
+  HandArea
 }
 
 @model("Entity")
@@ -40,6 +41,8 @@ export default class Entity extends Model({
   ),
   locked: prop(false, { setterAction: true }),
   faceUp: prop(false, { setterAction: true }),
+  stackable: prop(false, { setterAction: true }),
+
   controllingPeerId: prop<string | undefined>(undefined, { setterAction: true })
 }) {
   @observable boundingBox: Box3 = new Box3();

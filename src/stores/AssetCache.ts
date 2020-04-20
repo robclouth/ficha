@@ -18,22 +18,22 @@ export default class AssetCache extends Model({}) {
   }
 
   makeUrlAbsolute(url: string) {
-    return absoluteUrlRegExp.test(url)
+    return url.startsWith("data:") || absoluteUrlRegExp.test(url)
       ? url
       : this.gameStore.gameState.assetsUrl + "/" + url;
   }
 
   @modelAction
-  addTexture(url: string) {
-    url = this.makeUrlAbsolute(url);
+  addTexture(url: string, makeAbsolute = true) {
+    if (makeAbsolute) url = this.makeUrlAbsolute(url);
 
     if (!this.textureCache[url])
       this.textureCache[url] = new TextureLoader().load(url);
   }
 
   @modelAction
-  getTexture(url: string): Texture {
-    url = this.makeUrlAbsolute(url);
+  getTexture(url: string, makeAbsolute = true): Texture {
+    if (makeAbsolute) url = this.makeUrlAbsolute(url);
 
     let texture = this.textureCache[url];
 
