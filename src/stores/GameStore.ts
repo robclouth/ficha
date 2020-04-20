@@ -21,6 +21,8 @@ import {
   SnapshotOutOf,
   withoutUndo
 } from "mobx-keystone";
+// @ts-ignore
+import randomColor from "random-material-color";
 import localforage from "localforage";
 import Peer, { DataConnection } from "peerjs";
 import GameServer, { StateData, StateDataType } from "../models/GameServer";
@@ -55,6 +57,8 @@ export default class GameStore extends Model({
 
   @modelFlow
   init = _async(function*(this: GameStore) {
+    // yield* _await(localforage.clear());
+
     this.userId = yield* _await(localforage.getItem<string>("userId"));
     if (!this.userId) {
       this.userId = nanoid();
@@ -66,17 +70,11 @@ export default class GameStore extends Model({
       yield* _await(localforage.setItem("userName", this.userName));
     }
 
-    // yield* _await(localforage.removeItem("gameStore"));
     const gameStoreJson = yield* _await(
       localforage.getItem<SnapshotOutOf<GameStore>>("gameStore")
     );
     if (gameStoreJson) {
-      const restoredGameStore = fromSnapshot<GameStore>(gameStoreJson);
-      this.gameState = fromSnapshot<GameState>(
-        getSnapshot(restoredGameStore.gameState)
-      );
-
-      // applySnapshot(this, gameStoreJson);
+      applySnapshot(this, { ...gameStoreJson, $modelId: this.$modelId });
 
       this.gameState.players.forEach(player => {
         if (player.userId !== this.userId) player.isConnected = false;
@@ -90,14 +88,6 @@ export default class GameStore extends Model({
           name: this.userName!
         })
       );
-
-      const deck1 = new Deck({});
-      for (let i = 0; i < 52; i++) deck1.addCard(new Card({}));
-      this.gameState.addEntity(deck1);
-
-      const deck2 = new Deck({ position: [1, 0] });
-      for (let i = 0; i < 52; i++) deck2.addCard(new Card({}));
-      this.gameState.addEntity(deck2);
     }
 
     reaction(
@@ -107,8 +97,6 @@ export default class GameStore extends Model({
       },
       { delay: 1000 }
     );
-
-    this.trackLocalState(true);
 
     this.undoManager = undoMiddleware(this.gameState.entities);
 
@@ -141,6 +129,8 @@ export default class GameStore extends Model({
 
     yield* _await(this.gameServer.setup(this.peer!, this.gameState));
 
+    this.trackLocalState(true);
+
     this.isLoading = false;
   });
 
@@ -150,6 +140,8 @@ export default class GameStore extends Model({
     this.isLoading = true;
     this.gameServer = null;
     this.serverConnection = yield* _await(this.connectToGame());
+
+    this.trackLocalState(true);
 
     this.isLoading = false;
 

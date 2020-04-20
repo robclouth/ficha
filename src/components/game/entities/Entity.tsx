@@ -23,7 +23,7 @@ export type EntityProps = {
   contextMenuItems?: ContextMenuItem[];
   pivot?: [number, number, number];
   geometry: React.ReactElement<BufferGeometry>;
-  materialParams?: MaterialParameters[];
+  materialParams?: MaterialParameters | MaterialParameters[];
   materials?: React.ReactNode;
   deletable?: boolean;
   castShadows?: boolean;
@@ -208,11 +208,35 @@ export default observer((props: EntityProps) => {
     return minHeight;
   }, [position, boundingBox]);
 
+  const renderMaterial = (params: MaterialParameters, i?: number) => {
+    const updatedParams: MaterialParameters = {
+      ...params,
+      transparent: true,
+      opacity: hovered ? 0.7 : 1
+    };
+    const key =
+      i &&
+      Object.values(updatedParams)
+        .map(value => (value ? value.toString() : ""))
+        .join() + i;
+    // console.log(key);
+    const material = (
+      <meshStandardMaterial
+        key={key}
+        attachArray={i !== undefined ? "material" : undefined}
+        attach={i === undefined ? "material" : undefined}
+        {...(updatedParams as any)}
+      />
+    );
+
+    return material;
+  };
+
   return (
     <group
       position={[position[0], minHeight, position[1]]}
       rotation={[0, angle, 0]}
-      scale={[scale, scale, scale]}
+      scale={[scale.x, scale.y, scale.z]}
     >
       <mesh
         ref={mesh}
@@ -228,27 +252,9 @@ export default observer((props: EntityProps) => {
         receiveShadow
       >
         {geometry}
-        {materialParams.map((params, i) => {
-          const updatedParams: MaterialParameters = {
-            ...params,
-            transparent: true,
-            opacity: hovered ? 0.7 : 1
-          };
-          const key =
-            Object.values(updatedParams)
-              .map(value => (value ? value.toString() : ""))
-              .join() + i;
-          // console.log(key);
-          const material = (
-            <meshStandardMaterial
-              key={key}
-              attachArray="material"
-              {...(updatedParams as any)}
-            />
-          );
-
-          return material;
-        })}
+        {Array.isArray(materialParams)
+          ? materialParams.map(renderMaterial)
+          : renderMaterial(materialParams)}
       </mesh>
     </group>
   );

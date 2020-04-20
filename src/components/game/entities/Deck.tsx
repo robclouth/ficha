@@ -34,12 +34,12 @@ export default observer((props: DeckProps) => {
       {
         label: "Take one",
         type: "action",
-        action: () => deck.takeCards(1)
+        action: () => deck.take(1)
       },
       {
         label: "Draw one",
         type: "action",
-        action: () => deck.takeCards(1)
+        action: () => deck.take(1)
       },
       {
         label: "Flip",
@@ -60,7 +60,7 @@ export default observer((props: DeckProps) => {
     contextMenuItems.push({
       label: "Shuffle placed",
       type: "action",
-      action: () => deck.shufflePlaced()
+      action: () => deck.shuffleAll()
     });
   }
 
@@ -118,7 +118,7 @@ export default observer((props: DeckProps) => {
   }
 
   const handleDrag = (e: PointerEvent) => {
-    const card = deck.takeCards(1);
+    const card = deck.take(1);
     uiState.setDraggingEntity(card);
   };
 

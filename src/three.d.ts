@@ -10,6 +10,7 @@ declare global {
         typeof CameraControls
       >;
       dragControls: any;
+      orbitControls: any;
     }
   }
 }

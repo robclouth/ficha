@@ -122,12 +122,7 @@ export default observer<React.FC<GameCanvasProps>>(() => {
         // shadowMapHeight={2048}
       />
       {gameState?.entities.map((entity, i) =>
-        renderEntity(
-          {
-            entity
-          },
-          i
-        )
+        entity.render({ entity, key: i })
       )}
       <gridHelper
         args={[50, 50]}

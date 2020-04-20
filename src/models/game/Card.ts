@@ -1,46 +1,23 @@
-import { ExtendedModel, model, modelAction, prop, Ref } from "mobx-keystone";
-import Deck from "./Deck";
+import { ExtendedModel, model, prop } from "mobx-keystone";
+import React from "react";
+import CardComponent, { CardProps } from "../../components/game/entities/Card";
 import Entity, { EntityType } from "./Entity";
-import { when } from "mobx";
-import { nanoid } from "nanoid";
 
 @model("Card")
 export default class Card extends ExtendedModel(Entity, {
-  positionInDeck: prop<number>(-1, { setterAction: true }),
-  frontImageUrl: prop<string>("", { setterAction: true }),
-  backImageUrl: prop<string>("", { setterAction: true }),
-  ownerDeck: prop<Ref<Deck> | undefined>(undefined, { setterAction: true }),
   title: prop("", { setterAction: true }),
   subtitle: prop("", { setterAction: true }),
   body: prop("", { setterAction: true }),
   value: prop("", { setterAction: true })
 }) {
   onInit() {
+    super.onInit();
     this.type = EntityType.Card;
 
     this.stackable = true;
-
-    when(
-      () => this.assetCache !== undefined,
-      () => {
-        this.frontImageUrl && this.assetCache!.addTexture(this.frontImageUrl);
-        this.backImageUrl && this.assetCache!.addTexture(this.backImageUrl);
-      }
-    );
   }
 
-  @modelAction
-  returnToDeck() {
-    if (this.ownerDeck) {
-      const deck = this.ownerDeck.current;
-      this.gameState.removeEntity(this);
-      deck.addCard(this);
-      this.faceUp = deck.faceUp;
-    }
-  }
-
-  @modelAction
-  removeFromDeck() {
-    this.ownerDeck = undefined;
+  render(props: CardProps): JSX.Element {
+    return React.createElement(CardComponent, props);
   }
 }
