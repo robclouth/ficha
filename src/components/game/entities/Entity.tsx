@@ -1,6 +1,6 @@
 import { observer } from "mobx-react";
 import React, { useRef, useState, useEffect, useMemo } from "react";
-import { PointerEvent } from "react-three-fiber";
+import { PointerEvent, Dom } from "react-three-fiber";
 import {
   Box3,
   BufferGeometry,
@@ -27,6 +27,8 @@ export type EntityProps = {
   materials?: React.ReactNode;
   deletable?: boolean;
   castShadows?: boolean;
+  children?: React.ReactNode;
+  hoverMessage?: string;
 };
 
 let clickCount = 0;
@@ -41,6 +43,8 @@ export default observer((props: EntityProps) => {
     geometry,
     dragAction,
     doubleClickAction,
+    children,
+    hoverMessage,
     castShadows = true,
     materialParams = [{}],
     pivot = [0, 0, 0],
@@ -256,6 +260,12 @@ export default observer((props: EntityProps) => {
           ? materialParams.map(renderMaterial)
           : renderMaterial(materialParams)}
       </mesh>
+      {children}
+      {hoverMessage && hovered && (
+        <Dom position={[0, 0, 0]} center>
+          <h3>{hoverMessage}</h3>
+        </Dom>
+      )}
     </group>
   );
 });

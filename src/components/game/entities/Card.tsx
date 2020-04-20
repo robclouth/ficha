@@ -5,7 +5,8 @@ import Entity, { EntityProps, MaterialParameters } from "./Entity";
 import { ContextMenuItem } from "../../../types";
 import { useStore } from "../../../stores/RootStore";
 import defaultCardBack from "../../../assets/default-back.png";
-import { Color } from "three";
+import { Color, Group } from "three";
+import { Dom } from "react-three-fiber";
 
 export type CardProps = Omit<EntityProps, "geometry"> & {};
 
@@ -74,6 +75,10 @@ export default observer((props: CardProps) => {
       deletable={ownerSet ? false : true}
       doubleClickAction={() => card.flip()}
       castShadows={false}
-    />
+    >
+      <Dom position={[0, 0, 0]} center>
+        <h3>hello world!</h3>
+      </Dom>
+    </Entity>
   );
 });
