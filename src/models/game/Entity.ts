@@ -18,7 +18,10 @@ import { nanoid } from "nanoid";
 
 export enum EntityType {
   Deck,
-  Card
+  Card,
+  Dice,
+  Piece,
+  PlayerArea
 }
 
 @model("Entity")

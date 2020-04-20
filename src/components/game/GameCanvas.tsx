@@ -107,9 +107,20 @@ export default observer<React.FC<GameCanvasProps>>(() => {
     <Canvas
       style={{ background: "#333333", position: "absolute" }}
       camera={{ position: [0, 5, 5] }}
+      onCreated={({ gl }) => {
+        gl.shadowMap.enabled = true;
+        gl.shadowMap.type = THREE.PCFSoftShadowMap;
+      }}
     >
-      <ambientLight args={["white", 0.4]} />
-      <directionalLight position={[10, 10, 5]} intensity={1} />
+      >
+      <ambientLight args={["white", 0.2]} />
+      <directionalLight
+        position={[10, 10, 5]}
+        intensity={1}
+        castShadow
+        shadowMapWidth={2048}
+        shadowMapHeight={2048}
+      />
       {gameState?.entities.map((entity, i) =>
         renderEntity(
           {

@@ -67,6 +67,7 @@ export default observer((props: CardProps) => {
       contextMenuItems={contextMenuItems}
       deletable={ownerDeck ? false : true}
       doubleClickAction={() => card.flip()}
+      castShadows={false}
     />
   );
 });

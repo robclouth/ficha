@@ -25,6 +25,7 @@ export type EntityProps = {
   geometry: React.ReactElement<BufferGeometry>;
   materialParams?: MaterialParameters[];
   deletable?: boolean;
+  castShadows?: boolean;
 };
 
 let clickCount = 0;
@@ -39,6 +40,7 @@ export default observer((props: EntityProps) => {
     geometry,
     dragAction,
     doubleClickAction,
+    castShadows = true,
     materialParams = [{}],
     pivot = [0, 0, 0],
     deletable = true
@@ -220,6 +222,8 @@ export default observer((props: EntityProps) => {
         onPointerOver={handlePointerHoverOver}
         onPointerOut={handlePointerHoverOut}
         onClick={handleClick}
+        castShadow={castShadows}
+        receiveShadow
       >
         {geometry}
         {materialParams.map((params, i) => {
