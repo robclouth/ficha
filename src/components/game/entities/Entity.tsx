@@ -24,6 +24,7 @@ export type EntityProps = {
   pivot?: [number, number, number];
   geometry: React.ReactElement<BufferGeometry>;
   materialParams?: MaterialParameters[];
+  materials?: React.ReactNode;
   deletable?: boolean;
   castShadows?: boolean;
 };
@@ -233,7 +234,10 @@ export default observer((props: EntityProps) => {
             transparent: true,
             opacity: hovered ? 0.7 : 1
           };
-          const key = i;
+          const key =
+            Object.values(updatedParams)
+              .map(value => (value ? value.toString() : ""))
+              .join() + i;
           // console.log(key);
           const material = (
             <meshStandardMaterial

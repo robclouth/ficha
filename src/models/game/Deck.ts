@@ -8,10 +8,13 @@ import {
   prop,
   rootRef,
   applySnapshot,
-  getSnapshot
+  getSnapshot,
+  SnapshotInOf
 } from "mobx-keystone";
 import Card from "./Card";
 import Entity, { EntityType } from "./Entity";
+//@ts-ignore
+import shuffleArray from "shuffle-array";
 
 export const deckRef = rootRef<Deck>("DeckRef", {
   onResolvedValueChange(ref, newDeck, oldDeck) {
@@ -35,7 +38,7 @@ export default class Deck extends ExtendedModel(Entity, {
     return this.gameState.entities.filter(
       entity =>
         entity.type === EntityType.Card &&
-        (entity as Card).ownerDeck?.current === this
+        (entity as Card).ownerDeck?.maybeCurrent === this
     ) as Card[];
   }
 
@@ -55,44 +58,36 @@ export default class Deck extends ExtendedModel(Entity, {
 
   @modelAction
   shuffle() {
-    let currentIndex = this.cards.length,
-      temporaryValue,
-      randomIndex;
+    const shuffledCards = this.cards.map(card => clone(card));
+    shuffleArray(shuffledCards);
 
-    const shuffledCards = [];
-    while (currentIndex !== 0) {
-      randomIndex = Math.floor(Math.random() * currentIndex);
-      currentIndex -= 1;
-      shuffledCards.push(clone(this.cards[randomIndex]));
+    for (let i = 0; i < shuffledCards.length; i++) {
+      const card = this.cards[i];
+      const shuffledCard = shuffledCards[i];
+      this.swapCards(card, shuffledCard);
     }
-
-    this.cards = shuffledCards;
   }
 
   @modelAction
   shufflePlaced() {
-    let currentIndex = this.allCards.length,
-      randomIndex;
+    const shuffledCards = this.allCards.map(card => clone(card));
+    shuffleArray(shuffledCards);
 
-    const shuffledCards = [];
-    while (currentIndex !== 0) {
-      randomIndex = Math.floor(Math.random() * currentIndex);
-      currentIndex -= 1;
-      shuffledCards.push(this.allCards[randomIndex]);
-    }
-
-    shuffledCards.forEach((shuffledCard, i) => {
-      const snapshot = getSnapshot(shuffledCard);
-
+    for (let i = 0; i < shuffledCards.length; i++) {
       const card = this.allCards[i];
-      applySnapshot(card, {
-        ...snapshot,
-        $modelId: card.$modelId,
-        position: card.position,
-        faceUp: card.faceUp,
-        angle: card.angle
-      });
-    });
+      const shuffledCard = shuffledCards[i];
+      this.swapCards(card, shuffledCard);
+    }
+  }
+
+  @modelAction
+  swapCards(card1: Card, card2: Card) {
+    card1.frontImageUrl = card2.frontImageUrl;
+    card1.backImageUrl = card2.backImageUrl;
+    card1.title = card2.title;
+    card1.subtitle = card2.subtitle;
+    card1.body = card2.body;
+    card1.value = card2.value;
   }
 
   @modelAction
