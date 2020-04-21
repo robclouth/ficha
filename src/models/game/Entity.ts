@@ -97,7 +97,7 @@ export default class Entity extends Model({
       }
     );
   }
-  @observable boundingBox: Box3 = new Box3();
+  @observable boundingBox?: Box3;
 
   @computed get gameState() {
     return findParent<GameState>(

@@ -9,7 +9,7 @@ import {
   useThree
 } from "react-three-fiber";
 import * as THREE from "three";
-import { Clock, Vector3, Plane } from "three";
+import { Clock, Vector3, Plane, Color } from "three";
 import { DragControls } from "three/examples/jsm/controls/DragControls";
 import { EntityType } from "../../models/game/Entity";
 import { useStore } from "../../stores/RootStore";
@@ -107,29 +107,37 @@ export default observer<React.FC<GameCanvasProps>>(() => {
     <Canvas
       style={{ background: "#333333", position: "absolute" }}
       camera={{ position: [0, 5, 5] }}
-      // onCreated={({ gl }) => {
-      //   gl.shadowMap.enabled = true;
-      //   gl.shadowMap.type = THREE.PCFSoftShadowMap;
-      // }}
+      onCreated={({ gl }) => {
+        gl.shadowMap.enabled = true;
+        gl.shadowMap.type = THREE.PCFSoftShadowMap;
+      }}
     >
       >
       <ambientLight args={["white", 0.2]} />
       <directionalLight
         position={[10, 10, 5]}
         intensity={1}
-        // castShadow
-        // shadowMapWidth={2048}
-        // shadowMapHeight={2048}
+        castShadow
+        shadowMapWidth={2048}
+        shadowMapHeight={2048}
       />
       {gameState?.entities.map((entity, i) =>
         entity.render({ entity, key: i })
       )}
-      <gridHelper
-        args={[50, 50]}
+      <mesh
+        rotation={[-Math.PI / 2, 0, 0]}
+        receiveShadow
         onPointerDown={handlePointerDown}
         onPointerUp={handlePointerUp}
         onPointerMove={handlePointerMove}
-      />
+      >
+        <meshStandardMaterial
+          attach="material"
+          color={new Color(0.2, 0.2, 0.2)}
+        />
+        <planeBufferGeometry attach="geometry" args={[50, 50]} />
+      </mesh>
+      <gridHelper args={[50, 50]} position={[0, 0.01, 0]} />
       <CameraControl />
     </Canvas>
   );

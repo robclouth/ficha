@@ -66,7 +66,6 @@ export default observer((props: EntityProps) => {
     scale,
     color,
     locked,
-    boundingBox,
     faceUp,
     isDragging,
     isOtherPlayerControlling
@@ -201,17 +200,20 @@ export default observer((props: EntityProps) => {
 
   useEffect(() => {
     if (mesh.current) {
-      boundingBox.setFromObject(mesh.current);
-      boundingBox.min.y = 0;
+      entity.boundingBox = new Box3();
+      entity.boundingBox.setFromObject(mesh.current);
+      entity.boundingBox.min.y = 0;
     }
   }, [mesh, position, geometry, angle, scale]);
 
   const minHeight = useMemo(() => {
     let minHeight = 0;
-    if (boundingBox) {
+    if (entity.boundingBox) {
       for (const otherEntity of gameState.entities) {
         if (otherEntity !== entity && otherEntity.boundingBox) {
-          const collision = boundingBox.intersectsBox(otherEntity.boundingBox);
+          const collision = entity.boundingBox.intersectsBox(
+            otherEntity.boundingBox
+          );
           if (collision && otherEntity.boundingBox.max.y > minHeight) {
             minHeight = otherEntity.boundingBox.max.y;
           }
@@ -220,7 +222,7 @@ export default observer((props: EntityProps) => {
     }
 
     return minHeight;
-  }, [position, boundingBox]);
+  }, [entity.boundingBox]);
 
   const renderMaterial = useCallback(
     (params: MaterialParameters, i?: number) => {

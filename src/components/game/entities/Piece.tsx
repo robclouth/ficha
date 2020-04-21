@@ -88,8 +88,6 @@ export default observer((props: PieceProps) => {
       geometry={geometry!}
       materialParams={materialParams}
       contextMenuItems={contextMenuItems}
-      deletable={ownerSet ? false : true}
-      castShadows={false}
     />
   );
 });
