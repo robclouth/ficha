@@ -729,7 +729,7 @@ export default observer(
     }, [type, isEditing]);
 
     const entityDraft = draft(targetEntity);
-    entityDraft.data.position = [0, 0];
+    entityDraft.data.position = { x: 0, y: 0, z: 0 };
     entityDraft.data.angle = 0;
 
     const handleSaveClick = async () => {
@@ -737,7 +737,12 @@ export default observer(
       entityDraft.resetByPath(["angle"]);
       entityDraft.commit();
       if (!isEditing) {
-        if (positionGroundPlane) targetEntity.position = positionGroundPlane;
+        if (positionGroundPlane)
+          targetEntity.position = {
+            x: positionGroundPlane[0],
+            y: 0,
+            z: positionGroundPlane[1]
+          };
         gameState.addEntity(targetEntity);
       } else {
         if (targetEntity instanceof EntitySet)

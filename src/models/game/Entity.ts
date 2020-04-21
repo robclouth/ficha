@@ -19,7 +19,7 @@ import {
   getSnapshot
 } from "mobx-keystone";
 import GameState from "../GameState";
-import { Box3 } from "three";
+import { Box3, Mesh } from "three";
 import UIState from "../../stores/UIState";
 import RootStore from "../../stores/RootStore";
 import { nanoid } from "nanoid";
@@ -56,6 +56,8 @@ export const entityRef = rootRef<Entity>("EntityRef", {
   }
 });
 
+export type Vector3 = { x: number; y: number; z: number };
+
 @model("Entity")
 export default class Entity extends Model({
   id: prop(nanoid(), { setterAction: true }),
@@ -63,12 +65,9 @@ export default class Entity extends Model({
   type: prop<EntityType>(EntityType.Card, { setterAction: true }),
   ownerSet: prop<Ref<EntitySet> | undefined>(undefined, { setterAction: true }),
   prototype: prop<Ref<Entity> | undefined>(undefined, { setterAction: true }),
-  position: prop<[number, number]>(() => [0, 0], { setterAction: true }),
+  position: prop<Vector3>(() => ({ x: 0, y: 0, z: 0 }), { setterAction: true }),
   angle: prop(0, { setterAction: true }),
-  scale: prop<{ x: number; y: number; z: number }>(
-    () => ({ x: 1, y: 1, z: 1 }),
-    { setterAction: true }
-  ),
+  scale: prop<Vector3>(() => ({ x: 1, y: 1, z: 1 }), { setterAction: true }),
   color: prop<{ r: number; g: number; b: number }>(
     () => ({ r: 1, g: 1, b: 1 }),
     {
@@ -96,7 +95,15 @@ export default class Entity extends Model({
         this.backImageUrl && this.assetCache!.addTexture(this.backImageUrl);
       }
     );
+
+    reaction(
+      () => [this.mesh, this.position, this.scale, this.angle],
+      data => this.updateBoundingBox(),
+      { fireImmediately: true }
+    );
   }
+
+  @observable mesh?: Mesh;
   @observable boundingBox?: Box3;
 
   @computed get gameState() {
@@ -127,6 +134,34 @@ export default class Entity extends Model({
     return (
       this.uiState?.isDraggingEntity && this.uiState?.draggingEntity === this
     );
+  }
+
+  @modelAction
+  setPosition(x: number, z: number) {
+    let y = 0;
+    if (this.boundingBox) {
+      for (const otherEntity of this.gameState.entities) {
+        if (otherEntity !== this && otherEntity.boundingBox) {
+          const collision = this.boundingBox.intersectsBox(
+            otherEntity.boundingBox
+          );
+          if (collision && otherEntity.boundingBox.max.y > y) {
+            y = otherEntity.boundingBox.max.y;
+          }
+        }
+      }
+    }
+
+    this.position = { x, y, z };
+  }
+
+  @modelAction
+  updateBoundingBox() {
+    if (this.mesh) {
+      this.boundingBox = new Box3();
+      this.boundingBox.setFromObject(this.mesh);
+      this.boundingBox.min.y = 0;
+    }
   }
 
   @modelAction
@@ -182,7 +217,7 @@ export default class Entity extends Model({
   @modelAction
   duplicate() {
     const clonedEntity = clone(this);
-    clonedEntity.position[0] += 1;
+    clonedEntity.position.x += 1;
     this.gameState.addEntity(clonedEntity);
   }
 

@@ -156,8 +156,7 @@ export default class EntitySet extends ExtendedModel(Entity, {
         this.faceUp ? 0 : this.containedEntities.length - 1
       ];
       this.removeEntity(entity);
-      entity.position[0] = this.position[0];
-      entity.position[1] = this.position[1];
+      entity.position = { ...this.position };
       entity.faceUp = this.faceUp;
       this.gameState.addEntity(entity);
     }
@@ -174,8 +173,8 @@ export default class EntitySet extends ExtendedModel(Entity, {
     ];
 
     this.removeEntity(entity);
-    entity.position[0] = this.position[0];
-    entity.position[1] = this.position[1];
+    entity.position = { ...this.position };
+
     entity.faceUp = this.faceUp;
     this.gameState.addEntity(entity);
     return entity;

@@ -196,33 +196,13 @@ export default observer((props: EntityProps) => {
     setHovered(false);
   };
 
-  const mesh = useRef<Mesh>();
-
-  useEffect(() => {
-    if (mesh.current) {
-      entity.boundingBox = new Box3();
-      entity.boundingBox.setFromObject(mesh.current);
-      entity.boundingBox.min.y = 0;
+  const mesh = useCallback(mesh => {
+    if (mesh !== null) {
+      entity.mesh = mesh;
+      setTimeout(() => entity.updateBoundingBox(), 1);
+      entity.updateBoundingBox();
     }
-  }, [mesh, position, geometry, angle, scale]);
-
-  const minHeight = useMemo(() => {
-    let minHeight = 0;
-    if (entity.boundingBox) {
-      for (const otherEntity of gameState.entities) {
-        if (otherEntity !== entity && otherEntity.boundingBox) {
-          const collision = entity.boundingBox.intersectsBox(
-            otherEntity.boundingBox
-          );
-          if (collision && otherEntity.boundingBox.max.y > minHeight) {
-            minHeight = otherEntity.boundingBox.max.y;
-          }
-        }
-      }
-    }
-
-    return minHeight;
-  }, [entity.boundingBox]);
+  }, []);
 
   const renderMaterial = useCallback(
     (params: MaterialParameters, i?: number) => {
@@ -254,9 +234,9 @@ export default observer((props: EntityProps) => {
   return (
     <group
       position={[
-        position[0] + positionOffset[0],
-        minHeight + positionOffset[1],
-        position[1] + positionOffset[2]
+        position.x + positionOffset[0],
+        position.y + positionOffset[1],
+        position.z + positionOffset[2]
       ]}
       rotation={[0, angle, 0]}
       scale={[scale.x, scale.y, scale.z]}
@@ -279,6 +259,7 @@ export default observer((props: EntityProps) => {
           ? materialParams.map(renderMaterial)
           : renderMaterial(materialParams)}
       </mesh>
+
       {children}
       {hoverMessage && hovered && (
         <Dom

@@ -170,7 +170,6 @@ export default observer((props: CardProps) => {
       }
       materialParams={materialParams}
       contextMenuItems={contextMenuItems}
-      deletable={ownerSet ? false : true}
       doubleClickAction={() => card.flip()}
       castShadows={false}
     >

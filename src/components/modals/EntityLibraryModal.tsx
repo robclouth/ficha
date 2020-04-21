@@ -75,7 +75,11 @@ export default observer(
     );
 
     const handleAddClick = async () => {
-      if (positionGroundPlane) selectedEntity!.position = positionGroundPlane;
+      if (positionGroundPlane)
+        selectedEntity!.setPosition(
+          positionGroundPlane[0],
+          positionGroundPlane[1]
+        );
       gameState.addEntity(clone(selectedEntity!));
       handleClose();
     };

@@ -98,7 +98,7 @@ export default observer<React.FC<GameCanvasProps>>(() => {
       e.ray.intersectPlane(new Plane(new Vector3(0, 1, 0), 0), point);
 
       withoutUndo(() => {
-        draggingEntity!.position = [point.x, point.z];
+        draggingEntity!.setPosition(point.x, point.z);
       });
     }
   };
