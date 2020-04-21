@@ -15,6 +15,7 @@ import isUrl from "is-url";
 import { observer } from "mobx-react";
 import React, { useState, useEffect } from "react";
 import { useStore } from "../../stores/RootStore";
+import Modal from "./Modal";
 
 const useStyles = makeStyles(theme => ({
   formControl: {
@@ -52,40 +53,35 @@ export default observer(({ open, handleClose }: ModalProps) => {
   };
 
   return (
-    <Dialog open={open} onClose={handleClose}>
-      <DialogTitle>Game settings</DialogTitle>
-      <DialogContent
-        style={{
-          flexDirection: "column",
-          display: "flex",
-          alignItems: "stretch"
-        }}
-      >
-        <FormControl className={classes.formControl}>
-          <Input
-            value={name}
-            onChange={e => setName(e.target.value)}
-            fullWidth
-            placeholder="Game title"
-          />
-        </FormControl>
-        <FormControl className={classes.formControl}>
-          <Input
-            value={assetsUrl}
-            onChange={e => setAssetsUrl(e.target.value)}
-            fullWidth
-            placeholder="Assets URL"
-          />
-        </FormControl>
-      </DialogContent>
-      <DialogActions>
-        <Button onClick={handleClose} color="primary">
-          Cancel
-        </Button>
+    <Modal
+      open={open}
+      handleClose={handleClose}
+      title="Add from library"
+      content={
+        <>
+          <FormControl className={classes.formControl}>
+            <Input
+              value={name}
+              onChange={e => setName(e.target.value)}
+              fullWidth
+              placeholder="Game title"
+            />
+          </FormControl>
+          <FormControl className={classes.formControl}>
+            <Input
+              value={assetsUrl}
+              onChange={e => setAssetsUrl(e.target.value)}
+              fullWidth
+              placeholder="Assets URL"
+            />
+          </FormControl>
+        </>
+      }
+      actions={
         <Button onClick={handleSave} color="primary">
           Save
         </Button>
-      </DialogActions>
-    </Dialog>
+      }
+    />
   );
 });

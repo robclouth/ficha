@@ -385,25 +385,33 @@ export default observer(() => {
         open={loadGameModalOpen}
         handleClose={() => setLoadGameModalOpen(false)}
       />
-      <EditEntityModal
-        open={editEntityModalOpen}
-        positionGroundPlane={contextMenu?.positionGroundPlane}
-        entity={contextMenu?.target as Entity}
-        handleClose={handleModalClose}
-      />
-      <EntityLibraryModal
-        open={entityLibraryModalOpen}
-        positionGroundPlane={contextMenu?.positionGroundPlane}
-        handleClose={() => setEntityLibraryModalOpen(false)}
-      />
-      <JoinGameModal
-        open={joinGameModalOpen}
-        handleClose={() => setJoinGameModalOpen(false)}
-      />
-      <GameSettingsModal
-        open={gameSettingsModalOpen}
-        handleClose={() => setGameSettingsModalOpen(false)}
-      />
+      {editEntityModalOpen && (
+        <EditEntityModal
+          open={editEntityModalOpen}
+          positionGroundPlane={contextMenu?.positionGroundPlane}
+          entity={contextMenu?.target as Entity}
+          handleClose={handleModalClose}
+        />
+      )}
+      {entityLibraryModalOpen && (
+        <EntityLibraryModal
+          open={entityLibraryModalOpen}
+          positionGroundPlane={contextMenu?.positionGroundPlane}
+          handleClose={() => setEntityLibraryModalOpen(false)}
+        />
+      )}
+      {joinGameModalOpen && (
+        <JoinGameModal
+          open={joinGameModalOpen}
+          handleClose={() => setJoinGameModalOpen(false)}
+        />
+      )}
+      {gameSettingsModalOpen && (
+        <GameSettingsModal
+          open={gameSettingsModalOpen}
+          handleClose={() => setGameSettingsModalOpen(false)}
+        />
+      )}
       <Backdrop className={classes.loadingModal} open={gameStore.isLoading}>
         <CircularProgress color="inherit" />
       </Backdrop>

@@ -44,6 +44,7 @@ import EntitySet, { entitySetRef } from "../../models/game/EntitySet";
 import Piece from "../../models/game/Piece";
 import PieceSet from "../../models/game/PieceSet";
 import { useStore } from "../../stores/RootStore";
+import Modal from "./Modal";
 
 extend({ OrbitControls });
 
@@ -707,11 +708,9 @@ export type ModalProps = {
 
 export default observer(
   ({ open, handleClose, positionGroundPlane, entity }: ModalProps) => {
-    const { gameStore, uiState } = useStore();
+    const { gameStore } = useStore();
     const { gameState } = gameStore;
 
-    const theme = useTheme();
-    const [error, setError] = React.useState("");
     const [type, setType] = React.useState(EntityType.Deck);
     const classes = useStyles();
 
@@ -759,15 +758,11 @@ export default observer(
     }
 
     return (
-      <Dialog open={open} onClose={handleClose}>
-        <DialogTitle>{`${isEditing ? "Edit" : "Add"} entity`}</DialogTitle>
-        <DialogContent
-          style={{
-            flexDirection: "column",
-            display: "flex",
-            alignItems: "stretch"
-          }}
-        >
+      <Modal
+        open={open}
+        handleClose={handleClose}
+        title={`${isEditing ? "Edit" : "Add"} entity`}
+        content={
           <Box display="flex" height={600}>
             <Box
               display="flex"
@@ -793,16 +788,15 @@ export default observer(
             </Box>
             <Preview entity={entityDraft.data} active={open} />
           </Box>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleClose} color="primary">
-            Cancel
-          </Button>
-          <Button onClick={handleSaveClick} color="primary">
-            {isEditing ? "Save" : "Add"}
-          </Button>
-        </DialogActions>
-      </Dialog>
+        }
+        actions={
+          <>
+            <Button onClick={handleSaveClick} color="primary">
+              {isEditing ? "Save" : "Add"}
+            </Button>
+          </>
+        }
+      />
     );
   }
 );

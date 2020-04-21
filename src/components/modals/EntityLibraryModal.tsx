@@ -26,6 +26,7 @@ import Deck from "../../models/game/Deck";
 import Entity, { EntityType } from "../../models/game/Entity";
 import { useStore } from "../../stores/RootStore";
 import { clone } from "mobx-keystone";
+import Modal from "./Modal";
 
 const colorOptions = [
   "#f44336",
@@ -133,17 +134,12 @@ export default observer(
     };
 
     return (
-      <Dialog open={open} onClose={handleClose}>
-        <DialogTitle>Add from library</DialogTitle>
-        <DialogContent
-          style={{
-            flexDirection: "column",
-            display: "flex",
-            alignItems: "stretch",
-            minWidth: 500
-          }}
-        >
-          {
+      <Modal
+        open={open}
+        handleClose={handleClose}
+        title="Add from library"
+        content={
+          <Box width={500}>
             <AutoSizer disableHeight>
               {(size: any) => (
                 <FixedSizeList
@@ -158,12 +154,9 @@ export default observer(
                 </FixedSizeList>
               )}
             </AutoSizer>
-          }
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleClose} color="primary">
-            Cancel
-          </Button>
+          </Box>
+        }
+        actions={
           <Button
             onClick={handleAddClick}
             color="primary"
@@ -171,8 +164,8 @@ export default observer(
           >
             Add
           </Button>
-        </DialogActions>
-      </Dialog>
+        }
+      />
     );
   }
 );

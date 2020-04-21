@@ -14,6 +14,7 @@ import isUrl from "is-url";
 import { observer } from "mobx-react";
 import React from "react";
 import { useStore } from "../../stores/RootStore";
+import Modal from "./Modal";
 
 const useStyles = makeStyles(theme => ({
   formControl: {
@@ -55,39 +56,36 @@ export default observer(({ open, handleClose }: DialogProps) => {
   };
 
   return (
-    <Dialog
+    <Modal
       open={open}
-      onClose={handleClose}
-      aria-labelledby="load-game-dialog-title"
-    >
-      <DialogTitle id="load-game-dialog-title">Load game</DialogTitle>
-      <DialogContent>
-        <DialogContentText>
-          Load a game from a definition json file.
-        </DialogContentText>
-        <FormControl className={classes.formControl}>
-          <TextField
-            inputRef={urlFieldRef}
-            autoFocus
-            margin="dense"
-            id="url"
-            placeholder="URL"
-            defaultValue={gameUrl}
-            type="url"
-            fullWidth
-            error={error.length > 0}
-            helperText={error}
-          />
-        </FormControl>
-      </DialogContent>
-      <DialogActions>
-        <Button onClick={handleClose} color="primary">
-          Cancel
-        </Button>
+      handleClose={handleClose}
+      title="Add from library"
+      content={
+        <>
+          <DialogContentText>
+            Load a game from a definition json file.
+          </DialogContentText>
+          <FormControl className={classes.formControl}>
+            <TextField
+              inputRef={urlFieldRef}
+              autoFocus
+              margin="dense"
+              id="url"
+              placeholder="URL"
+              defaultValue={gameUrl}
+              type="url"
+              fullWidth
+              error={error.length > 0}
+              helperText={error}
+            />
+          </FormControl>
+        </>
+      }
+      actions={
         <Button onClick={handleLoadClick} color="primary">
           Load
         </Button>
-      </DialogActions>
-    </Dialog>
+      }
+    />
   );
 });
