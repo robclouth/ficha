@@ -24,7 +24,7 @@ import { useSnackbar } from "notistack";
 import EventListener from "react-event-listener";
 // @ts-ignore
 import randomColor from "random-material-color";
-import React from "react";
+import React, { useCallback } from "react";
 //@ts-ignore
 import { CopyToClipboard } from "react-copy-to-clipboard";
 import { PointerEvent } from "react-three-fiber";
@@ -269,6 +269,10 @@ export default observer(() => {
     });
   }, []);
 
+  const handleModalClose = useCallback(() => {
+    setEditEntityModalOpen(false);
+  }, []);
+
   const classes = useStyles();
 
   return (
@@ -385,7 +389,7 @@ export default observer(() => {
         open={editEntityModalOpen}
         positionGroundPlane={contextMenu?.positionGroundPlane}
         entity={contextMenu?.target as Entity}
-        handleClose={() => setEditEntityModalOpen(false)}
+        handleClose={handleModalClose}
       />
       <EntityLibraryModal
         open={entityLibraryModalOpen}

@@ -16,14 +16,6 @@ export default class PieceSet extends ExtendedModel(EntitySet, {}) {
     this.childType = EntityType.Piece;
   }
 
-  @computed get pieces() {
-    return this.entities as Piece[];
-  }
-
-  @computed get allPieces() {
-    return this.allEntities as Piece[];
-  }
-
   render(props: PieceSetProps): JSX.Element {
     return React.createElement(PieceSetComponent, props);
   }

@@ -11,6 +11,7 @@ import { Color } from "three";
 import defaultCardBack from "../../../assets/default-back.png";
 import PieceSet from "../../../models/game/PieceSet";
 import { clone } from "mobx-keystone";
+import { take } from "lodash";
 
 export type PieceSetProps = Omit<EntityProps, "geometry"> & {};
 
@@ -23,7 +24,12 @@ export default observer((props: PieceSetProps) => {
 
   const { entity } = props;
   const pieceSet = entity as PieceSet;
-  const { entities, allEntities, name } = pieceSet;
+  const {
+    containedEntities: entities,
+    allEntities,
+    name,
+    prototypes
+  } = pieceSet;
 
   const contextMenuItems: ContextMenuItem[] = [
     {
@@ -63,14 +69,13 @@ export default observer((props: PieceSetProps) => {
     });
   }
 
-  const firstEntity =
-    allEntities.length > 0 ? clone(allEntities[0]) : undefined;
+  const previewPrototypes = take(prototypes, 5).map(prototype =>
+    clone(prototype)
+  );
 
   let materialParams: MaterialParameters = {
     roughness: 1,
-    color: firstEntity
-      ? new Color(firstEntity.color.r, firstEntity.color.g, firstEntity.color.b)
-      : new Color(1, 1, 1)
+    color: new Color(0.6, 0.6, 0.6)
   };
 
   const handleDrag = (e: PointerEvent) => {
@@ -93,13 +98,23 @@ export default observer((props: PieceSetProps) => {
       dragAction={entities.length > 0 ? handleDrag : undefined}
       hoverMessage={`${name} (${entities.length})`}
     >
-      {firstEntity &&
-        firstEntity.render({
-          preview: true,
-          entity: firstEntity,
-          yOffset: height,
-          position: [0, 0],
-          angle: 0
+      {previewPrototypes &&
+        previewPrototypes.map((prototype, i) => {
+          const radius = previewPrototypes.length > 1 ? 0.25 : 0;
+          const angle = (i / previewPrototypes.length) * Math.PI * 2;
+
+          return prototype.render({
+            key: i,
+            preview: true,
+            entity: prototype,
+            position: [0, 0],
+            positionOffset: [
+              Math.cos(angle) * radius,
+              height,
+              Math.sin(angle) * radius
+            ],
+            angle
+          });
         })}
     </Entity>
   );

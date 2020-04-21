@@ -15,7 +15,7 @@ export default class Deck extends ExtendedModel(EntitySet, {}) {
   }
 
   @computed get cards() {
-    return this.entities as Card[];
+    return this.containedEntities as Card[];
   }
 
   @computed get allCards() {

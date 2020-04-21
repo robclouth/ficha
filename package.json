@@ -17,6 +17,7 @@
     "emoji-mart": "^3.0.0",
     "is-url": "^1.2.4",
     "localforage": "^1.7.3",
+    "lodash": "^4.17.15",
     "mdi-material-ui": "^6.13.2",
     "mobx": "^5.15.4",
     "mobx-keystone": "^0.43.1",
@@ -64,6 +65,7 @@
     ]
   },
   "devDependencies": {
+    "@types/lodash": "^4.14.150",
     "@types/react-color": "^3.0.1",
     "@types/react-router-dom": "^5.1.4",
     "source-map-explorer": "^2.4.2"

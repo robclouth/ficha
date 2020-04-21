@@ -35,7 +35,7 @@ export type EntityProps = {
   castShadows?: boolean;
   children?: React.ReactNode;
   hoverMessage?: string;
-  yOffset?: number;
+  positionOffset?: [number, number, number];
   preview?: boolean;
 };
 
@@ -57,7 +57,7 @@ export default observer((props: EntityProps) => {
     materialParams = [{}],
     pivot = [0, 0, 0],
     deletable = true,
-    yOffset = 0,
+    positionOffset = [0, 0, 0],
     preview = false
   } = props;
   const {
@@ -251,7 +251,11 @@ export default observer((props: EntityProps) => {
 
   return (
     <group
-      position={[position[0], minHeight + yOffset, position[1]]}
+      position={[
+        position[0] + positionOffset[0],
+        minHeight + positionOffset[1],
+        position[1] + positionOffset[2]
+      ]}
       rotation={[0, angle, 0]}
       scale={[scale.x, scale.y, scale.z]}
     >
@@ -275,8 +279,18 @@ export default observer((props: EntityProps) => {
       </mesh>
       {children}
       {hoverMessage && hovered && (
-        <Dom position={[0, 0.5, 0]} center style={{ pointerEvents: "none" }}>
-          <h3 style={{ pointerEvents: "none" }}>{hoverMessage}</h3>
+        <Dom
+          position={[0, 1, 0]}
+          center
+          style={{ pointerEvents: "none", userSelect: "none" }}
+          onContextMenu={() => false}
+        >
+          <h3
+            style={{ pointerEvents: "none", userSelect: "none" }}
+            onContextMenu={() => false}
+          >
+            {hoverMessage}
+          </h3>
         </Dom>
       )}
     </group>

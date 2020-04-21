@@ -535,69 +535,70 @@ const InputSlider = observer(
 type EntityListProps = {
   entitySet: EntitySet;
   editor: React.FunctionComponent<any>;
+  itemHeight: number;
 };
 
-const EntityList = observer(({ entitySet, editor }: EntityListProps) => {
-  const classes = useStyles();
+const EntityList = observer(
+  ({ entitySet, editor, itemHeight }: EntityListProps) => {
+    const classes = useStyles();
 
-  const renderRow = useCallback(
-    ({ data, index, style }: ListChildComponentProps) => {
-      const { entity, count } = data[index];
+    const renderRow = useCallback(
+      ({ data, index, style }: ListChildComponentProps) => {
+        const { entity, count } = data[index];
 
-      return (
-        <Box
-          key={index}
-          style={style}
-          flexDirection="column"
-          alignItems="stretch"
-        >
-          <FormControl
-            className={classes.formControl}
-            style={{ width: "100%" }}
+        return (
+          <Box
+            key={index}
+            style={style}
+            flexDirection="column"
+            alignItems="stretch"
           >
-            <FormLabel>Count</FormLabel>
-            <InputSlider
-              value={count}
-              onChange={value => entitySet.setCount(entity, value)}
-              min={1}
-              max={1000}
-            />
-          </FormControl>
-          {React.createElement(editor, { entity })}
-          <Button fullWidth onClick={() => entitySet.removeEntity(entity)}>
-            Remove
-          </Button>
-          <Divider />
-        </Box>
-      );
-    },
-    [entitySet]
-  );
+            <FormControl
+              className={classes.formControl}
+              style={{ width: "100%" }}
+            >
+              <FormLabel>Count</FormLabel>
+              <InputSlider
+                value={count}
+                onChange={value => entitySet.setPrototypeCount(entity, value)}
+                min={1}
+                max={1000}
+              />
+            </FormControl>
+            {React.createElement(editor, { entity })}
+            <Button fullWidth onClick={() => entitySet.removePrototype(entity)}>
+              Remove
+            </Button>
+            <Divider />
+          </Box>
+        );
+      },
+      [entitySet]
+    );
 
-  const items = entitySet.allEntities.map(entity => ({
-    entity,
-    count: entitySet.entityCounts.get(entity.$modelId)
-  }));
+    const items = entitySet.prototypes.map(entity => ({
+      entity,
+      count: entitySet.prototypeCounts[entity.$modelId]
+    }));
 
-  return (
-    <AutoSizer disableHeight>
-      {(size: any) => (
-        <FixedSizeList
-          className="List"
-          height={entitySet.allEntities.length > 0 ? cardComponentHeight : 0}
-          itemCount={entitySet.allEntities.length}
-          itemSize={cardComponentHeight}
-          itemData={items}
-          width={size.width}
-        >
-          {renderRow}
-        </FixedSizeList>
-      )}
-    </AutoSizer>
-  );
-});
-
-const cardComponentHeight = 500;
+    return (
+      <AutoSizer disableHeight>
+        {(size: any) => (
+          <FixedSizeList
+            className="List"
+            height={entitySet.prototypes.length > 0 ? itemHeight : 0}
+            itemCount={entitySet.prototypes.length}
+            itemSize={itemHeight}
+            itemData={items}
+            width={size.width}
+          >
+            {renderRow}
+          </FixedSizeList>
+        )}
+      </AutoSizer>
+    );
+  }
+);
 
 type SetEditorProps = {
   entitySet: EntitySet;
@@ -608,7 +609,7 @@ const DeckEditor = observer(({ entitySet }: SetEditorProps) => {
   const [backImageUrl, setBackImageUrl] = useState("");
 
   const handleBackImageUrlChange = (url: string) => {
-    entitySet.entities.forEach(entity => (entity.backImageUrl = url));
+    entitySet.containedEntities.forEach(entity => (entity.backImageUrl = url));
     setBackImageUrl(url);
   };
 
@@ -650,14 +651,14 @@ const DeckEditor = observer(({ entitySet }: SetEditorProps) => {
         gutterBottom
       >{`${entitySet.allEntities.length} cards`}</Typography>
       <Button onClick={() => handleAddEntity("")}>Add card</Button>
-      <EntityList entitySet={entitySet} editor={CardEditor} />
+      <EntityList entitySet={entitySet} editor={CardEditor} itemHeight={500} />
     </Box>
   );
 });
 
 const PieceSetEditor = observer(({ entitySet }: SetEditorProps) => {
   const handleAddEntity = (frontImageUrl: string) => {
-    entitySet.addEntity(
+    entitySet.addPrototype(
       new Piece({
         ownerSet: entitySetRef(entitySet)
       })
@@ -669,25 +670,25 @@ const PieceSetEditor = observer(({ entitySet }: SetEditorProps) => {
       <Typography
         variant="body1"
         gutterBottom
-      >{`${entitySet.allEntities.length} pieces`}</Typography>
+      >{`${entitySet.prototypesWithDuplicates.length} pieces`}</Typography>
       <Button onClick={() => handleAddEntity("")}>Add piece</Button>
-      <EntityList entitySet={entitySet} editor={PieceEditor} />
+      <EntityList entitySet={entitySet} editor={PieceEditor} itemHeight={500} />
     </Box>
   );
 });
 
 type EntityEditorProps = {
-  entityDraft: Draft<Entity>;
+  entity: Entity;
   editor: React.ReactNode;
 };
-const EntityEditor = observer(({ entityDraft, editor }: EntityEditorProps) => {
+const EntityEditor = observer(({ entity, editor }: EntityEditorProps) => {
   const classes = useStyles();
   return (
     <>
       <FormControl className={classes.formControl}>
         <Input
-          value={entityDraft.data.name}
-          onChange={e => (entityDraft.data.name = e.target.value)}
+          value={entity.name}
+          onChange={e => (entity.name = e.target.value)}
           fullWidth
           placeholder="Name"
         />
@@ -726,7 +727,7 @@ export default observer(
       else if (type === EntityType.Piece)
         return new Piece({ name: "New Piece" });
       else return new Deck({});
-    }, [type, open]);
+    }, [type, isEditing]);
 
     const entityDraft = draft(targetEntity);
     entityDraft.data.position = [0, 0];
@@ -739,6 +740,9 @@ export default observer(
       if (!isEditing) {
         if (positionGroundPlane) targetEntity.position = positionGroundPlane;
         gameState.addEntity(targetEntity);
+      } else {
+        if (targetEntity instanceof EntitySet)
+          (targetEntity as EntitySet).updateInstances();
       }
       handleClose();
     };
@@ -785,7 +789,7 @@ export default observer(
                   </Select>
                 </FormControl>
               )}
-              <EntityEditor entityDraft={entityDraft} editor={typeEditor} />
+              <EntityEditor entity={entityDraft.data} editor={typeEditor} />
             </Box>
             <Preview entity={entityDraft.data} active={open} />
           </Box>

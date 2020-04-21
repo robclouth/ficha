@@ -1,4 +1,4 @@
-import { observable, computed, when } from "mobx";
+import { observable, computed, when, reaction } from "mobx";
 import {
   Model,
   model,
@@ -9,7 +9,14 @@ import {
   getRoot,
   getRootStore,
   clone,
-  Ref
+  Ref,
+  rootRef,
+  detach,
+  onSnapshot,
+  OnSnapshotDisposer,
+  SnapshotOutOfModel,
+  applySnapshot,
+  getSnapshot
 } from "mobx-keystone";
 import GameState from "../GameState";
 import { Box3 } from "three";
@@ -18,6 +25,7 @@ import RootStore from "../../stores/RootStore";
 import { nanoid } from "nanoid";
 import EntitySet from "./EntitySet";
 import React from "react";
+import { omit } from "lodash";
 
 export enum EntityType {
   Deck,
@@ -42,12 +50,19 @@ export enum Shape {
   Dodecahedron
 }
 
+export const entityRef = rootRef<Entity>("EntityRef", {
+  onResolvedValueChange(ref, newEntity, oldEntity) {
+    if (oldEntity && !newEntity) detach(ref);
+  }
+});
+
 @model("Entity")
 export default class Entity extends Model({
   id: prop(nanoid(), { setterAction: true }),
   name: prop("", { setterAction: true }),
   type: prop<EntityType>(EntityType.Card, { setterAction: true }),
   ownerSet: prop<Ref<EntitySet> | undefined>(undefined, { setterAction: true }),
+  prototype: prop<Ref<Entity> | undefined>(undefined, { setterAction: true }),
   position: prop<[number, number]>(() => [0, 0], { setterAction: true }),
   angle: prop(0, { setterAction: true }),
   scale: prop<{ x: number; y: number; z: number }>(
@@ -71,6 +86,8 @@ export default class Entity extends Model({
 
   controllingPeerId: prop<string | undefined>(undefined, { setterAction: true })
 }) {
+  onSnapshotDisposer?: OnSnapshotDisposer;
+
   onInit() {
     when(
       () => this.assetCache !== undefined,
@@ -81,11 +98,6 @@ export default class Entity extends Model({
     );
   }
   @observable boundingBox: Box3 = new Box3();
-
-  @computed get countInSet() {
-    if (!this.ownerSet || !this.ownerSet.maybeCurrent) return 0;
-    return this.ownerSet.current.getCount(this);
-  }
 
   @computed get gameState() {
     return findParent<GameState>(
@@ -115,6 +127,26 @@ export default class Entity extends Model({
     return (
       this.uiState?.isDraggingEntity && this.uiState?.draggingEntity === this
     );
+  }
+
+  @modelAction
+  updateFromPrototype() {
+    if (!this.prototype?.maybeCurrent) return;
+
+    let snapshot = getSnapshot(this.prototype?.maybeCurrent)!;
+
+    const newSnapshot = omit(snapshot, [
+      "$modelId",
+      "position",
+      "angle",
+      "faceUp",
+      "ownerSet",
+      "prototype",
+      "locked",
+      "controllingPeerId"
+    ]);
+
+    applySnapshot(this, { ...getSnapshot(this), ...newSnapshot });
   }
 
   @modelAction
