@@ -10,7 +10,8 @@ export default class GameState extends Model({
   hostPeerId: prop("", { setterAction: true }),
   players: prop<Player[]>(() => [], { setterAction: true }),
   chatHistory: prop<string[]>(() => [], { setterAction: true }),
-  entities: prop<Entity[]>(() => [], { setterAction: true })
+  entities: prop<Entity[]>(() => [], { setterAction: true }),
+  rules: prop<string[]>(() => [], { setterAction: true })
 }) {
   @computed get connectedPlayers() {
     return this.players.filter(p => p.isConnected);

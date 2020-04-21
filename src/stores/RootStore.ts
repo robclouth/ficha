@@ -11,7 +11,9 @@ import {
   modelAction,
   modelFlow,
   _async,
-  _await
+  _await,
+  applySnapshot,
+  getSnapshot
 } from "mobx-keystone";
 import AssetCache from "./AssetCache";
 import EntityLibrary from "./EntityLibrary";
@@ -38,6 +40,14 @@ export default class RootStore extends Model({
 }
 
 const rootStore = new RootStore({});
+
+// if (module?.hot?.data?.store) {
+//   applySnapshot(rootStore, module.hot.data.store);
+// }
+// module?.hot?.dispose(data => {
+//   data.store = getSnapshot(rootStore);
+// });
+
 registerRootStore(rootStore);
 
 const context = React.createContext<RootStore>(rootStore);

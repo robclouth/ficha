@@ -37,17 +37,12 @@ import { ContextMenuItem } from "../types";
 import Entity from "../models/game/Entity";
 import GameSettingsModal from "../components/modals/GameSettingsModal";
 import EntityLibraryModal from "../components/modals/EntityLibraryModal";
+import RulesModal from "../components/modals/RulesModal";
 
 const useStyles = makeStyles(theme => ({
   root: {
     width: "100%",
     height: "100%"
-  },
-  chat: {
-    flex: 1
-  },
-  messages: {
-    minHeight: 100
   },
   chip: {
     marginBottom: theme.spacing(1)
@@ -65,7 +60,7 @@ const useStyles = makeStyles(theme => ({
   }
 }));
 
-const PlayersTable = observer(() => {
+const PlayersList = observer(() => {
   const { gameStore } = useStore();
   const { gameState } = gameStore;
   const theme = useTheme();
@@ -127,51 +122,14 @@ const PlayersTable = observer(() => {
   );
 });
 
-const Chat = observer(() => {
-  const [message, setMessage] = React.useState("");
-  const { gameStore } = useStore();
-  const { player, gameState } = gameStore;
-
-  const classes = useStyles();
-
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.which === 13) {
-      gameState.addMessage(`${player.name}: ${message}`);
-      setMessage("");
-    }
-  };
-
-  return (
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "stretch",
-        flex: 1,
-        overflowY: "auto",
-        height: 400
-      }}
-    >
-      <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
-        <div style={{ flex: 1 }}></div>
-        {gameState.chatHistory.map((message, i) => (
-          <Typography key={i} variant="body2">
-            {message}
-          </Typography>
-        ))}
-      </div>
-      <div>
-        <TextField
-          fullWidth
-          value={message}
-          placeholder="Type something"
-          onChange={e => setMessage(e.target.value)}
-          onKeyPress={handleKeyPress}
-        ></TextField>
-      </div>
-    </div>
-  );
-});
+enum Modals {
+  EditEntity,
+  EntityLibrary,
+  GameSettings,
+  ImportGame,
+  JoinGame,
+  Rules
+}
 
 export default observer(() => {
   const { gameStore, uiState } = useStore();
@@ -185,15 +143,8 @@ export default observer(() => {
     setTopMenuAnchorEl
   ] = React.useState<null | HTMLElement>(null);
 
-  const [loadGameModalOpen, setLoadGameModalOpen] = React.useState(false);
-  const [editEntityModalOpen, setEditEntityModalOpen] = React.useState(false);
-  const [entityLibraryModalOpen, setEntityLibraryModalOpen] = React.useState(
-    false
-  );
-
-  const [joinGameModalOpen, setJoinGameModalOpen] = React.useState(false);
-  const [gameSettingsModalOpen, setGameSettingsModalOpen] = React.useState(
-    false
+  const [openModal, setOpenModal] = React.useState<Modals | undefined>(
+    undefined
   );
 
   const handleTopMenuClick = (e: React.MouseEvent<HTMLElement>) => {
@@ -218,7 +169,7 @@ export default observer(() => {
 
     if (item.type === "action") item.action && item.action();
     else if (item.type === "edit") {
-      setEditEntityModalOpen(true);
+      setOpenModal(Modals.EditEntity);
     }
   };
 
@@ -240,7 +191,8 @@ export default observer(() => {
         label: "New entity",
         type: "action",
         action: () => {
-          setEditEntityModalOpen(true);
+          setOpenModal(Modals.EditEntity);
+
           handleContextMenuClose();
         }
       },
@@ -248,7 +200,7 @@ export default observer(() => {
         label: "Add entity from library",
         type: "action",
         action: () => {
-          setEntityLibraryModalOpen(true);
+          setOpenModal(Modals.EntityLibrary);
           handleContextMenuClose();
         }
       }
@@ -270,7 +222,7 @@ export default observer(() => {
   }, []);
 
   const handleModalClose = useCallback(() => {
-    setEditEntityModalOpen(false);
+    setOpenModal(undefined);
   }, []);
 
   const classes = useStyles();
@@ -278,7 +230,7 @@ export default observer(() => {
   return (
     <Box className={classes.root} onClick={handleContextMenuClose}>
       <GameCanvas />
-      <PlayersTable />
+      <PlayersList />
       {/* <Box
         zIndex={1}
         width={250}
@@ -339,12 +291,16 @@ export default observer(() => {
           New game
         </MenuItem>
         <MenuItem
-          onClick={() => handleTopMenuSelect(() => setJoinGameModalOpen(true))}
+          onClick={() =>
+            handleTopMenuSelect(() => setOpenModal(Modals.JoinGame))
+          }
         >
           Join game
         </MenuItem>
         <MenuItem
-          onClick={() => handleTopMenuSelect(() => setLoadGameModalOpen(true))}
+          onClick={() =>
+            handleTopMenuSelect(() => setOpenModal(Modals.ImportGame))
+          }
         >
           Import
         </MenuItem>
@@ -352,8 +308,13 @@ export default observer(() => {
           Export
         </MenuItem>
         <MenuItem
+          onClick={() => handleTopMenuSelect(() => setOpenModal(Modals.Rules))}
+        >
+          Game rules
+        </MenuItem>
+        <MenuItem
           onClick={() =>
-            handleTopMenuSelect(() => setGameSettingsModalOpen(true))
+            handleTopMenuSelect(() => setOpenModal(Modals.GameSettings))
           }
         >
           Game settings
@@ -381,35 +342,43 @@ export default observer(() => {
         ))}
         <EventListener target="window" onResize={handleContextMenuClose} />
       </Menu>
-      <ImportGameModal
-        open={loadGameModalOpen}
-        handleClose={() => setLoadGameModalOpen(false)}
-      />
-      {editEntityModalOpen && (
+      {openModal === Modals.ImportGame && (
+        <ImportGameModal
+          open={openModal === Modals.ImportGame}
+          handleClose={() => setOpenModal(undefined)}
+        />
+      )}
+      {openModal === Modals.EditEntity && (
         <EditEntityModal
-          open={editEntityModalOpen}
+          open={openModal === Modals.EditEntity}
           positionGroundPlane={contextMenu?.positionGroundPlane}
           entity={contextMenu?.target as Entity}
           handleClose={handleModalClose}
         />
       )}
-      {entityLibraryModalOpen && (
+      {openModal === Modals.EntityLibrary && (
         <EntityLibraryModal
-          open={entityLibraryModalOpen}
+          open={openModal === Modals.EntityLibrary}
           positionGroundPlane={contextMenu?.positionGroundPlane}
-          handleClose={() => setEntityLibraryModalOpen(false)}
+          handleClose={handleModalClose}
         />
       )}
-      {joinGameModalOpen && (
+      {openModal === Modals.JoinGame && (
         <JoinGameModal
-          open={joinGameModalOpen}
-          handleClose={() => setJoinGameModalOpen(false)}
+          open={openModal === Modals.JoinGame}
+          handleClose={handleModalClose}
         />
       )}
-      {gameSettingsModalOpen && (
+      {openModal === Modals.GameSettings && (
         <GameSettingsModal
-          open={gameSettingsModalOpen}
-          handleClose={() => setGameSettingsModalOpen(false)}
+          open={openModal === Modals.GameSettings}
+          handleClose={handleModalClose}
+        />
+      )}
+      {openModal === Modals.Rules && (
+        <RulesModal
+          open={openModal === Modals.Rules}
+          handleClose={handleModalClose}
         />
       )}
       <Backdrop className={classes.loadingModal} open={gameStore.isLoading}>

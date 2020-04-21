@@ -24,14 +24,22 @@ import { useStore } from "../../stores/RootStore";
 
 export type ModalProps = {
   open: boolean;
-  title: string;
+  title?: string;
   content?: React.ReactNode;
   actions?: React.ReactNode;
+  noActions?: boolean;
   handleClose: () => void;
 };
 
 export default observer(
-  ({ open, title, content, actions, handleClose }: ModalProps) => {
+  ({
+    open,
+    title,
+    content,
+    actions,
+    handleClose,
+    noActions = false
+  }: ModalProps) => {
     const [modalOpen, setModalOpen] = React.useState(open);
 
     useEffect(() => {
@@ -42,7 +50,7 @@ export default observer(
 
     return (
       <Dialog open={modalOpen} onClose={onClose} onExited={handleClose}>
-        <DialogTitle>{title}</DialogTitle>
+        {title && <DialogTitle>{title}</DialogTitle>}
         <DialogContent
           style={{
             flexDirection: "column",
@@ -52,12 +60,14 @@ export default observer(
         >
           {content}
         </DialogContent>
-        <DialogActions>
-          <Button onClick={onClose} color="primary">
-            Cancel
-          </Button>
-          {actions}
-        </DialogActions>
+        {!noActions && (
+          <DialogActions>
+            <Button onClick={onClose} color="primary">
+              Cancel
+            </Button>
+            {actions}
+          </DialogActions>
+        )}
       </Dialog>
     );
   }

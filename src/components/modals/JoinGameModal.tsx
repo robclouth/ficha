@@ -11,6 +11,7 @@ import {
 import { observer } from "mobx-react";
 import React from "react";
 import { useStore } from "../../stores/RootStore";
+import Modal from "./Modal";
 
 const useStyles = makeStyles(theme => ({
   formControl: {
@@ -50,9 +51,11 @@ export default observer(({ open, handleClose }: JoinGameModalProps) => {
   };
 
   return (
-    <Dialog open={open} onClose={handleClose}>
-      <DialogTitle>Join game</DialogTitle>
-      <DialogContent>
+    <Modal
+      open={open}
+      handleClose={handleClose}
+      title="Add from library"
+      content={
         <FormControl className={classes.formControl}>
           <TextField
             inputRef={gameIdFieldRef}
@@ -64,15 +67,12 @@ export default observer(({ open, handleClose }: JoinGameModalProps) => {
             helperText={error}
           />
         </FormControl>
-      </DialogContent>
-      <DialogActions>
-        <Button onClick={handleClose} color="primary">
-          Cancel
-        </Button>
+      }
+      actions={
         <Button onClick={handleJoinClick} color="primary">
           Join
         </Button>
-      </DialogActions>
-    </Dialog>
+      }
+    />
   );
 });
