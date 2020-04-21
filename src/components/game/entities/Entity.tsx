@@ -1,5 +1,11 @@
 import { observer } from "mobx-react";
-import React, { useRef, useState, useEffect, useMemo } from "react";
+import React, {
+  useRef,
+  useState,
+  useEffect,
+  useMemo,
+  useCallback
+} from "react";
 import { PointerEvent, Dom } from "react-three-fiber";
 import {
   Box3,
@@ -29,6 +35,8 @@ export type EntityProps = {
   castShadows?: boolean;
   children?: React.ReactNode;
   hoverMessage?: string;
+  yOffset?: number;
+  preview?: boolean;
 };
 
 let clickCount = 0;
@@ -48,7 +56,9 @@ export default observer((props: EntityProps) => {
     castShadows = true,
     materialParams = [{}],
     pivot = [0, 0, 0],
-    deletable = true
+    deletable = true,
+    yOffset = 0,
+    preview = false
   } = props;
   const {
     position,
@@ -212,33 +222,36 @@ export default observer((props: EntityProps) => {
     return minHeight;
   }, [position, boundingBox]);
 
-  const renderMaterial = (params: MaterialParameters, i?: number) => {
-    const updatedParams: MaterialParameters = {
-      ...params,
-      transparent: true,
-      opacity: hovered ? 0.7 : 1
-    };
-    const key =
-      i &&
-      Object.values(updatedParams)
-        .map(value => (value ? value.toString() : ""))
-        .join() + i;
-    // console.log(key);
-    const material = (
-      <meshStandardMaterial
-        key={key}
-        attachArray={i !== undefined ? "material" : undefined}
-        attach={i === undefined ? "material" : undefined}
-        {...(updatedParams as any)}
-      />
-    );
+  const renderMaterial = useCallback(
+    (params: MaterialParameters, i?: number) => {
+      const updatedParams: MaterialParameters = {
+        ...params,
+        transparent: true,
+        opacity: hovered ? 0.7 : 1
+      };
+      const key =
+        i &&
+        Object.values(updatedParams)
+          .map(value => (value ? value.toString() : ""))
+          .join() + i;
 
-    return material;
-  };
+      const material = (
+        <meshStandardMaterial
+          key={key}
+          attachArray={i !== undefined ? "material" : undefined}
+          attach={i === undefined ? "material" : undefined}
+          {...(updatedParams as any)}
+        />
+      );
+
+      return material;
+    },
+    [materialParams]
+  );
 
   return (
     <group
-      position={[position[0], minHeight, position[1]]}
+      position={[position[0], minHeight + yOffset, position[1]]}
       rotation={[0, angle, 0]}
       scale={[scale.x, scale.y, scale.z]}
     >
@@ -246,12 +259,12 @@ export default observer((props: EntityProps) => {
         ref={mesh}
         position={[-pivot[0], -pivot[1], -pivot[2]]}
         rotation={[faceUp ? Math.PI : 0, 0, 0]}
-        onPointerDown={handlePointerDown}
-        onPointerUp={handlePointerUp}
-        onPointerMove={handlePointerMove}
-        onPointerOver={handlePointerHoverOver}
-        onPointerOut={handlePointerHoverOut}
-        onClick={handleClick}
+        onPointerDown={!preview ? handlePointerDown : undefined}
+        onPointerUp={!preview ? handlePointerUp : undefined}
+        onPointerMove={!preview ? handlePointerMove : undefined}
+        onPointerOver={!preview ? handlePointerHoverOver : undefined}
+        onPointerOut={!preview ? handlePointerHoverOut : undefined}
+        onClick={!preview ? handleClick : undefined}
         castShadow={castShadows}
         receiveShadow
       >
@@ -262,8 +275,8 @@ export default observer((props: EntityProps) => {
       </mesh>
       {children}
       {hoverMessage && hovered && (
-        <Dom position={[0, 0, 0]} center>
-          <h3>{hoverMessage}</h3>
+        <Dom position={[0, 0.5, 0]} center style={{ pointerEvents: "none" }}>
+          <h3 style={{ pointerEvents: "none" }}>{hoverMessage}</h3>
         </Dom>
       )}
     </group>

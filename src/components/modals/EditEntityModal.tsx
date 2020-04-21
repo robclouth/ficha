@@ -9,45 +9,41 @@ import {
   FormControl,
   FormHelperText,
   FormLabel,
+  Grid,
+  IconButton,
   Input,
+  InputAdornment,
+  InputProps,
   makeStyles,
   MenuItem,
+  Popover,
   Select,
-  Typography,
-  useTheme,
   Slider,
-  InputProps,
-  InputAdornment,
-  IconButton,
-  Popover
+  Typography,
+  useTheme
 } from "@material-ui/core";
 import InsertEmoticonIcon from "@material-ui/icons/InsertEmoticon";
-
+//@ts-ignore
+import { Picker } from "emoji-mart";
+import "emoji-mart/css/emoji-mart.css";
+import { draft, Draft } from "mobx-keystone";
 import { observer } from "mobx-react";
-import React, { useState, useRef, useMemo, useEffect } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { CirclePicker } from "react-color";
-import { Canvas, extend, useThree, useFrame } from "react-three-fiber";
+import { Canvas, extend, useFrame, useThree } from "react-three-fiber";
 //@ts-ignore
 import AutoSizer from "react-virtualized-auto-sizer";
 //@ts-ignore
 import { FixedSizeList, ListChildComponentProps } from "react-window";
+import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 import { $enum } from "ts-enum-util";
 import Card from "../../models/game/Card";
-import CardComponent from "../game/entities/Card";
 import Deck from "../../models/game/Deck";
 import Entity, { EntityType, Shape } from "../../models/game/Entity";
 import EntitySet, { entitySetRef } from "../../models/game/EntitySet";
 import Piece from "../../models/game/Piece";
 import PieceSet from "../../models/game/PieceSet";
 import { useStore } from "../../stores/RootStore";
-import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
-import { draft } from "mobx-keystone";
-import { DirectionalLight } from "three";
-import "emoji-mart/css/emoji-mart.css";
-//@ts-ignore
-import { Picker } from "emoji-mart";
-import { values } from "mobx";
-import classes from "*.module.css";
 
 extend({ OrbitControls });
 
@@ -140,6 +136,7 @@ type EmojiInputProps = InputProps & {
 };
 
 const EmojiInput = observer((props: EmojiInputProps) => {
+  const { onTextChange, ...inputProps } = props;
   const classes = useStyles();
   const theme = useTheme();
   const [anchorEl, setAnchorEl] = useState<HTMLButtonElement | null>(null);
@@ -155,8 +152,9 @@ const EmojiInput = observer((props: EmojiInputProps) => {
   return (
     <>
       <Input
-        {...props}
-        onChange={e => props.onTextChange(e.target.value)}
+        {...inputProps}
+        margin="dense"
+        onChange={e => onTextChange(e.target.value)}
         endAdornment={
           <InputAdornment position="end">
             <IconButton onClick={handleClick}>
@@ -181,7 +179,7 @@ const EmojiInput = observer((props: EmojiInputProps) => {
       >
         <Picker
           title="Pick an emoji"
-          native="true"
+          native={true}
           autoFocus
           color={theme.palette.primary.main}
           theme="dark"
@@ -195,9 +193,15 @@ const EmojiInput = observer((props: EmojiInputProps) => {
 });
 
 const CardEditor = observer(
-  ({ card, showBackInput = true }: { card: Card; showBackInput?: boolean }) => {
+  ({
+    entity,
+    showBackInput = true
+  }: {
+    entity: Entity;
+    showBackInput?: boolean;
+  }) => {
     const classes = useStyles();
-
+    const card = entity as Card;
     const {
       frontImageUrl,
       backImageUrl,
@@ -264,7 +268,7 @@ const CardEditor = observer(
             value={cornerValue}
             onTextChange={text => (card.cornerValue = text)}
             fullWidth
-            placeholder="Value"
+            placeholder="Corner text"
           />
         </FormControl>
         <FormControl className={classes.formControl}>
@@ -272,7 +276,7 @@ const CardEditor = observer(
             value={centerValue}
             onTextChange={text => (card.centerValue = text)}
             fullWidth
-            placeholder="Value"
+            placeholder="Center text"
           />
         </FormControl>
         <FormControl className={classes.formControl}>
@@ -310,9 +314,10 @@ const CardEditor = observer(
   }
 );
 
-const PieceEditor = observer(({ piece }: { piece: Piece }) => {
+const PieceEditor = observer(({ entity }: { entity: Entity }) => {
   const classes = useStyles();
 
+  const piece = entity as Piece;
   const { color, shape } = piece;
 
   useEffect(() => {
@@ -392,7 +397,9 @@ const PieceEditor = observer(({ piece }: { piece: Piece }) => {
           {$enum(Shape)
             .getEntries()
             .map(entry => (
-              <MenuItem value={entry[1]}>{entry[0]}</MenuItem>
+              <MenuItem key={entry[1]} value={entry[1]}>
+                {entry[0]}
+              </MenuItem>
             ))}
         </Select>
       </FormControl>
@@ -464,16 +471,140 @@ const PieceEditor = observer(({ piece }: { piece: Piece }) => {
   );
 });
 
+type InputSliderProps = {
+  value: number;
+  min: number;
+  max: number;
+  onChange: (value: number) => void;
+};
+const InputSlider = observer(
+  ({ value, onChange, min, max }: InputSliderProps) => {
+    const classes = useStyles();
+
+    const handleSliderChange = (event: any, newValue: number | number[]) => {
+      onChange(newValue as number);
+    };
+
+    const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+      onChange(event.target.value === "" ? min : Number(event.target.value));
+    };
+
+    const handleBlur = () => {
+      if (value < min) {
+        onChange(min);
+      } else if (value > max) {
+        onChange(max);
+      }
+    };
+
+    return (
+      <Grid
+        container
+        spacing={2}
+        alignItems="center"
+        style={{ paddingLeft: 10 }}
+      >
+        <Grid item xs>
+          <Slider
+            value={value}
+            onChange={handleSliderChange}
+            aria-labelledby="input-slider"
+          />
+        </Grid>
+        <Grid item>
+          <Input
+            style={{ width: 42 }}
+            value={value}
+            margin="dense"
+            onChange={handleInputChange}
+            onBlur={handleBlur}
+            inputProps={{
+              step: 1,
+              min,
+              max,
+              type: "number",
+              "aria-labelledby": "input-slider"
+            }}
+          />
+        </Grid>
+      </Grid>
+    );
+  }
+);
+
+type EntityListProps = {
+  entitySet: EntitySet;
+  editor: React.FunctionComponent<any>;
+};
+
+const EntityList = observer(({ entitySet, editor }: EntityListProps) => {
+  const classes = useStyles();
+
+  const renderRow = useCallback(
+    ({ data, index, style }: ListChildComponentProps) => {
+      const { entity, count } = data[index];
+
+      return (
+        <Box
+          key={index}
+          style={style}
+          flexDirection="column"
+          alignItems="stretch"
+        >
+          <FormControl
+            className={classes.formControl}
+            style={{ width: "100%" }}
+          >
+            <FormLabel>Count</FormLabel>
+            <InputSlider
+              value={count}
+              onChange={value => entitySet.setCount(entity, value)}
+              min={1}
+              max={1000}
+            />
+          </FormControl>
+          {React.createElement(editor, { entity })}
+          <Button fullWidth onClick={() => entitySet.removeEntity(entity)}>
+            Remove
+          </Button>
+          <Divider />
+        </Box>
+      );
+    },
+    [entitySet]
+  );
+
+  const items = entitySet.allEntities.map(entity => ({
+    entity,
+    count: entitySet.entityCounts.get(entity.$modelId)
+  }));
+
+  return (
+    <AutoSizer disableHeight>
+      {(size: any) => (
+        <FixedSizeList
+          className="List"
+          height={entitySet.allEntities.length > 0 ? cardComponentHeight : 0}
+          itemCount={entitySet.allEntities.length}
+          itemSize={cardComponentHeight}
+          itemData={items}
+          width={size.width}
+        >
+          {renderRow}
+        </FixedSizeList>
+      )}
+    </AutoSizer>
+  );
+});
+
 const cardComponentHeight = 500;
 
 type SetEditorProps = {
   entitySet: EntitySet;
-  childType: EntityType;
 };
 
-const SetEditor = observer(({ entitySet, childType }: SetEditorProps) => {
+const DeckEditor = observer(({ entitySet }: SetEditorProps) => {
   const classes = useStyles();
-  const theme = useTheme();
   const [backImageUrl, setBackImageUrl] = useState("");
 
   const handleBackImageUrlChange = (url: string) => {
@@ -493,21 +624,6 @@ const SetEditor = observer(({ entitySet, childType }: SetEditorProps) => {
         backImageUrl,
         ownerSet: entitySetRef(entitySet)
       })
-    );
-  };
-
-  const renderRow = ({ data, index, style }: ListChildComponentProps) => {
-    const entity = entitySet.entities[index];
-    if (!entity) return null;
-
-    return (
-      <Box style={style}>
-        <CardEditor card={entity as Card} />
-        <Button fullWidth onClick={() => entitySet.removeEntity(entity)}>
-          Remove
-        </Button>
-        <Divider />
-      </Box>
     );
   };
 
@@ -534,21 +650,50 @@ const SetEditor = observer(({ entitySet, childType }: SetEditorProps) => {
         gutterBottom
       >{`${entitySet.allEntities.length} cards`}</Typography>
       <Button onClick={() => handleAddEntity("")}>Add card</Button>
-      <AutoSizer disableHeight>
-        {(size: any) => (
-          <FixedSizeList
-            // style={{ maxHeight: 400 }}
-            className="List"
-            height={entitySet.allEntities.length > 0 ? cardComponentHeight : 0}
-            itemCount={entitySet.allEntities.length}
-            itemSize={cardComponentHeight}
-            width={size.width}
-          >
-            {renderRow}
-          </FixedSizeList>
-        )}
-      </AutoSizer>
+      <EntityList entitySet={entitySet} editor={CardEditor} />
     </Box>
+  );
+});
+
+const PieceSetEditor = observer(({ entitySet }: SetEditorProps) => {
+  const handleAddEntity = (frontImageUrl: string) => {
+    entitySet.addEntity(
+      new Piece({
+        ownerSet: entitySetRef(entitySet)
+      })
+    );
+  };
+
+  return (
+    <Box display="flex" flexDirection="column">
+      <Typography
+        variant="body1"
+        gutterBottom
+      >{`${entitySet.allEntities.length} pieces`}</Typography>
+      <Button onClick={() => handleAddEntity("")}>Add piece</Button>
+      <EntityList entitySet={entitySet} editor={PieceEditor} />
+    </Box>
+  );
+});
+
+type EntityEditorProps = {
+  entityDraft: Draft<Entity>;
+  editor: React.ReactNode;
+};
+const EntityEditor = observer(({ entityDraft, editor }: EntityEditorProps) => {
+  const classes = useStyles();
+  return (
+    <>
+      <FormControl className={classes.formControl}>
+        <Input
+          value={entityDraft.data.name}
+          onChange={e => (entityDraft.data.name = e.target.value)}
+          fullWidth
+          placeholder="Name"
+        />
+      </FormControl>
+      {editor}
+    </>
   );
 });
 
@@ -574,12 +719,14 @@ export default observer(
     const targetEntity = React.useMemo(() => {
       if (isEditing) return entity!;
 
-      if (type === EntityType.Deck) return new Deck({});
-      else if (type === EntityType.Card) return new Card({});
-      else if (type === EntityType.PieceSet) return new PieceSet({});
-      else if (type === EntityType.Piece) return new Piece({});
+      if (type === EntityType.Deck) return new Deck({ name: "New Deck" });
+      else if (type === EntityType.Card) return new Card({ name: "New Card" });
+      else if (type === EntityType.PieceSet)
+        return new PieceSet({ name: "New Piece Set" });
+      else if (type === EntityType.Piece)
+        return new Piece({ name: "New Piece" });
       else return new Deck({});
-    }, [type, entity, open]);
+    }, [type, open]);
 
     const entityDraft = draft(targetEntity);
     entityDraft.data.position = [0, 0];
@@ -598,23 +745,13 @@ export default observer(
 
     let typeEditor: React.ReactNode = null;
     if (entityDraft.data.type === EntityType.Deck) {
-      typeEditor = (
-        <SetEditor
-          entitySet={entityDraft.data as EntitySet}
-          childType={EntityType.Card}
-        />
-      );
+      typeEditor = <DeckEditor entitySet={entityDraft.data as EntitySet} />;
     } else if (entityDraft.data.type === EntityType.Card) {
-      typeEditor = <CardEditor card={entityDraft.data as Card} />;
+      typeEditor = <CardEditor entity={entityDraft.data} />;
     } else if (entityDraft.data.type === EntityType.PieceSet) {
-      typeEditor = (
-        <SetEditor
-          entitySet={entityDraft.data as EntitySet}
-          childType={EntityType.Piece}
-        />
-      );
+      typeEditor = <PieceSetEditor entitySet={entityDraft.data as EntitySet} />;
     } else if (entityDraft.data.type === EntityType.Piece) {
-      typeEditor = <PieceEditor piece={entityDraft.data as Piece} />;
+      typeEditor = <PieceEditor entity={entityDraft.data} />;
     }
 
     return (
@@ -648,15 +785,7 @@ export default observer(
                   </Select>
                 </FormControl>
               )}
-              <FormControl className={classes.formControl}>
-                <Input
-                  value={entityDraft.data.name}
-                  onChange={e => (entityDraft.data.name = e.target.value)}
-                  fullWidth
-                  placeholder="Name"
-                />
-              </FormControl>
-              {typeEditor}
+              <EntityEditor entityDraft={entityDraft} editor={typeEditor} />
             </Box>
             <Preview entity={entityDraft.data} active={open} />
           </Box>

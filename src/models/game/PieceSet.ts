@@ -3,6 +3,10 @@ import { ExtendedModel, model } from "mobx-keystone";
 import { EntityType } from "./Entity";
 import EntitySet from "./EntitySet";
 import Piece from "./Piece";
+import PieceSetComponent, {
+  PieceSetProps
+} from "../../components/game/entities/PieceSet";
+import React from "react";
 
 @model("PieceSet")
 export default class PieceSet extends ExtendedModel(EntitySet, {}) {
@@ -18,5 +22,9 @@ export default class PieceSet extends ExtendedModel(EntitySet, {}) {
 
   @computed get allPieces() {
     return this.allEntities as Piece[];
+  }
+
+  render(props: PieceSetProps): JSX.Element {
+    return React.createElement(PieceSetComponent, props);
   }
 }

@@ -6,7 +6,8 @@ import {
   model,
   modelAction,
   prop,
-  rootRef
+  rootRef,
+  prop_mapObject
 } from "mobx-keystone";
 //@ts-ignore
 import shuffleArray from "shuffle-array";
@@ -21,7 +22,8 @@ export const entitySetRef = rootRef<EntitySet>("EntitySetRef", {
 @model("EntitySet")
 export default class EntitySet extends ExtendedModel(Entity, {
   entities: prop<Entity[]>(() => [], { setterAction: true }),
-  childType: prop<EntityType>(EntityType.Any, { setterAction: true })
+  childType: prop<EntityType>(EntityType.Any, { setterAction: true }),
+  entityCounts: prop_mapObject(() => new Map<string, number>())
 }) {
   onInit() {
     super.onInit();
@@ -41,14 +43,36 @@ export default class EntitySet extends ExtendedModel(Entity, {
     return [...this.entities, ...this.looseEntities];
   }
 
+  @computed get totalEntities() {
+    return Array.from(this.entityCounts.values()).reduce(
+      (total, count) => (total += count),
+      0
+    );
+  }
+
+  // @computed get entitiesWithDuplicates() {
+  //   return this.ene;
+  // }
+
+  getCount(entity: Entity) {
+    return this.entityCounts.get(entity.$modelId) || 0;
+  }
+
+  @modelAction
+  setCount(entity: Entity, count: number) {
+    this.entityCounts.set(entity.$modelId, count);
+  }
+
   @modelAction
   addEntity(entity: Entity) {
     this.entities.unshift(entity);
+    this.setCount(entity, 1);
   }
 
   @modelAction
   removeEntity(entity: Entity) {
     this.entities.splice(this.entities.indexOf(entity), 1);
+    this.entityCounts.delete(entity.$modelId);
   }
 
   @modelAction
@@ -84,7 +108,24 @@ export default class EntitySet extends ExtendedModel(Entity, {
 
   @modelAction
   take(count: number) {
+    if (this.totalEntities === 0) return undefined;
+
     const entity = this.entities[this.faceUp ? 0 : this.entities.length - 1];
+
+    this.removeEntity(entity);
+    entity.position[0] = this.position[0];
+    entity.position[1] = this.position[1];
+    entity.faceUp = this.faceUp;
+    this.gameState.addEntity(entity);
+    return entity;
+  }
+
+  @modelAction
+  takeRandom(count: number) {
+    if (this.totalEntities === 0) return undefined;
+
+    const entity = this.entities[this.faceUp ? 0 : this.entities.length - 1];
+
     this.removeEntity(entity);
     entity.position[0] = this.position[0];
     entity.position[1] = this.position[1];

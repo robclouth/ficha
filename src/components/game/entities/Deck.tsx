@@ -19,7 +19,7 @@ export default observer((props: DeckProps) => {
 
   const { entity } = props;
   const deck = entity as Deck;
-  const { cards, allCards } = deck;
+  const { cards, allCards, name } = deck;
 
   const contextMenuItems: ContextMenuItem[] = [
     {
@@ -130,6 +130,7 @@ export default observer((props: DeckProps) => {
       materialParams={materialParams}
       contextMenuItems={contextMenuItems}
       dragAction={cards.length > 0 ? handleDrag : undefined}
+      hoverMessage={`${name} (${cards.length})`}
     />
   );
 });

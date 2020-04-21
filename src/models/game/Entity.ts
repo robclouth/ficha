@@ -82,6 +82,11 @@ export default class Entity extends Model({
   }
   @observable boundingBox: Box3 = new Box3();
 
+  @computed get countInSet() {
+    if (!this.ownerSet || !this.ownerSet.maybeCurrent) return 0;
+    return this.ownerSet.current.getCount(this);
+  }
+
   @computed get gameState() {
     return findParent<GameState>(
       this,
