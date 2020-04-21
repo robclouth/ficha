@@ -15,6 +15,8 @@ import {
 //@ts-ignore
 import shuffleArray from "shuffle-array";
 import Entity, { EntityType, entityRef } from "./Entity";
+import { Vector3 } from "./Entity";
+import { take as take_ } from "lodash";
 
 export const entitySetRef = rootRef<EntitySet>("EntitySetRef", {
   onResolvedValueChange(ref, newSet, oldSet) {
@@ -22,14 +24,20 @@ export const entitySetRef = rootRef<EntitySet>("EntitySetRef", {
   }
 });
 
+export type DealPosition = {
+  position: Vector3;
+  angle: number;
+  faceUp: boolean;
+};
+
 @model("EntitySet")
 export default class EntitySet extends ExtendedModel(Entity, {
   childType: prop<EntityType>(EntityType.Any, { setterAction: true }),
   containedEntities: prop<Entity[]>(() => [], { setterAction: true }),
   prototypes: prop<Entity[]>(() => [], { setterAction: true }),
   prototypeCounts: prop<{ [key: string]: number }>(() => ({})),
-
-  infinite: prop(false, { setterAction: true })
+  infinite: prop(false, { setterAction: true }),
+  savedDeal: prop<DealPosition[] | undefined>(undefined, { setterAction: true })
 }) {
   onInit() {
     super.onInit();
@@ -115,53 +123,31 @@ export default class EntitySet extends ExtendedModel(Entity, {
   }
 
   @modelAction
-  shuffleAll() {
-    this.shuffleEntities(this.allEntities);
-  }
-
-  @modelAction
-  shuffleEntities(entities: Entity[]) {
-    const shuffledEntities = entities.map(entity => clone(entity));
-    shuffleArray(shuffledEntities);
-    this.containedEntities = shuffledEntities;
-    // for (let i = 0; i < shuffledEntities.length; i++) {
-    //   const card = entities[i];
-    //   this.swapEntities(card, shuffledEntities[i]);
-    // }
-  }
-
-  @modelAction
-  swapEntities(entity1: Entity, entity2: Entity) {
-    // card1.frontImageUrl = card2.frontImageUrl;
-    // card1.backImageUrl = card2.backImageUrl;
-    // card1.title = card2.title;
-    // card1.subtitle = card2.subtitle;
-    // card1.body = card2.body;
-    // card1.value = card2.value;
-  }
-
-  @modelAction
   take(count: number) {
-    let entity: Entity;
+    let entities: Entity[] = [];
     if (this.infinite) {
-      entity = this.instantiateFromPrototype(
-        this.prototypesWithDuplicates[
-          Math.floor(Math.random() * this.prototypesWithDuplicates.length)
-        ]
-      );
+      for (let i = 0; i < count; i++)
+        entities.push(
+          this.instantiateFromPrototype(
+            this.prototypesWithDuplicates[
+              Math.floor(Math.random() * this.prototypesWithDuplicates.length)
+            ]
+          )
+        );
     } else {
-      if (this.totalEntities === 0) return undefined;
+      let list = [...this.containedEntities];
+      if (!this.faceUp) list.reverse();
 
-      entity = this.containedEntities[
-        this.faceUp ? 0 : this.containedEntities.length - 1
-      ];
-      this.removeEntity(entity);
-      entity.position = { ...this.position };
-      entity.faceUp = this.faceUp;
-      this.gameState.addEntity(entity);
+      entities = take_(list, count);
+      entities.forEach(entity => {
+        this.removeEntity(entity);
+        entity.position = { ...this.position };
+        entity.faceUp = this.faceUp;
+        this.gameState.addEntity(entity);
+      });
     }
 
-    return entity;
+    return entities;
   }
 
   @modelAction
@@ -178,6 +164,29 @@ export default class EntitySet extends ExtendedModel(Entity, {
     entity.faceUp = this.faceUp;
     this.gameState.addEntity(entity);
     return entity;
+  }
+
+  @modelAction
+  saveDeal() {
+    this.savedDeal = this.externalEntities.map(entity => ({
+      position: { ...entity.position },
+      angle: entity.angle,
+      faceUp: entity.faceUp
+    }));
+  }
+
+  @modelAction
+  deal() {
+    if (this.savedDeal) {
+      this.savedDeal.forEach(dealPosition => {
+        const entity = this.take(1);
+        if (entity.length > 0) {
+          entity[0].position = { ...dealPosition.position };
+          entity[0].angle = dealPosition.angle;
+          entity[0].faceUp = dealPosition.faceUp;
+        }
+      });
+    }
   }
 
   @modelAction

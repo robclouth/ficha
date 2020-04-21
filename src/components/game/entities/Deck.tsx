@@ -19,7 +19,7 @@ export default observer((props: DeckProps) => {
 
   const { entity } = props;
   const deck = entity as Deck;
-  const { cards, allCards, name } = deck;
+  const { cards, allCards, name, externalEntities, savedDeal } = deck;
 
   const contextMenuItems: ContextMenuItem[] = [
     {
@@ -56,11 +56,19 @@ export default observer((props: DeckProps) => {
     contextMenuItems.push(...items);
   }
 
-  if (allCards.length > 0) {
+  if (externalEntities.length > 0) {
     contextMenuItems.push({
-      label: "Shuffle placed",
+      label: "Save deal",
       type: "action",
-      action: () => deck.shuffleAll()
+      action: () => deck.saveDeal()
+    });
+  }
+
+  if (savedDeal) {
+    contextMenuItems.push({
+      label: "Deal",
+      type: "action",
+      action: () => deck.deal()
     });
   }
 
@@ -119,7 +127,7 @@ export default observer((props: DeckProps) => {
 
   const handleDrag = (e: PointerEvent) => {
     const card = deck.take(1);
-    uiState.setDraggingEntity(card);
+    if (card.length > 0) uiState.setDraggingEntity(card[0]);
   };
 
   return (

@@ -25,10 +25,12 @@ export default observer((props: PieceSetProps) => {
   const { entity } = props;
   const pieceSet = entity as PieceSet;
   const {
-    containedEntities: entities,
+    containedEntities,
     allEntities,
     name,
-    prototypes
+    prototypes,
+    externalEntities,
+    savedDeal
   } = pieceSet;
 
   const contextMenuItems: ContextMenuItem[] = [
@@ -39,7 +41,7 @@ export default observer((props: PieceSetProps) => {
     }
   ];
 
-  if (entities.length > 0) {
+  if (containedEntities.length > 0) {
     const items: ContextMenuItem[] = [
       {
         label: "Take one",
@@ -61,11 +63,19 @@ export default observer((props: PieceSetProps) => {
     contextMenuItems.push(...items);
   }
 
-  if (allEntities.length > 0) {
+  if (externalEntities.length > 0) {
     contextMenuItems.push({
-      label: "Shuffle placed",
+      label: "Save deal",
       type: "action",
-      action: () => pieceSet.shuffleAll()
+      action: () => pieceSet.saveDeal()
+    });
+  }
+
+  if (savedDeal) {
+    contextMenuItems.push({
+      label: "Deal",
+      type: "action",
+      action: () => pieceSet.deal()
     });
   }
 
@@ -80,7 +90,7 @@ export default observer((props: PieceSetProps) => {
 
   const handleDrag = (e: PointerEvent) => {
     const piece = pieceSet.take(1);
-    uiState.setDraggingEntity(piece);
+    if (piece.length > 0) uiState.setDraggingEntity(piece[0]);
   };
 
   return (
@@ -95,8 +105,8 @@ export default observer((props: PieceSetProps) => {
       }
       materialParams={materialParams}
       contextMenuItems={contextMenuItems}
-      dragAction={entities.length > 0 ? handleDrag : undefined}
-      hoverMessage={`${name} (${entities.length})`}
+      dragAction={containedEntities.length > 0 ? handleDrag : undefined}
+      hoverMessage={`${name} (${containedEntities.length})`}
     >
       {previewPrototypes &&
         previewPrototypes.map((prototype, i) => {
