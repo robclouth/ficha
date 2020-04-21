@@ -138,7 +138,7 @@ export default observer((props: EntityProps) => {
 
   const handlePointerUp = (e: any) => {
     if (e.button === 0) {
-      if (isDragging) uiState.setDraggingEntity();
+      uiState.setDraggingEntity();
       setPressed(false);
       e.target.releasePointerCapture(e.pointerId);
     } else if (e.button === 2) {
@@ -246,7 +246,7 @@ export default observer((props: EntityProps) => {
 
       return material;
     },
-    [materialParams]
+    [materialParams, hovered]
   );
 
   return (
