@@ -75,7 +75,7 @@ export default class EntitySet extends ExtendedModel(Entity, {
 
   @modelAction
   addPrototype(prototype: Entity) {
-    this.prototypes.unshift(prototype);
+    this.prototypes.push(prototype);
     this.setPrototypeCount(prototype, 1);
   }
 
@@ -97,7 +97,7 @@ export default class EntitySet extends ExtendedModel(Entity, {
 
   @modelAction
   addEntity(entity: Entity) {
-    this.containedEntities.unshift(entity);
+    this.containedEntities.push(entity);
   }
 
   @modelAction

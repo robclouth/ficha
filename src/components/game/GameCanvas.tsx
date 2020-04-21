@@ -137,7 +137,7 @@ export default observer<React.FC<GameCanvasProps>>(() => {
         />
         <planeBufferGeometry attach="geometry" args={[50, 50]} />
       </mesh>
-      <gridHelper args={[50, 50]} position={[0, 0.01, 0]} />
+      <gridHelper args={[50, 50]} position={[0, 0.001, 0]} />
       <CameraControl />
     </Canvas>
   );

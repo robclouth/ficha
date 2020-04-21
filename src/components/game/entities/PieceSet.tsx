@@ -69,7 +69,7 @@ export default observer((props: PieceSetProps) => {
     });
   }
 
-  const previewPrototypes = take(prototypes, 5).map(prototype =>
+  const previewPrototypes = take(prototypes, 8).map(prototype =>
     clone(prototype)
   );
 

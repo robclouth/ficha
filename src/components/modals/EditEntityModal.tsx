@@ -20,15 +20,18 @@ import {
   Select,
   Slider,
   Typography,
-  useTheme
+  useTheme,
+  Paper
 } from "@material-ui/core";
+import Pagination from "@material-ui/lab/Pagination";
+
 import InsertEmoticonIcon from "@material-ui/icons/InsertEmoticon";
 //@ts-ignore
 import { Picker } from "emoji-mart";
 import "emoji-mart/css/emoji-mart.css";
 import { draft, Draft } from "mobx-keystone";
 import { observer } from "mobx-react";
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useMemo, useEffect, useRef, useState } from "react";
 import { CirclePicker } from "react-color";
 import { Canvas, extend, useFrame, useThree } from "react-three-fiber";
 //@ts-ignore
@@ -68,8 +71,6 @@ const colorOptions = [
   "#000000",
   "#ffffff"
 ];
-
-const controlsWidth = 250;
 
 const useStyles = makeStyles(theme => ({
   formControl: {
@@ -114,8 +115,16 @@ function PreviewControls() {
 
 const Preview = observer(
   ({ entity, active }: { entity: Entity; active: boolean }) => {
+    const theme = useTheme();
     return (
-      <Box display="flex" alignItems="center" marginLeft={2} width={280}>
+      <Paper
+        variant="outlined"
+        style={{
+          display: "flex",
+          alignItems: "center",
+          flex: 1
+        }}
+      >
         <Canvas
           invalidateFrameloop={!active}
           noEvents
@@ -127,7 +136,7 @@ const Preview = observer(
           {entity.render({ entity, pivot: [0, 0, 0] })}
           <gridHelper args={[11, 11]} />
         </Canvas>
-      </Box>
+      </Paper>
     );
   }
 );
@@ -336,7 +345,7 @@ const PieceEditor = observer(({ entity }: { entity: Entity }) => {
   if (shape === Shape.Cube) shapeControls = undefined;
   else if (shape === Shape.Cylinder) {
     shapeControls = (
-      <FormControl className={classes.formControl}>
+      <FormControl>
         <FormLabel>Sides</FormLabel>
         <Slider
           value={piece.shapeParam1}
@@ -349,7 +358,7 @@ const PieceEditor = observer(({ entity }: { entity: Entity }) => {
     );
   } else if (shape === Shape.Cone) {
     shapeControls = (
-      <FormControl className={classes.formControl}>
+      <FormControl>
         <FormLabel>Sides</FormLabel>
         <Slider
           value={piece.shapeParam1}
@@ -363,7 +372,7 @@ const PieceEditor = observer(({ entity }: { entity: Entity }) => {
   } else if (shape === Shape.Ring) {
     shapeControls = (
       <>
-        <FormControl className={classes.formControl}>
+        <FormControl>
           <FormLabel>Radial segments</FormLabel>
           <Slider
             value={piece.shapeParam1}
@@ -373,7 +382,7 @@ const PieceEditor = observer(({ entity }: { entity: Entity }) => {
             max={20}
           />
         </FormControl>
-        <FormControl className={classes.formControl}>
+        <FormControl>
           <FormLabel>Tubular segments</FormLabel>
           <Slider
             value={piece.shapeParam2}
@@ -389,7 +398,7 @@ const PieceEditor = observer(({ entity }: { entity: Entity }) => {
 
   return (
     <Box display="flex" flexDirection="column">
-      <FormControl className={classes.formControl}>
+      <FormControl className={classes.formControl} style={{ marginBottom: 20 }}>
         <Select
           fullWidth
           value={shape}
@@ -405,7 +414,7 @@ const PieceEditor = observer(({ entity }: { entity: Entity }) => {
         </Select>
       </FormControl>
       {shapeControls}
-      <FormControl className={classes.formControl}>
+      <FormControl>
         <FormLabel>Scale X</FormLabel>
         <Slider
           value={piece.scale.x}
@@ -416,7 +425,7 @@ const PieceEditor = observer(({ entity }: { entity: Entity }) => {
           step={0.1}
         />
       </FormControl>
-      <FormControl className={classes.formControl}>
+      <FormControl>
         <FormLabel>Scale Y</FormLabel>
         <Slider
           value={piece.scale.y}
@@ -427,7 +436,7 @@ const PieceEditor = observer(({ entity }: { entity: Entity }) => {
           step={0.1}
         />
       </FormControl>
-      <FormControl className={classes.formControl}>
+      <FormControl>
         <FormLabel>Scale Z</FormLabel>
         <Slider
           value={piece.scale.z}
@@ -536,67 +545,72 @@ const InputSlider = observer(
 type EntityListProps = {
   entitySet: EntitySet;
   editor: React.FunctionComponent<any>;
-  itemHeight: number;
+  childEntityName: string;
+  getNewEntity: () => Entity;
 };
 
 const EntityList = observer(
-  ({ entitySet, editor, itemHeight }: EntityListProps) => {
-    const classes = useStyles();
+  ({ entitySet, editor, getNewEntity, childEntityName }: EntityListProps) => {
+    const [index, setIndex] = useState(0);
+    const entity = entitySet.prototypes[index];
+    const count = entity && entitySet.prototypeCounts[entity.$modelId];
 
-    const renderRow = useCallback(
-      ({ data, index, style }: ListChildComponentProps) => {
-        const { entity, count } = data[index];
+    const handleAddEntity = () => {
+      entitySet.addPrototype(getNewEntity());
+      if (entitySet.prototypes.length > 1) setIndex(index + 1);
+    };
 
-        return (
-          <Box
-            key={index}
-            style={style}
-            flexDirection="column"
-            alignItems="stretch"
-          >
-            <FormControl
-              className={classes.formControl}
-              style={{ width: "100%" }}
-            >
-              <FormLabel>Count</FormLabel>
-              <InputSlider
-                value={count}
-                onChange={value => entitySet.setPrototypeCount(entity, value)}
-                min={1}
-                max={1000}
-              />
-            </FormControl>
-            {React.createElement(editor, { entity })}
-            <Button fullWidth onClick={() => entitySet.removePrototype(entity)}>
-              Remove
-            </Button>
-            <Divider />
-          </Box>
-        );
-      },
-      [entitySet]
-    );
-
-    const items = entitySet.prototypes.map(entity => ({
-      entity,
-      count: entitySet.prototypeCounts[entity.$modelId]
-    }));
+    const handleRemove = () => {
+      if (index <= entitySet.prototypes.length)
+        setIndex(entitySet.prototypes.length - 1);
+      entitySet.removePrototype(entity);
+    };
 
     return (
-      <AutoSizer disableHeight>
-        {(size: any) => (
-          <FixedSizeList
-            className="List"
-            height={entitySet.prototypes.length > 0 ? itemHeight : 0}
-            itemCount={entitySet.prototypes.length}
-            itemSize={itemHeight}
-            itemData={items}
-            width={size.width}
-          >
-            {renderRow}
-          </FixedSizeList>
+      <Box display="flex" flexDirection="column" alignItems="center" flex={1}>
+        <Box>
+          <Button onClick={() => handleAddEntity()}>Add</Button>
+          {entitySet.prototypes.length > 0 && (
+            <Button onClick={handleRemove}>Remove</Button>
+          )}
+        </Box>
+        {entitySet.prototypes.length > 0 && (
+          <>
+            <Box
+              flexDirection="column"
+              alignItems="stretch"
+              flex={1}
+              marginBottom={1}
+            >
+              <FormControl style={{ width: "100%" }}>
+                <FormLabel>Count</FormLabel>
+                <Slider
+                  value={count}
+                  onChange={(e, value) =>
+                    entitySet.setPrototypeCount(entity, value as number)
+                  }
+                  valueLabelDisplay="auto"
+                  min={0}
+                  max={100}
+                />
+              </FormControl>
+              {React.createElement(editor, { entity, showBackInput: false })}
+            </Box>
+            <Typography
+              variant="body1"
+              gutterBottom
+            >{`${entitySet.prototypesWithDuplicates.length} ${childEntityName}`}</Typography>
+            <Pagination
+              size="small"
+              count={entitySet.prototypes.length}
+              siblingCount={1}
+              boundaryCount={1}
+              page={index + 1}
+              onChange={(e, value) => setIndex(value - 1)}
+            />
+          </>
         )}
-      </AutoSizer>
+      </Box>
     );
   }
 );
@@ -620,7 +634,7 @@ const DeckEditor = observer(({ entitySet }: SetEditorProps) => {
   };
 
   const handleAddEntity = (frontImageUrl: string) => {
-    entitySet.addEntity(
+    entitySet.addPrototype(
       new Card({
         frontImageUrl,
         backImageUrl,
@@ -630,7 +644,7 @@ const DeckEditor = observer(({ entitySet }: SetEditorProps) => {
   };
 
   return (
-    <Box display="flex" flexDirection="column">
+    <Box display="flex" flexDirection="column" flex={1}>
       <FormControl className={classes.formControl}>
         <Input
           value={backImageUrl}
@@ -647,33 +661,35 @@ const DeckEditor = observer(({ entitySet }: SetEditorProps) => {
           onChange={e => handleBulkAdd(e.target.value)}
         />
       </FormControl>
-      <Typography
-        variant="body1"
-        gutterBottom
-      >{`${entitySet.allEntities.length} cards`}</Typography>
-      <Button onClick={() => handleAddEntity("")}>Add card</Button>
-      <EntityList entitySet={entitySet} editor={CardEditor} itemHeight={500} />
+      <EntityList
+        entitySet={entitySet}
+        editor={CardEditor}
+        childEntityName="cards"
+        getNewEntity={() =>
+          new Card({
+            backImageUrl,
+            frontImageUrl: "",
+            ownerSet: entitySetRef(entitySet)
+          })
+        }
+      />
     </Box>
   );
 });
 
 const PieceSetEditor = observer(({ entitySet }: SetEditorProps) => {
-  const handleAddEntity = (frontImageUrl: string) => {
-    entitySet.addPrototype(
-      new Piece({
-        ownerSet: entitySetRef(entitySet)
-      })
-    );
-  };
-
   return (
-    <Box display="flex" flexDirection="column">
-      <Typography
-        variant="body1"
-        gutterBottom
-      >{`${entitySet.prototypesWithDuplicates.length} pieces`}</Typography>
-      <Button onClick={() => handleAddEntity("")}>Add piece</Button>
-      <EntityList entitySet={entitySet} editor={PieceEditor} itemHeight={500} />
+    <Box display="flex" flexDirection="column" flex={1}>
+      <EntityList
+        entitySet={entitySet}
+        editor={PieceEditor}
+        childEntityName="pieces"
+        getNewEntity={() =>
+          new Piece({
+            ownerSet: entitySetRef(entitySet)
+          })
+        }
+      />
     </Box>
   );
 });
@@ -682,21 +698,10 @@ type EntityEditorProps = {
   entity: Entity;
   editor: React.ReactNode;
 };
+
 const EntityEditor = observer(({ entity, editor }: EntityEditorProps) => {
   const classes = useStyles();
-  return (
-    <>
-      <FormControl className={classes.formControl}>
-        <Input
-          value={entity.name}
-          onChange={e => (entity.name = e.target.value)}
-          fullWidth
-          placeholder="Name"
-        />
-      </FormControl>
-      {editor}
-    </>
-  );
+  return <>{editor}</>;
 });
 
 export type ModalProps = {
@@ -716,21 +721,27 @@ export default observer(
 
     const isEditing = !!entity;
 
-    const targetEntity = React.useMemo(() => {
-      if (isEditing) return entity!;
+    const entityDraft = React.useMemo(() => {
+      let targetEntity: Entity;
 
-      if (type === EntityType.Deck) return new Deck({ name: "New Deck" });
-      else if (type === EntityType.Card) return new Card({ name: "New Card" });
-      else if (type === EntityType.PieceSet)
-        return new PieceSet({ name: "New Piece Set" });
-      else if (type === EntityType.Piece)
-        return new Piece({ name: "New Piece" });
-      else return new Deck({});
+      if (isEditing) targetEntity = entity!;
+      else {
+        if (type === EntityType.Deck)
+          targetEntity = new Deck({ name: "New Deck" });
+        else if (type === EntityType.Card)
+          targetEntity = new Card({ name: "New Card" });
+        else if (type === EntityType.PieceSet)
+          targetEntity = new PieceSet({ name: "New Piece Set" });
+        else if (type === EntityType.Piece)
+          targetEntity = new Piece({ name: "New Piece" });
+        else targetEntity = new Deck({});
+      }
+
+      const newDraft = draft(targetEntity);
+      newDraft.data.position = { x: 0, y: 0, z: 0 };
+      newDraft.data.angle = 0;
+      return newDraft;
     }, [type, isEditing]);
-
-    const entityDraft = draft(targetEntity);
-    entityDraft.data.position = { x: 0, y: 0, z: 0 };
-    entityDraft.data.angle = 0;
 
     const handleSaveClick = async () => {
       entityDraft.resetByPath(["position"]);
@@ -738,29 +749,30 @@ export default observer(
       entityDraft.commit();
       if (!isEditing) {
         if (positionGroundPlane)
-          targetEntity.position = {
+          entityDraft.originalData.position = {
             x: positionGroundPlane[0],
             y: 0,
             z: positionGroundPlane[1]
           };
-        gameState.addEntity(targetEntity);
+        gameState.addEntity(entityDraft.originalData);
       } else {
-        if (targetEntity instanceof EntitySet)
-          (targetEntity as EntitySet).updateInstances();
+        if (entityDraft.originalData instanceof EntitySet)
+          (entityDraft.originalData as EntitySet).updateInstances();
       }
       handleClose();
     };
 
-    let typeEditor: React.ReactNode = null;
-    if (entityDraft.data.type === EntityType.Deck) {
-      typeEditor = <DeckEditor entitySet={entityDraft.data as EntitySet} />;
-    } else if (entityDraft.data.type === EntityType.Card) {
-      typeEditor = <CardEditor entity={entityDraft.data} />;
-    } else if (entityDraft.data.type === EntityType.PieceSet) {
-      typeEditor = <PieceSetEditor entitySet={entityDraft.data as EntitySet} />;
-    } else if (entityDraft.data.type === EntityType.Piece) {
-      typeEditor = <PieceEditor entity={entityDraft.data} />;
-    }
+    let typeEditor: React.ReactNode = useMemo(() => {
+      if (entityDraft.data.type === EntityType.Deck) {
+        return <DeckEditor entitySet={entityDraft.data as EntitySet} />;
+      } else if (entityDraft.data.type === EntityType.Card) {
+        return <CardEditor entity={entityDraft.data} />;
+      } else if (entityDraft.data.type === EntityType.PieceSet) {
+        return <PieceSetEditor entitySet={entityDraft.data as EntitySet} />;
+      } else if (entityDraft.data.type === EntityType.Piece) {
+        return <PieceEditor entity={entityDraft.data} />;
+      }
+    }, [entityDraft.data.type]);
 
     return (
       <Modal
@@ -768,12 +780,13 @@ export default observer(
         handleClose={handleClose}
         title={`${isEditing ? "Edit" : "Add"} entity`}
         content={
-          <Box display="flex" height={600}>
+          <Box display="flex" height={650}>
             <Box
               display="flex"
               flexDirection="column"
               alignItems="stretch"
-              width={400}
+              width={250}
+              marginRight={2}
             >
               {!isEditing && (
                 <FormControl className={classes.formControl}>
@@ -789,9 +802,24 @@ export default observer(
                   </Select>
                 </FormControl>
               )}
+              <FormControl className={classes.formControl}>
+                <Input
+                  value={entityDraft.data.name}
+                  onChange={e => (entityDraft.data.name = e.target.value)}
+                  fullWidth
+                  placeholder="Name"
+                />
+              </FormControl>
+              <Preview entity={entityDraft.data} active={open} />
+            </Box>
+            <Box
+              display="flex"
+              flexDirection="column"
+              alignItems="stretch"
+              width={270}
+            >
               <EntityEditor entity={entityDraft.data} editor={typeEditor} />
             </Box>
-            <Preview entity={entityDraft.data} active={open} />
           </Box>
         }
         actions={
