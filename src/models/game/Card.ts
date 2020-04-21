@@ -8,7 +8,8 @@ export default class Card extends ExtendedModel(Entity, {
   title: prop("", { setterAction: true }),
   subtitle: prop("", { setterAction: true }),
   body: prop("", { setterAction: true }),
-  value: prop("", { setterAction: true })
+  cornerValue: prop("", { setterAction: true }),
+  centerValue: prop("", { setterAction: true })
 }) {
   onInit() {
     super.onInit();

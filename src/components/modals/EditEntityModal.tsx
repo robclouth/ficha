@@ -15,8 +15,14 @@ import {
   Select,
   Typography,
   useTheme,
-  Slider
+  Slider,
+  InputProps,
+  InputAdornment,
+  IconButton,
+  Popover
 } from "@material-ui/core";
+import InsertEmoticonIcon from "@material-ui/icons/InsertEmoticon";
+
 import { observer } from "mobx-react";
 import React, { useState, useRef, useMemo, useEffect } from "react";
 import { CirclePicker } from "react-color";
@@ -37,6 +43,11 @@ import { useStore } from "../../stores/RootStore";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 import { draft } from "mobx-keystone";
 import { DirectionalLight } from "three";
+import "emoji-mart/css/emoji-mart.css";
+//@ts-ignore
+import { Picker } from "emoji-mart";
+import { values } from "mobx";
+import classes from "*.module.css";
 
 extend({ OrbitControls });
 
@@ -67,6 +78,19 @@ const useStyles = makeStyles(theme => ({
   formControl: {
     marginTop: theme.spacing(1),
     marginBottom: theme.spacing(1)
+  },
+  emojiInput: {
+    "& .emoji-mart": {
+      borderWidth: 0,
+      fontFamily: theme.typography.fontFamily
+    },
+    "& .emoji-mart-dark": {
+      backgroundColor: theme.palette.background.default
+    },
+    "& .emoji-mart-category-label span": {
+      backgroundColor: theme.palette.background.default,
+      fontWeight: theme.typography.fontWeightRegular
+    }
   }
 }));
 
@@ -111,6 +135,65 @@ const Preview = observer(
   }
 );
 
+type EmojiInputProps = InputProps & {
+  onTextChange: (text: string) => void;
+};
+
+const EmojiInput = observer((props: EmojiInputProps) => {
+  const classes = useStyles();
+  const theme = useTheme();
+  const [anchorEl, setAnchorEl] = useState<HTMLButtonElement | null>(null);
+  const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleClose = () => {
+    setAnchorEl(null);
+  };
+  const open = Boolean(anchorEl);
+
+  return (
+    <>
+      <Input
+        {...props}
+        onChange={e => props.onTextChange(e.target.value)}
+        endAdornment={
+          <InputAdornment position="end">
+            <IconButton onClick={handleClick}>
+              <InsertEmoticonIcon />
+            </IconButton>
+          </InputAdornment>
+        }
+      />
+      <Popover
+        className={classes.emojiInput}
+        open={open}
+        anchorEl={anchorEl}
+        onClose={handleClose}
+        anchorOrigin={{
+          vertical: "bottom",
+          horizontal: "center"
+        }}
+        transformOrigin={{
+          vertical: "top",
+          horizontal: "center"
+        }}
+      >
+        <Picker
+          title="Pick an emoji"
+          native="true"
+          autoFocus
+          color={theme.palette.primary.main}
+          theme="dark"
+          onSelect={(emoji: any) =>
+            props.onTextChange(props.value + emoji.native)
+          }
+        />
+      </Popover>
+    </>
+  );
+});
+
 const CardEditor = observer(
   ({ card, showBackInput = true }: { card: Card; showBackInput?: boolean }) => {
     const classes = useStyles();
@@ -121,7 +204,8 @@ const CardEditor = observer(
       title,
       subtitle,
       body,
-      value,
+      centerValue,
+      cornerValue,
       color
     } = card;
 
@@ -152,33 +236,41 @@ const CardEditor = observer(
           </FormControl>
         )}
         <FormControl className={classes.formControl}>
-          <Input
+          <EmojiInput
             value={title}
-            onChange={e => (card.title = e.target.value)}
+            onTextChange={text => (card.title = text)}
             fullWidth
             placeholder="Title"
           />
         </FormControl>
         <FormControl className={classes.formControl}>
-          <Input
+          <EmojiInput
             value={subtitle}
-            onChange={e => (card.subtitle = e.target.value)}
+            onTextChange={text => (card.subtitle = text)}
             fullWidth
             placeholder="Subtitle"
           />
         </FormControl>
         <FormControl className={classes.formControl}>
-          <Input
+          <EmojiInput
             value={body}
-            onChange={e => (card.body = e.target.value)}
+            onTextChange={text => (card.body = text)}
             fullWidth
             placeholder="Body"
           />
         </FormControl>
         <FormControl className={classes.formControl}>
-          <Input
-            value={value}
-            onChange={e => (card.value = e.target.value)}
+          <EmojiInput
+            value={cornerValue}
+            onTextChange={text => (card.cornerValue = text)}
+            fullWidth
+            placeholder="Value"
+          />
+        </FormControl>
+        <FormControl className={classes.formControl}>
+          <EmojiInput
+            value={centerValue}
+            onTextChange={text => (card.centerValue = text)}
             fullWidth
             placeholder="Value"
           />
