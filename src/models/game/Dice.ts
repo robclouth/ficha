@@ -10,14 +10,15 @@ export enum DiceType {
   D4,
   D6,
   D8,
-  // D10,
+  D10,
   D12,
   D20
 }
 
 @model("Dice")
 export default class Dice extends ExtendedModel(Entity, {
-  diceType: prop<DiceType>({ setterAction: true })
+  diceType: prop<DiceType>({ setterAction: true }),
+  value: prop(0, { setterAction: true })
 }) {
   onInit() {
     super.onInit();
@@ -33,12 +34,12 @@ export default class Dice extends ExtendedModel(Entity, {
       [DiceType.D4]: 4,
       [DiceType.D6]: 6,
       [DiceType.D8]: 8,
-      // [DiceType.D10]: 10,
+      [DiceType.D10]: 10,
       [DiceType.D12]: 12,
       [DiceType.D20]: 20
     });
 
-    return Math.floor(Math.random() * numSides);
+    this.value = Math.floor(Math.random() * numSides);
   }
 
   render(props: DiceProps): JSX.Element {

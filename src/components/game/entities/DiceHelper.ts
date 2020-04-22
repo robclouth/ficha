@@ -1,7 +1,12 @@
 // @ts-nocheck
 import * as THREE from "three";
+import { uniqBy } from "lodash";
 
-class DiceObject {
+export class DiceObject {
+  geometry;
+  textures;
+  faceRotations;
+
   /**
    * @constructor
    * @param {object} options
@@ -11,7 +16,7 @@ class DiceObject {
    */
   constructor(options) {
     options = this.setDefaults(options, {
-      size: 100,
+      size: 0.1,
       fontColor: "#000000",
       backColor: "#ffffff"
     });
@@ -20,12 +25,6 @@ class DiceObject {
     this.size = options.size;
     this.invertUpside = false;
 
-    this.materialOptions = {
-      specular: 0x172022,
-      color: 0xf0f0f0,
-      shininess: 40,
-      shading: THREE.FlatShading
-    };
     this.labelColor = options.fontColor;
     this.diceColor = options.backColor;
   }
@@ -44,18 +43,31 @@ class DiceObject {
     return options;
   }
 
+  getFaceRotations() {
+    let offsets = [];
+    let vector = new THREE.Vector3(0, this.invertUpside ? -1 : 1);
+
+    const uniqueFaces = uniqBy(
+      this.geometry.faces.filter(face => face.materialIndex !== 0),
+      face => face.materialIndex
+    );
+
+    return uniqueFaces.map(face => {
+      const quaternion = new THREE.Quaternion();
+      quaternion.setFromUnitVectors(face.normal, vector);
+      return quaternion;
+    });
+  }
+
   getUpsideValue() {
     let vector = new THREE.Vector3(0, this.invertUpside ? -1 : 1);
     let closest_face;
     let closest_angle = Math.PI * 2;
-    for (let i = 0; i < this.object.geometry.faces.length; ++i) {
-      let face = this.object.geometry.faces[i];
+    for (let i = 0; i < this.geometry.faces.length; ++i) {
+      let face = this.geometry.faces[i];
       if (face.materialIndex === 0) continue;
 
-      let angle = face.normal
-        .clone()
-        .applyQuaternion(this.object.body.quaternion)
-        .angleTo(vector);
+      let angle = face.normal.clone().angleTo(vector);
       if (angle < closest_angle) {
         closest_angle = angle;
         closest_face = face;
@@ -63,41 +75,6 @@ class DiceObject {
     }
 
     return closest_face.materialIndex - 1;
-  }
-
-  getCurrentVectors() {
-    return {
-      position: this.object.body.position.clone(),
-      quaternion: this.object.body.quaternion.clone(),
-      velocity: this.object.body.velocity.clone(),
-      angularVelocity: this.object.body.angularVelocity.clone()
-    };
-  }
-
-  setVectors(vectors) {
-    this.object.body.position = vectors.position;
-    this.object.body.quaternion = vectors.quaternion;
-    this.object.body.velocity = vectors.velocity;
-    this.object.body.angularVelocity = vectors.angularVelocity;
-  }
-
-  shiftUpperValue(toValue) {
-    let geometry = this.object.geometry.clone();
-
-    let fromValue = this.getUpsideValue();
-
-    for (let i = 0, l = geometry.faces.length; i < l; ++i) {
-      let materialIndex = geometry.faces[i].materialIndex;
-      if (materialIndex === 0) continue;
-
-      materialIndex += toValue - fromValue - 1;
-      while (materialIndex > this.values) materialIndex -= this.values;
-      while (materialIndex < 1) materialIndex += this.values;
-
-      geometry.faces[i].materialIndex = materialIndex + 1;
-    }
-
-    this.object.geometry = geometry;
   }
 
   getChamferGeometry(vectors, faces, chamfer) {
@@ -217,19 +194,6 @@ class DiceObject {
     return geom;
   }
 
-  createShape(vertices, faces, radius) {
-    let cv = new Array(vertices.length),
-      cf = new Array(faces.length);
-    for (let i = 0; i < vertices.length; ++i) {
-      let v = vertices[i];
-      cv[i] = new CANNON.Vec3(v.x * radius, v.y * radius, v.z * radius);
-    }
-    for (let i = 0; i < faces.length; ++i) {
-      cf[i] = faces[i].slice(0, faces[i].length - 1);
-    }
-    return new CANNON.ConvexPolyhedron(cv, cf);
-  }
-
   getGeometry() {
     let radius = this.size * this.scaleFactor;
 
@@ -250,7 +214,6 @@ class DiceObject {
       this.tab,
       this.af
     );
-    geometry.cannon_shape = this.createShape(vectors, this.faces, radius);
 
     return geometry;
   }
@@ -281,8 +244,8 @@ class DiceObject {
     return texture;
   }
 
-  getMaterials() {
-    let materials = [];
+  getTextures() {
+    let textures = [];
     for (let i = 0; i < this.faceTexts.length; ++i) {
       let texture = null;
       if (this.customTextTextureFunction) {
@@ -299,30 +262,15 @@ class DiceObject {
         );
       }
 
-      materials.push(
-        new THREE.MeshPhongMaterial(
-          Object.assign({}, this.materialOptions, { map: texture })
-        )
-      );
+      textures.push(texture);
     }
-    return materials;
-  }
-
-  getObject() {
-    return this.object;
+    return textures;
   }
 
   create() {
-    this.object = new THREE.Mesh(
-      this.getGeometry(),
-      new THREE.MultiMaterial(this.getMaterials())
-    );
-
-    this.object.receiveShadow = true;
-    this.object.castShadow = true;
-    this.object.diceObject = this;
-
-    return this.object;
+    this.geometry = this.getGeometry();
+    this.textures = this.getTextures();
+    this.faceRotations = this.getFaceRotations();
   }
 }
 

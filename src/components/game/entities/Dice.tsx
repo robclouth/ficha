@@ -1,11 +1,27 @@
 import { observer } from "mobx-react";
-import React from "react";
-import { BufferGeometry, Color } from "three";
+import React, { useMemo } from "react";
+import {
+  BufferGeometry,
+  Color,
+  OctahedronBufferGeometry,
+  OctahedronGeometry,
+  Texture,
+  Quaternion
+} from "three";
 import Dice, { DiceType } from "../../../models/game/Dice";
 import { useStore } from "../../../stores/RootStore";
 import { ContextMenuItem } from "../../../types";
 import Entity, { EntityProps } from "./Entity";
 import { $enum } from "ts-enum-util";
+import {
+  DiceD4,
+  DiceD6,
+  DiceD8,
+  DiceD10,
+  DiceD12,
+  DiceD20,
+  DiceObject
+} from "./DiceHelper";
 
 export type DiceProps = Omit<EntityProps, "geometry"> & {};
 const size = 0.1;
@@ -14,7 +30,7 @@ export default observer((props: DiceProps) => {
   const { assetCache } = useStore();
   const { entity } = props;
   const dice = entity as Dice;
-  const { ownerSet, color, diceType } = dice;
+  const { ownerSet, color, diceType, value } = dice;
 
   const contextMenuItems: ContextMenuItem[] = [];
 
@@ -42,81 +58,54 @@ export default observer((props: DiceProps) => {
     color: new Color(color.r, color.g, color.b)
   };
 
-  let geometry: React.ReactElement<BufferGeometry>;
-
-  let pivot: [number, number, number] = [0, 0, 0];
-  let rotationOffset: [number, number, number] = [0, 0, 0];
-
   const numSides = $enum.mapValue(diceType).with<number>({
     [DiceType.Coin]: 2,
     [DiceType.D4]: 4,
     [DiceType.D6]: 6,
     [DiceType.D8]: 8,
-    // [DiceType.D10]: 10,
+    [DiceType.D10]: 10,
     [DiceType.D12]: 12,
     [DiceType.D20]: 20
   });
 
-  if (diceType === DiceType.Coin) {
-    geometry = (
-      <cylinderBufferGeometry args={[size, size, 0.02, 20]} attach="geometry" />
-    );
-    pivot[1] = -0.02 * 0.5;
-  } else if (diceType === DiceType.D4) {
-    geometry = (
-      <tetrahedronBufferGeometry
-        args={[(size / 2) * 1.3, 0]}
-        attach="geometry"
-      />
-    );
-    rotationOffset[1] = Math.PI / 4;
-    rotationOffset[0] = Math.acos(1 / Math.sqrt(3));
-    pivot[1] = -size * 0.2;
-  } else if (diceType === DiceType.D6) {
-    geometry = (
-      <boxBufferGeometry
-        args={[size * 0.7, size * 0.7, size * 0.7]}
-        attach="geometry"
-      />
-    );
-    pivot[1] = -size * 0.7 * 0.5;
-  } else if (diceType === DiceType.D8) {
-    geometry = (
-      <octahedronBufferGeometry
-        args={[(size / 2) * 1.2, 0]}
-        attach="geometry"
-      />
-    );
-    rotationOffset[2] = -0.8;
-    rotationOffset[1] = 0.0;
-    rotationOffset[0] = Math.PI / 4 - 0.17;
-    pivot[1] = -size * 0.35;
-  } else if (diceType === DiceType.D12) {
-    geometry = (
-      <dodecahedronBufferGeometry args={[size / 2, 0]} attach="geometry" />
-    );
-    rotationOffset[2] = 0;
-    rotationOffset[1] = 0.0;
-    rotationOffset[0] = (Math.PI - (Math.PI - Math.atan(2))) / 2;
-    pivot[1] = -size * 0.4;
-  } else if (diceType === DiceType.D20) {
-    geometry = (
-      <icosahedronBufferGeometry args={[size / 2, 0]} attach="geometry" />
-    );
-    rotationOffset[2] = 0.0;
-    rotationOffset[1] = 0.0;
-    rotationOffset[0] = (Math.PI - (Math.PI - Math.acos(Math.sqrt(5) / 3))) / 2;
-    pivot[1] = -size * 0.4;
-  }
+  const diceData = useMemo(() => {
+    let die: DiceObject;
+    let pivot: [number, number, number] = [0, -0.05, 0];
+    if (diceType === DiceType.D4) {
+      die = new DiceD4({});
+      pivot = [0, -0.04, 0];
+    } else if (diceType === DiceType.D6) die = new DiceD6({});
+    else if (diceType === DiceType.D8) die = new DiceD8({});
+    else if (diceType === DiceType.D10) {
+      die = new DiceD10({});
+      pivot = [0, -0.061, 0];
+    } else if (diceType === DiceType.D12) {
+      die = new DiceD12({});
+      pivot = [0, -0.072, 0];
+    } else {
+      die = new DiceD20({});
+      pivot = [0, -0.08, 0];
+    }
+
+    return {
+      geometry: die.geometry,
+      textures: die.textures,
+      faceRotations: die.faceRotations as Quaternion[],
+      pivot
+    };
+  }, [diceType]);
 
   return (
     <Entity
       {...props}
-      pivot={pivot}
-      geometry={geometry!}
-      materialParams={materialParams}
+      pivot={diceData.pivot}
+      geometry={<primitive object={diceData.geometry} attach="geometry" />}
+      materialParams={diceData.textures.map((texture: Texture) => ({
+        map: texture
+      }))}
       contextMenuItems={contextMenuItems}
-      rotationOffset={rotationOffset}
+      rotationOffset={diceData.faceRotations[value]}
+      doubleClickAction={() => dice.roll()}
     />
   );
 });
