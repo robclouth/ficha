@@ -89,8 +89,7 @@ export default class Entity extends Model({
   onSnapshotDisposer?: OnSnapshotDisposer;
 
   @observable
-  handArea?: Entity = undefined;
-
+  // handArea?: Entity = undefined;
   onInit() {
     when(
       () => this.assetCache !== undefined,
@@ -140,10 +139,29 @@ export default class Entity extends Model({
     );
   }
 
+  @computed get handArea() {
+    let area: Entity | undefined;
+    if (this.gameState && this.boundingBox) {
+      for (const otherEntity of this.gameState.entities) {
+        if (otherEntity !== this && otherEntity.boundingBox) {
+          const collision = this.boundingBox.intersectsBox(
+            otherEntity.boundingBox
+          );
+          if (collision && otherEntity.$modelType === "HandArea") {
+            area = otherEntity;
+            break;
+          }
+        }
+      }
+    }
+
+    return area;
+  }
+
   @modelAction
   setPosition(x: number, z: number) {
     let y = 0;
-    this.handArea = undefined;
+    // this.handArea = undefined;
     if (this.boundingBox) {
       for (const otherEntity of this.gameState.entities) {
         if (otherEntity !== this && otherEntity.boundingBox) {
@@ -155,9 +173,9 @@ export default class Entity extends Model({
               y = otherEntity.boundingBox.max.y;
             }
 
-            if (otherEntity.$modelType === "HandArea") {
-              this.handArea = otherEntity;
-            }
+            // if (otherEntity.$modelType === "HandArea") {
+            //   this.handArea = otherEntity;
+            // }
           }
         }
       }

@@ -43,7 +43,7 @@ export type EntityProps = {
     | [number, number, number]
     | SpringValue<[number, number, number]>;
   rotationOffset?: Quaternion | SpringValue<[number, number, number, number]>;
-  preview?: boolean;
+  blockInteraction?: boolean;
 };
 
 let clickCount = 0;
@@ -66,7 +66,7 @@ export default observer((props: EntityProps) => {
     deletable = true,
     positionOffset = [0, 0, 0],
     rotationOffset,
-    preview = false
+    blockInteraction = false
   } = props;
   const {
     position,
@@ -238,8 +238,10 @@ export default observer((props: EntityProps) => {
     [materialParams, hovered]
   );
 
-  const visible =
-    !handArea || (handArea as HandArea).player === gameStore.player;
+  const inOtherPlayersArea =
+    handArea && (handArea as HandArea).player !== gameStore.player;
+  const visible = !inOtherPlayersArea;
+  const interactive = !blockInteraction && !inOtherPlayersArea;
 
   return (
     <a.group position={positionOffset} visible={visible}>
@@ -253,12 +255,12 @@ export default observer((props: EntityProps) => {
             ref={mesh}
             quaternion={rotationOffset}
             rotation={rotationOffset ? undefined : [faceUp ? Math.PI : 0, 0, 0]}
-            onPointerDown={!preview ? handlePointerDown : undefined}
-            onPointerUp={!preview ? handlePointerUp : undefined}
-            onPointerMove={!preview ? handlePointerMove : undefined}
-            onPointerOver={!preview ? handlePointerHoverOver : undefined}
-            onPointerOut={!preview ? handlePointerHoverOut : undefined}
-            onClick={!preview ? handleClick : undefined}
+            onPointerDown={interactive ? handlePointerDown : undefined}
+            onPointerUp={handlePointerUp}
+            onPointerMove={interactive ? handlePointerMove : undefined}
+            onPointerOver={interactive ? handlePointerHoverOver : undefined}
+            onPointerOut={handlePointerHoverOut}
+            onClick={interactive ? handleClick : undefined}
             castShadow={castShadows}
             receiveShadow
           >

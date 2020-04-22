@@ -49,7 +49,7 @@ export default observer((props: HandAreaProps) => {
       }}
       contextMenuItems={contextMenuItems}
       hoverMessage={player !== gameStore.player ? player?.name : undefined}
-      preview={claimed && player !== gameStore.player}
+      blockInteraction={claimed && player !== gameStore.player}
     />
   );
 });
