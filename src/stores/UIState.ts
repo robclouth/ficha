@@ -2,7 +2,7 @@ import RootStore from "./RootStore";
 import { observable, action, computed } from "mobx";
 import Entity from "../models/game/Entity";
 import { PointerEvent } from "react-three-fiber";
-import { Vector3, Plane } from "three";
+import { Vector3, Plane, Vector, Vector2 } from "three";
 import {
   model,
   Model,
@@ -32,10 +32,19 @@ export type ContextMenu = {
 @model("UIState")
 export default class UIState extends Model({}) {
   @observable draggingEntity?: Entity;
+  @observable hoveredEntity?: Entity;
+
   @observable isDraggingEntity = false;
   @observable isStartingDrag = false;
   @observable contextMenu?: ContextMenu;
   @observable isContextMenuOpen = false;
+  @observable selectedEntities: { [id: string]: Entity } = {};
+  @observable selectionBoxStart?: [number, number];
+  @observable selectionBoxEnd?: [number, number];
+  @observable dragGroupOffsets: { [key: string]: [number, number] } = {};
+  @observable allContextMenuItems: {
+    [key: string]: Array<ContextMenuItem>;
+  } = {};
 
   @computed get gameStore() {
     return getRootStore<RootStore>(this)?.gameStore;
@@ -46,11 +55,42 @@ export default class UIState extends Model({}) {
   }
 
   @modelAction
+  selectEntity(entity: Entity) {
+    if (entity) this.selectedEntities[entity.$modelId] = entity;
+  }
+
+  @modelAction
+  deselectEntity(entity: Entity) {
+    delete this.selectedEntities[entity.$modelId];
+  }
+
+  @modelAction
+  setHoveredEntity(entity?: Entity) {
+    this.hoveredEntity = entity;
+  }
+
+  @modelAction
+  deselectAll() {
+    this.selectedEntities = {};
+  }
+
+  @modelAction
   setDraggingEntity(entity?: Entity) {
     if (entity) {
       this.isDraggingEntity = true;
       entity.controllingPeerId = this.gameStore?.peerId;
       this.draggingEntity = entity;
+
+      this.dragGroupOffsets = {};
+
+      Object.values(this.selectedEntities).forEach(entity => {
+        if (entity !== this.draggingEntity) {
+          this.dragGroupOffsets[entity.$modelId] = [
+            this.draggingEntity!.position.x - entity.position.x,
+            this.draggingEntity!.position.z - entity.position.z
+          ];
+        }
+      });
     } else {
       this.isDraggingEntity = false;
       if (this.draggingEntity) {
@@ -59,10 +99,53 @@ export default class UIState extends Model({}) {
     }
   }
 
+  // @modelAction
+  dragEntity(x: number, z: number) {
+    withoutUndo(() => {
+      this.draggingEntity!.setPosition(x, z);
+
+      if (!this.draggingEntity) return;
+      Object.values(this.selectedEntities).forEach(entity => {
+        if (entity !== this.draggingEntity) {
+          const offset = this.dragGroupOffsets[entity.$modelId];
+
+          entity.setPosition(
+            this.draggingEntity!.position.x - offset[0],
+            this.draggingEntity!.position.z - offset[1],
+            Object.values(this.selectedEntities)
+          );
+        }
+      });
+    });
+  }
+
+  @modelAction
+  handleSelectionBoxStart(e: React.MouseEvent) {
+    this.selectionBoxStart = this.selectionBoxEnd = [e.clientX, e.clientY];
+  }
+
+  @modelAction
+  handleSelectionBoxMove(e: React.MouseEvent) {
+    if (this.selectionBoxStart && this.selectionBoxEnd) {
+      if (e.clientX <= this.selectionBoxStart[0])
+        this.selectionBoxStart[0] = e.clientX;
+      else this.selectionBoxEnd[0] = e.clientX;
+
+      if (e.clientY <= this.selectionBoxStart[1])
+        this.selectionBoxStart[1] = e.clientY;
+      else this.selectionBoxEnd[1] = e.clientY;
+    }
+  }
+
+  @modelAction
+  handleSelectionBoxEnd(e: React.MouseEvent) {
+    this.selectionBoxStart = this.selectionBoxEnd = undefined;
+  }
+
   @modelAction
   openContextMenu(
     e: PointerEvent,
-    items?: Array<ContextMenuItem | false>,
+    items?: Array<ContextMenuItem>,
     target?: Entity
   ) {
     let point = new Vector3();
@@ -77,6 +160,27 @@ export default class UIState extends Model({}) {
     };
 
     this.isContextMenuOpen = true;
+  }
+
+  doContextMenuAction(item: ContextMenuItem) {
+    item.action && item.action();
+
+    Object.values(this.selectedEntities).forEach(entity => {
+      if (
+        entity !== item.target &&
+        entity.$modelType === item.target?.$modelType
+      ) {
+        const items = this.allContextMenuItems[entity.$modelId];
+        const matchedItem = items.find(i => i.label === item.label);
+        if (matchedItem?.action) matchedItem.action();
+      }
+    });
+  }
+
+  registerContextMenuItems(entity: Entity, items: Array<ContextMenuItem>) {
+    this.allContextMenuItems[entity.$modelId] = items.filter(
+      item => item
+    ) as ContextMenuItem[];
   }
 
   @modelAction

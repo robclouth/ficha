@@ -115,7 +115,7 @@ export default observer((props: PieceSetProps) => {
 
           return prototype.render({
             key: i,
-            preview: true,
+            blockInteraction: true,
             entity: prototype,
             position: [0, 0],
             positionOffset: [

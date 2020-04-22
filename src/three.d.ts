@@ -11,6 +11,10 @@ declare global {
       >;
       dragControls: any;
       orbitControls: any;
+      effectComposer: any;
+      renderPass: any;
+      outlinePass: any;
+      shaderPass: any;
     }
   }
 }

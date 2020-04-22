@@ -165,11 +165,12 @@ export default observer(() => {
     uiState.closeContextMenu();
   };
 
-  const handleContextMenuSelect = (item: Partial<ContextMenuItem>) => {
+  const handleContextMenuSelect = (item: ContextMenuItem) => {
     handleContextMenuClose();
 
-    if (item.type === "action") item.action && item.action();
-    else if (item.type === "edit") {
+    if (item.type === "action") {
+      uiState.doContextMenuAction(item);
+    } else if (item.type === "edit") {
       setOpenModal(Modals.EditEntity);
     }
   };
@@ -248,12 +249,14 @@ export default observer(() => {
   return (
     <Box className={classes.root} onClick={handleContextMenuClose}>
       <GameCanvas />
+
       <PlayersList />
       <Box
         position="absolute"
         bottom={theme.spacing(1)}
         left={theme.spacing(1)}
         display="flex"
+        zIndex={2}
       >
         <IconButton
           aria-label="undo"

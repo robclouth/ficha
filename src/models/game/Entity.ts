@@ -61,7 +61,6 @@ export type Vector3 = { x: number; y: number; z: number };
 
 @model("Entity")
 export default class Entity extends Model({
-  id: prop(nanoid(), { setterAction: true }),
   name: prop("", { setterAction: true }),
   type: prop<EntityType>(EntityType.Card, { setterAction: true }),
   ownerSet: prop<Ref<EntitySet> | undefined>(undefined, { setterAction: true }),
@@ -87,9 +86,9 @@ export default class Entity extends Model({
   controllingPeerId: prop<string | undefined>(undefined, { setterAction: true })
 }) {
   onSnapshotDisposer?: OnSnapshotDisposer;
+  @observable mesh?: Mesh;
+  @observable boundingBox?: Box3;
 
-  @observable
-  // handArea?: Entity = undefined;
   onInit() {
     when(
       () => this.assetCache !== undefined,
@@ -105,9 +104,6 @@ export default class Entity extends Model({
       { fireImmediately: true }
     );
   }
-
-  @observable mesh?: Mesh;
-  @observable boundingBox?: Box3;
 
   @computed get gameState() {
     return findParent<GameState>(
@@ -139,6 +135,10 @@ export default class Entity extends Model({
     );
   }
 
+  @computed get isSelected() {
+    return this.uiState?.selectedEntities[this.$modelId] !== undefined;
+  }
+
   @computed get handArea() {
     let area: Entity | undefined;
     if (this.gameState && this.boundingBox) {
@@ -159,11 +159,11 @@ export default class Entity extends Model({
   }
 
   @modelAction
-  setPosition(x: number, z: number) {
+  setPosition(x: number, z: number, ignoreEntities: Entity[] = []) {
     let y = 0;
-    // this.handArea = undefined;
-    if (this.boundingBox) {
+    if (this.boundingBox && this.gameState) {
       for (const otherEntity of this.gameState.entities) {
+        if (ignoreEntities.includes(otherEntity)) continue;
         if (otherEntity !== this && otherEntity.boundingBox) {
           const collision = this.boundingBox.intersectsBox(
             otherEntity.boundingBox
@@ -172,10 +172,6 @@ export default class Entity extends Model({
             if (this.stackable && otherEntity.boundingBox.max.y > y) {
               y = otherEntity.boundingBox.max.y;
             }
-
-            // if (otherEntity.$modelType === "HandArea") {
-            //   this.handArea = otherEntity;
-            // }
           }
         }
       }
@@ -189,7 +185,7 @@ export default class Entity extends Model({
     if (this.mesh && this.mesh.geometry) {
       this.boundingBox = new Box3();
       this.boundingBox.setFromObject(this.mesh);
-      this.boundingBox.min.y = 0;
+      // this.boundingBox.min.y = 0;
     }
   }
 

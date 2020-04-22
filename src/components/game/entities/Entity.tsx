@@ -17,7 +17,8 @@ import {
   MeshStandardMaterialParameters,
   Plane,
   Vector3,
-  Quaternion
+  Quaternion,
+  BackSide
 } from "three";
 import Entity from "../../../models/game/Entity";
 import HandArea from "../../../models/game/HandArea";
@@ -78,7 +79,8 @@ export default observer((props: EntityProps) => {
     isDragging,
     isOtherPlayerControlling,
     editable,
-    handArea
+    handArea,
+    isSelected
   } = entity;
   const [hovered, setHovered] = useState(false);
   const [pressed, setPressed] = useState(false);
@@ -124,20 +126,45 @@ export default observer((props: EntityProps) => {
     }
   ];
 
-  const contextMenuItems = props.contextMenuItems
+  let contextMenuItems = props.contextMenuItems
     ? [...props.contextMenuItems, ...standardItems]
     : standardItems;
 
-  const handlePointerDown = (e: any) => {
-    if (e.button === 0) {
-      setPressed(true);
-      e.target.setPointerCapture(e.pointerId);
+  const allContextMenuItems = contextMenuItems.filter(
+    item => item !== false
+  ) as ContextMenuItem[];
 
+  allContextMenuItems.forEach(item => (item.target = entity));
+
+  uiState.registerContextMenuItems(entity, allContextMenuItems);
+
+  const handlePointerDown = (e: any) => {
+    e.stopPropagation();
+    if (e.button === 0) {
       if (!isOtherPlayerControlling) {
+        setPressed(true);
+        e.target.setPointerCapture(e.pointerId);
+
+        if (!isSelected && Object.values(uiState.selectedEntities).length > 0) {
+          uiState.deselectAll();
+        }
+
         setPointerDownPos({
           x: e.clientX,
           y: e.clientY
         });
+
+        clickCount++;
+        if (clickCount === 1) {
+          singleClickTimer = setTimeout(() => {
+            clickCount = 0;
+            handleSingleClick(e);
+          }, 300);
+        } else if (clickCount === 2) {
+          clearTimeout(singleClickTimer);
+          clickCount = 0;
+          handleDoubleClick(e);
+        }
       }
     }
   };
@@ -147,23 +174,40 @@ export default observer((props: EntityProps) => {
       uiState.setDraggingEntity();
       setPressed(false);
       e.target.releasePointerCapture(e.pointerId);
+
+      const distance = Math.sqrt(
+        Math.pow(e.clientX - pointerDownPos.x, 2) +
+          Math.pow(e.clientY - pointerDownPos.y, 2)
+      );
+
+      if (distance < 10) {
+        // singleClickTimer && clearTimeout(singleClickTimer);
+        // clickCount = 0;
+        handleSelect();
+      }
     } else if (e.button === 2) {
-      uiState.openContextMenu(e, contextMenuItems, entity);
+      uiState.openContextMenu(e, allContextMenuItems, entity);
       e.stopPropagation();
     }
   };
 
   const handlePointerMove = (e: any) => {
+    const distance = Math.sqrt(
+      Math.pow(e.clientX - pointerDownPos.x, 2) +
+        Math.pow(e.clientY - pointerDownPos.y, 2)
+    );
+
+    if (distance > 20) {
+      singleClickTimer && clearTimeout(singleClickTimer);
+      clickCount = 0;
+    }
+
     if (!isDragging && pressed) {
       if (!locked) {
         e.stopPropagation();
         uiState.setDraggingEntity(entity);
       } else if (dragAction) {
         uiState.isStartingDrag = true;
-        const distance = Math.sqrt(
-          Math.pow(e.clientX - pointerDownPos.x, 2) +
-            Math.pow(e.clientY - pointerDownPos.y, 2)
-        );
 
         if (distance > 5) {
           dragAction(e);
@@ -175,31 +219,25 @@ export default observer((props: EntityProps) => {
     }
   };
 
+  const handleSelect = () => {
+    if (!isSelected) uiState.selectEntity(entity);
+    else uiState.deselectEntity(entity);
+  };
   const handleSingleClick = (e: PointerEvent) => {};
 
   const handleDoubleClick = (e: PointerEvent) => {
     doubleClickAction && doubleClickAction(e);
   };
 
-  const handleClick = (e: PointerEvent) => {
-    clickCount++;
-    if (clickCount === 1) {
-      singleClickTimer = setTimeout(() => {
-        clickCount = 0;
-        handleSingleClick(e);
-      }, 400);
-    } else if (clickCount === 2) {
-      clearTimeout(singleClickTimer);
-      clickCount = 0;
-      handleDoubleClick(e);
-    }
-  };
+  const handleClick = (e: PointerEvent) => {};
 
   const handlePointerHoverOver = (e: PointerEvent) => {
+    uiState.setHoveredEntity(entity);
     setHovered(true);
   };
 
   const handlePointerHoverOut = (e: PointerEvent) => {
+    uiState.setHoveredEntity();
     setHovered(false);
   };
 
@@ -211,12 +249,14 @@ export default observer((props: EntityProps) => {
     }
   }, []);
 
+  const faded = isSelected;
+
   const renderMaterial = useCallback(
     (params: MaterialParameters, i?: number) => {
       const updatedParams: MaterialParameters = {
         ...params,
         transparent: true,
-        opacity: hovered ? 0.7 : 1
+        opacity: faded ? 0.5 : 1
       };
       const key =
         i &&
@@ -235,7 +275,7 @@ export default observer((props: EntityProps) => {
 
       return material;
     },
-    [materialParams, hovered]
+    [materialParams, faded]
   );
 
   const inOtherPlayersArea =
@@ -244,50 +284,56 @@ export default observer((props: EntityProps) => {
   const interactive = !blockInteraction && !inOtherPlayersArea;
 
   return (
-    <a.group position={positionOffset} visible={visible}>
-      <group
-        position={[position.x, position.y, position.z]}
-        rotation={[0, angle, 0]}
-        scale={[scale.x, scale.y, scale.z]}
-      >
-        <a.group position={[-pivot[0], -pivot[1], -pivot[2]]}>
-          <a.mesh
-            ref={mesh}
-            quaternion={rotationOffset}
-            rotation={rotationOffset ? undefined : [faceUp ? Math.PI : 0, 0, 0]}
-            onPointerDown={interactive ? handlePointerDown : undefined}
-            onPointerUp={handlePointerUp}
-            onPointerMove={interactive ? handlePointerMove : undefined}
-            onPointerOver={interactive ? handlePointerHoverOver : undefined}
-            onPointerOut={handlePointerHoverOut}
-            onClick={interactive ? handleClick : undefined}
-            castShadow={castShadows}
-            receiveShadow
-          >
-            {geometry}
-            {Array.isArray(materialParams)
-              ? materialParams.map(renderMaterial)
-              : renderMaterial(materialParams)}
-          </a.mesh>
-        </a.group>
+    <>
+      {/* {entity.boundingBox && <box3Helper box={entity.boundingBox} />} */}
+      <a.group position={positionOffset} visible={visible}>
+        <group
+          position={[position.x, position.y, position.z]}
+          rotation={[0, angle, 0]}
+          scale={[scale.x, scale.y, scale.z]}
+        >
+          <a.group position={[-pivot[0], -pivot[1], -pivot[2]]}>
+            <a.mesh
+              ref={mesh}
+              userData={{ entity }}
+              quaternion={rotationOffset}
+              rotation={
+                rotationOffset ? undefined : [faceUp ? Math.PI : 0, 0, 0]
+              }
+              onPointerDown={interactive ? handlePointerDown : undefined}
+              onPointerUp={handlePointerUp}
+              onPointerMove={interactive ? handlePointerMove : undefined}
+              onPointerOver={interactive ? handlePointerHoverOver : undefined}
+              onPointerOut={handlePointerHoverOut}
+              onClick={interactive ? handleClick : undefined}
+              castShadow={castShadows}
+              receiveShadow
+            >
+              {geometry}
+              {Array.isArray(materialParams)
+                ? materialParams.map(renderMaterial)
+                : renderMaterial(materialParams)}
+            </a.mesh>
+          </a.group>
 
-        {children}
-        {hoverMessage && hovered && (
-          <Dom
-            position={[0, 1, 0]}
-            center
-            style={{ pointerEvents: "none", userSelect: "none" }}
-            onContextMenu={() => false}
-          >
-            <h3
+          {children}
+          {hoverMessage && hovered && (
+            <Dom
+              position={[0, 1 / scale.y, 0]}
+              center
               style={{ pointerEvents: "none", userSelect: "none" }}
               onContextMenu={() => false}
             >
-              {hoverMessage}
-            </h3>
-          </Dom>
-        )}
-      </group>
-    </a.group>
+              <h3
+                style={{ pointerEvents: "none", userSelect: "none" }}
+                onContextMenu={() => false}
+              >
+                {hoverMessage}
+              </h3>
+            </Dom>
+          )}
+        </group>
+      </a.group>
+    </>
   );
 });

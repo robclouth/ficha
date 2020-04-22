@@ -1,6 +1,6 @@
 import { observable, computed } from "mobx";
 import { model, Model, modelAction, getRootStore } from "mobx-keystone";
-import { Texture, TextureLoader, Cache } from "three";
+import { Texture, TextureLoader, Cache, RepeatWrapping } from "three";
 import RootStore from "./RootStore";
 
 const absoluteUrlRegExp = new RegExp("^(?:[a-z]+:)?//", "i");
@@ -41,6 +41,7 @@ export default class AssetCache extends Model({}) {
     else {
       texture = new TextureLoader().load(url);
       this.textureCache[url] = texture;
+      texture.wrapS = texture.wrapT = RepeatWrapping;
       return texture;
     }
   }

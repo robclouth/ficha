@@ -89,7 +89,7 @@ export default observer((props: DiceProps) => {
       faceRotations: die.faceRotations as Quaternion[],
       pivot
     };
-  }, [diceType, ...labels]);
+  }, [diceType, labels]);
 
   const animation = useSpring({
     to: {

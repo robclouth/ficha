@@ -57,7 +57,7 @@ export default class GameStore extends Model({
 
   @modelFlow
   init = _async(function*(this: GameStore) {
-    yield* _await(localforage.clear());
+    // yield* _await(localforage.clear());
 
     this.userId = yield* _await(localforage.getItem<string>("userId"));
     if (!this.userId) {
