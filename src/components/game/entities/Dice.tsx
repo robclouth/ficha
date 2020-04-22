@@ -1,36 +1,38 @@
+import { easeBounceOut, easeQuadOut, easeLinear } from "d3-ease";
 import { observer } from "mobx-react";
-import React, { useMemo } from "react";
-import {
-  BufferGeometry,
-  Color,
-  OctahedronBufferGeometry,
-  OctahedronGeometry,
-  Texture,
-  Quaternion
-} from "three";
+import React, { useMemo, useState } from "react";
+import { useSpring } from "react-spring/three";
+import { Color, Quaternion, Texture, FlatShading } from "three";
 import Dice, { DiceType } from "../../../models/game/Dice";
 import { useStore } from "../../../stores/RootStore";
 import { ContextMenuItem } from "../../../types";
-import Entity, { EntityProps } from "./Entity";
-import { $enum } from "ts-enum-util";
+import delay from "delay";
 import {
-  DiceD4,
-  DiceD6,
-  DiceD8,
   DiceD10,
   DiceD12,
   DiceD20,
+  DiceD4,
+  DiceD6,
+  DiceD8,
   DiceObject
 } from "./DiceHelper";
+import Entity, { EntityProps } from "./Entity";
 
 export type DiceProps = Omit<EntityProps, "geometry"> & {};
 const size = 0.1;
+
+enum RollPhase {
+  None,
+  Rising,
+  Falling
+}
 
 export default observer((props: DiceProps) => {
   const { assetCache } = useStore();
   const { entity } = props;
   const dice = entity as Dice;
   const { ownerSet, color, diceType, value } = dice;
+  const [rollPhase, setRollPhase] = useState(RollPhase.None);
 
   const contextMenuItems: ContextMenuItem[] = [];
 
@@ -50,23 +52,22 @@ export default observer((props: DiceProps) => {
   contextMenuItems.push({
     label: "Roll",
     type: "action",
-    action: () => dice.roll()
+    action: () => handleRoll()
   });
+
+  const handleRoll = async () => {
+    setRollPhase(RollPhase.Rising);
+    await delay(250);
+    setRollPhase(RollPhase.Falling);
+    await delay(750);
+    dice.roll();
+    setRollPhase(RollPhase.None);
+  };
 
   const materialParams = {
     roughness: 1,
     color: new Color(color.r, color.g, color.b)
   };
-
-  const numSides = $enum.mapValue(diceType).with<number>({
-    [DiceType.Coin]: 2,
-    [DiceType.D4]: 4,
-    [DiceType.D6]: 6,
-    [DiceType.D8]: 8,
-    [DiceType.D10]: 10,
-    [DiceType.D12]: 12,
-    [DiceType.D20]: 20
-  });
 
   const diceData = useMemo(() => {
     let die: DiceObject;
@@ -95,17 +96,31 @@ export default observer((props: DiceProps) => {
     };
   }, [diceType]);
 
+  const animation = useSpring({
+    to: {
+      position: [0, rollPhase === RollPhase.Rising ? 1.5 : 0, 0] as any
+    },
+    config:
+      rollPhase === RollPhase.Rising
+        ? { duration: 250, easing: easeQuadOut }
+        : { duration: 750, easing: easeBounceOut }
+  });
+
   return (
     <Entity
       {...props}
       pivot={diceData.pivot}
       geometry={<primitive object={diceData.geometry} attach="geometry" />}
       materialParams={diceData.textures.map((texture: Texture) => ({
-        map: texture
+        map: texture,
+        roughness: 0.1,
+        flatShading: true,
+        color: new Color(color.r, color.g, color.b)
       }))}
       contextMenuItems={contextMenuItems}
       rotationOffset={diceData.faceRotations[value]}
-      doubleClickAction={() => dice.roll()}
+      positionOffset={animation.position}
+      doubleClickAction={handleRoll}
     />
   );
 });

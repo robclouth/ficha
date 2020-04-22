@@ -7,6 +7,8 @@ import React, {
   useCallback
 } from "react";
 import { PointerEvent, Dom } from "react-three-fiber";
+import { a, SpringValue } from "react-spring/three";
+
 import {
   Box3,
   BufferGeometry,
@@ -36,8 +38,10 @@ export type EntityProps = {
   castShadows?: boolean;
   children?: React.ReactNode;
   hoverMessage?: string;
-  positionOffset?: [number, number, number];
-  rotationOffset?: Quaternion;
+  positionOffset?:
+    | [number, number, number]
+    | SpringValue<[number, number, number]>;
+  rotationOffset?: Quaternion | SpringValue<[number, number, number, number]>;
   preview?: boolean;
 };
 
@@ -235,51 +239,50 @@ export default observer((props: EntityProps) => {
   );
 
   return (
-    <group
-      position={[
-        position.x + positionOffset[0],
-        position.y + positionOffset[1],
-        position.z + positionOffset[2]
-      ]}
-      rotation={[0, angle, 0]}
-      scale={[scale.x, scale.y, scale.z]}
-    >
-      <mesh
-        ref={mesh}
-        position={[-pivot[0], -pivot[1], -pivot[2]]}
-        quaternion={rotationOffset}
-        rotation={rotationOffset ? undefined : [faceUp ? Math.PI : 0, 0, 0]}
-        onPointerDown={!preview ? handlePointerDown : undefined}
-        onPointerUp={!preview ? handlePointerUp : undefined}
-        onPointerMove={!preview ? handlePointerMove : undefined}
-        onPointerOver={!preview ? handlePointerHoverOver : undefined}
-        onPointerOut={!preview ? handlePointerHoverOut : undefined}
-        onClick={!preview ? handleClick : undefined}
-        castShadow={castShadows}
-        receiveShadow
+    <a.group position={positionOffset}>
+      <group
+        position={[position.x, position.y, position.z]}
+        rotation={[0, angle, 0]}
+        scale={[scale.x, scale.y, scale.z]}
       >
-        {geometry}
-        {Array.isArray(materialParams)
-          ? materialParams.map(renderMaterial)
-          : renderMaterial(materialParams)}
-      </mesh>
+        <a.group position={[-pivot[0], -pivot[1], -pivot[2]]}>
+          <a.mesh
+            ref={mesh}
+            quaternion={rotationOffset}
+            rotation={rotationOffset ? undefined : [faceUp ? Math.PI : 0, 0, 0]}
+            onPointerDown={!preview ? handlePointerDown : undefined}
+            onPointerUp={!preview ? handlePointerUp : undefined}
+            onPointerMove={!preview ? handlePointerMove : undefined}
+            onPointerOver={!preview ? handlePointerHoverOver : undefined}
+            onPointerOut={!preview ? handlePointerHoverOut : undefined}
+            onClick={!preview ? handleClick : undefined}
+            castShadow={castShadows}
+            receiveShadow
+          >
+            {geometry}
+            {Array.isArray(materialParams)
+              ? materialParams.map(renderMaterial)
+              : renderMaterial(materialParams)}
+          </a.mesh>
+        </a.group>
 
-      {children}
-      {hoverMessage && hovered && (
-        <Dom
-          position={[0, 1, 0]}
-          center
-          style={{ pointerEvents: "none", userSelect: "none" }}
-          onContextMenu={() => false}
-        >
-          <h3
+        {children}
+        {hoverMessage && hovered && (
+          <Dom
+            position={[0, 1, 0]}
+            center
             style={{ pointerEvents: "none", userSelect: "none" }}
             onContextMenu={() => false}
           >
-            {hoverMessage}
-          </h3>
-        </Dom>
-      )}
-    </group>
+            <h3
+              style={{ pointerEvents: "none", userSelect: "none" }}
+              onContextMenu={() => false}
+            >
+              {hoverMessage}
+            </h3>
+          </Dom>
+        )}
+      </group>
+    </a.group>
   );
 });
