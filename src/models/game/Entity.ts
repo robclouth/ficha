@@ -157,7 +157,7 @@ export default class Entity extends Model({
 
   @modelAction
   updateBoundingBox() {
-    if (this.mesh) {
+    if (this.mesh && this.mesh.geometry) {
       this.boundingBox = new Box3();
       this.boundingBox.setFromObject(this.mesh);
       this.boundingBox.min.y = 0;

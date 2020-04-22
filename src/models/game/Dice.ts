@@ -18,7 +18,32 @@ export enum DiceType {
 @model("Dice")
 export default class Dice extends ExtendedModel(Entity, {
   diceType: prop<DiceType>({ setterAction: true }),
-  value: prop(0, { setterAction: true })
+  value: prop(0, { setterAction: true }),
+  labels: prop<string[]>(
+    () => [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8",
+      "9",
+      "10",
+      "11",
+      "12",
+      "13",
+      "14",
+      "15",
+      "16",
+      "17",
+      "18",
+      "19",
+      "20"
+    ],
+    { setterAction: true }
+  )
 }) {
   onInit() {
     super.onInit();

@@ -6,7 +6,7 @@ export class DiceObject {
   geometry;
   textures;
   faceRotations;
-
+  labels;
   /**
    * @constructor
    * @param {object} options
@@ -27,6 +27,7 @@ export class DiceObject {
 
     this.labelColor = options.fontColor;
     this.diceColor = options.backColor;
+    this.labels = options.labels;
   }
 
   setDefaults(options, defaults) {
@@ -190,7 +191,6 @@ export class DiceObject {
       }
     }
     geom.computeFaceNormals();
-    geom.boundingSphere = new THREE.Sphere(new THREE.Vector3(), radius);
     return geom;
   }
 
@@ -225,7 +225,9 @@ export class DiceObject {
     );
   }
 
-  createTextTexture(text, color, backColor) {
+  createTextTexture(labelIndex, color, backColor) {
+    const text =
+      labelIndex >= 0 && this.labels[labelIndex] ? this.labels[labelIndex] : "";
     let canvas = document.createElement("canvas");
     let context = canvas.getContext("2d");
     let ts =
@@ -297,13 +299,17 @@ export class DiceD4 extends DiceObject {
     this.values = 4;
     this.faceTexts = [
       [],
-      ["0", "0", "0"],
-      ["2", "4", "3"],
-      ["1", "3", "4"],
-      ["2", "1", "4"],
-      ["1", "2", "3"]
+      [-1, -1, -1],
+      [1, 3, 2],
+      [0, 2, 3],
+      [1, 0, 3],
+      [0, 1, 2]
     ];
-    this.customTextTextureFunction = function(text, color, backColor) {
+    this.customTextTextureFunction = function(labelIndices, color, backColor) {
+      const texts = labelIndices.map(index =>
+        index >= 0 && this.labels[index] ? this.labels[index] : ""
+      );
+
       let canvas = document.createElement("canvas");
       let context = canvas.getContext("2d");
       let ts = this.calculateTextureSize(this.size / 2 + this.size * 2) * 2;
@@ -314,9 +320,9 @@ export class DiceD4 extends DiceObject {
       context.textAlign = "center";
       context.textBaseline = "middle";
       context.fillStyle = color;
-      for (let i in text) {
+      for (let i in texts) {
         context.fillText(
-          text[i],
+          texts[i],
           canvas.width / 2,
           canvas.height / 2 - ts * 0.3
         );
@@ -364,28 +370,28 @@ export class DiceD6 extends DiceObject {
     this.scaleFactor = 0.9;
     this.values = 6;
     this.faceTexts = [
-      " ",
-      "0",
-      "1",
-      "2",
-      "3",
-      "4",
-      "5",
-      "6",
-      "7",
-      "8",
-      "9",
-      "10",
-      "11",
-      "12",
-      "13",
-      "14",
-      "15",
-      "16",
-      "17",
-      "18",
-      "19",
-      "20"
+      -1,
+      -1,
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19
     ];
     this.textMargin = 1.0;
     this.mass = 300;
@@ -423,28 +429,28 @@ export class DiceD8 extends DiceObject {
     this.scaleFactor = 1;
     this.values = 8;
     this.faceTexts = [
-      " ",
-      "0",
-      "1",
-      "2",
-      "3",
-      "4",
-      "5",
-      "6",
-      "7",
-      "8",
-      "9",
-      "10",
-      "11",
-      "12",
-      "13",
-      "14",
-      "15",
-      "16",
-      "17",
-      "18",
-      "19",
-      "20"
+      -1,
+      -1,
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19
     ];
     this.textMargin = 1.2;
     this.mass = 340;
@@ -494,28 +500,28 @@ export class DiceD10 extends DiceObject {
     this.scaleFactor = 0.9;
     this.values = 10;
     this.faceTexts = [
-      " ",
-      "0",
-      "1",
-      "2",
-      "3",
-      "4",
-      "5",
-      "6",
-      "7",
-      "8",
-      "9",
-      "10",
-      "11",
-      "12",
-      "13",
-      "14",
-      "15",
-      "16",
-      "17",
-      "18",
-      "19",
-      "20"
+      -1,
+      -1,
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19
     ];
     this.textMargin = 1.0;
     this.mass = 350;
@@ -574,28 +580,28 @@ export class DiceD12 extends DiceObject {
     this.scaleFactor = 0.9;
     this.values = 12;
     this.faceTexts = [
-      " ",
-      "0",
-      "1",
-      "2",
-      "3",
-      "4",
-      "5",
-      "6",
-      "7",
-      "8",
-      "9",
-      "10",
-      "11",
-      "12",
-      "13",
-      "14",
-      "15",
-      "16",
-      "17",
-      "18",
-      "19",
-      "20"
+      -1,
+      -1,
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19
     ];
     this.textMargin = 1.0;
     this.mass = 350;
@@ -653,28 +659,28 @@ export class DiceD20 extends DiceObject {
     this.scaleFactor = 1;
     this.values = 20;
     this.faceTexts = [
-      " ",
-      "0",
-      "1",
-      "2",
-      "3",
-      "4",
-      "5",
-      "6",
-      "7",
-      "8",
-      "9",
-      "10",
-      "11",
-      "12",
-      "13",
-      "14",
-      "15",
-      "16",
-      "17",
-      "18",
-      "19",
-      "20"
+      -1,
+      -1,
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19
     ];
     this.textMargin = 1.0;
     this.mass = 400;

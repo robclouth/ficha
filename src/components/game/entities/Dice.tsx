@@ -31,7 +31,7 @@ export default observer((props: DiceProps) => {
   const { assetCache } = useStore();
   const { entity } = props;
   const dice = entity as Dice;
-  const { ownerSet, color, diceType, value } = dice;
+  const { ownerSet, color, diceType, value, labels } = dice;
   const [rollPhase, setRollPhase] = useState(RollPhase.None);
 
   const contextMenuItems: ContextMenuItem[] = [];
@@ -64,27 +64,22 @@ export default observer((props: DiceProps) => {
     setRollPhase(RollPhase.None);
   };
 
-  const materialParams = {
-    roughness: 1,
-    color: new Color(color.r, color.g, color.b)
-  };
-
   const diceData = useMemo(() => {
     let die: DiceObject;
     let pivot: [number, number, number] = [0, -0.05, 0];
     if (diceType === DiceType.D4) {
-      die = new DiceD4({});
+      die = new DiceD4({ labels });
       pivot = [0, -0.04, 0];
-    } else if (diceType === DiceType.D6) die = new DiceD6({});
-    else if (diceType === DiceType.D8) die = new DiceD8({});
+    } else if (diceType === DiceType.D6) die = new DiceD6({ labels });
+    else if (diceType === DiceType.D8) die = new DiceD8({ labels });
     else if (diceType === DiceType.D10) {
-      die = new DiceD10({});
+      die = new DiceD10({ labels });
       pivot = [0, -0.061, 0];
     } else if (diceType === DiceType.D12) {
-      die = new DiceD12({});
+      die = new DiceD12({ labels });
       pivot = [0, -0.072, 0];
     } else {
-      die = new DiceD20({});
+      die = new DiceD20({ labels });
       pivot = [0, -0.08, 0];
     }
 
@@ -94,7 +89,7 @@ export default observer((props: DiceProps) => {
       faceRotations: die.faceRotations as Quaternion[],
       pivot
     };
-  }, [diceType]);
+  }, [diceType, ...labels]);
 
   const animation = useSpring({
     to: {
@@ -121,6 +116,7 @@ export default observer((props: DiceProps) => {
       rotationOffset={diceData.faceRotations[value]}
       positionOffset={animation.position}
       doubleClickAction={handleRoll}
+      hoverMessage={labels[value]}
     />
   );
 });

@@ -476,7 +476,7 @@ const DiceEditor = observer(({ entity }: { entity: Entity }) => {
   const classes = useStyles();
 
   const dice = entity as Dice;
-  const { color, diceType } = dice;
+  const { color, diceType, labels } = dice;
 
   return (
     <Box display="flex" flexDirection="column">
@@ -494,6 +494,15 @@ const DiceEditor = observer(({ entity }: { entity: Entity }) => {
               </MenuItem>
             ))}
         </Select>
+      </FormControl>
+      <FormControl className={classes.formControl}>
+        <EmojiInput
+          multiline
+          value={labels.join(" ")}
+          onTextChange={text => (dice.labels = text.trim().split(" "))}
+          fullWidth
+          placeholder="Body"
+        />
       </FormControl>
       <FormControl>
         <FormLabel>Scale</FormLabel>
