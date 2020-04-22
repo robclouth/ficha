@@ -1,11 +1,6 @@
 import {
   Box,
   Button,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  Divider,
   FormControl,
   FormHelperText,
   FormLabel,
@@ -16,32 +11,28 @@ import {
   InputProps,
   makeStyles,
   MenuItem,
+  Paper,
   Popover,
   Select,
   Slider,
   Typography,
-  useTheme,
-  Paper
+  useTheme
 } from "@material-ui/core";
-import Pagination from "@material-ui/lab/Pagination";
-
 import InsertEmoticonIcon from "@material-ui/icons/InsertEmoticon";
+import Pagination from "@material-ui/lab/Pagination";
 //@ts-ignore
 import { Picker } from "emoji-mart";
 import "emoji-mart/css/emoji-mart.css";
-import { draft, Draft } from "mobx-keystone";
+import { draft } from "mobx-keystone";
 import { observer } from "mobx-react";
-import React, { useMemo, useEffect, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { CirclePicker } from "react-color";
 import { Canvas, extend, useFrame, useThree } from "react-three-fiber";
-//@ts-ignore
-import AutoSizer from "react-virtualized-auto-sizer";
-//@ts-ignore
-import { FixedSizeList, ListChildComponentProps } from "react-window";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 import { $enum } from "ts-enum-util";
 import Card from "../../models/game/Card";
 import Deck from "../../models/game/Deck";
+import Dice, { DiceType } from "../../models/game/Dice";
 import Entity, { EntityType, Shape } from "../../models/game/Entity";
 import EntitySet, { entitySetRef } from "../../models/game/EntitySet";
 import Piece from "../../models/game/Piece";
@@ -481,6 +472,75 @@ const PieceEditor = observer(({ entity }: { entity: Entity }) => {
   );
 });
 
+const DiceEditor = observer(({ entity }: { entity: Entity }) => {
+  const classes = useStyles();
+
+  const dice = entity as Dice;
+  const { color, diceType } = dice;
+
+  return (
+    <Box display="flex" flexDirection="column">
+      <FormControl className={classes.formControl} style={{ marginBottom: 20 }}>
+        <Select
+          fullWidth
+          value={diceType}
+          onChange={e => (dice.diceType = e.target.value as DiceType)}
+        >
+          {$enum(DiceType)
+            .getEntries()
+            .map(entry => (
+              <MenuItem key={entry[1]} value={entry[1]}>
+                {entry[0]}
+              </MenuItem>
+            ))}
+        </Select>
+      </FormControl>
+      <FormControl>
+        <FormLabel>Scale</FormLabel>
+        <Slider
+          value={dice.scale.x}
+          onChange={(e, value) => dice.setScale(value as number)}
+          valueLabelDisplay="auto"
+          min={1}
+          max={10}
+          step={0.1}
+        />
+      </FormControl>
+
+      <FormControl className={classes.formControl}>
+        <FormLabel>Color</FormLabel>
+        <div
+          style={{
+            padding: 10,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center"
+          }}
+        >
+          <CirclePicker
+            colors={colorOptions}
+            circleSpacing={5}
+            circleSize={20}
+            color={{
+              r: Math.floor(color.r * 255),
+              g: Math.floor(color.g * 255),
+              b: Math.floor(color.b * 255)
+            }}
+            onChange={color =>
+              (dice.color = {
+                r: color.rgb.r / 255,
+                g: color.rgb.g / 255,
+                b: color.rgb.b / 255
+              })
+            }
+            width={"240px"}
+          />
+        </div>
+      </FormControl>
+    </Box>
+  );
+});
+
 type InputSliderProps = {
   value: number;
   min: number;
@@ -716,7 +776,7 @@ export default observer(
     const { gameStore } = useStore();
     const { gameState } = gameStore;
 
-    const [type, setType] = React.useState(EntityType.Deck);
+    const [type, setType] = React.useState(EntityType.Dice);
     const classes = useStyles();
 
     const isEditing = !!entity;
@@ -734,6 +794,12 @@ export default observer(
           targetEntity = new PieceSet({ name: "New Piece Set" });
         else if (type === EntityType.Piece)
           targetEntity = new Piece({ name: "New Piece" });
+        else if (type === EntityType.Dice)
+          targetEntity = new Dice({
+            name: "New Die",
+            diceType: DiceType.D8,
+            scale: { x: 2, y: 2, z: 2 }
+          });
         else targetEntity = new Deck({});
       }
 
@@ -771,6 +837,8 @@ export default observer(
         return <PieceSetEditor entitySet={entityDraft.data as EntitySet} />;
       } else if (entityDraft.data.type === EntityType.Piece) {
         return <PieceEditor entity={entityDraft.data} />;
+      } else if (entityDraft.data.type === EntityType.Dice) {
+        return <DiceEditor entity={entityDraft.data} />;
       }
     }, [entityDraft.data.type]);
 
@@ -799,6 +867,7 @@ export default observer(
                     <MenuItem value={EntityType.Card}>Card</MenuItem>
                     <MenuItem value={EntityType.PieceSet}>Piece set</MenuItem>
                     <MenuItem value={EntityType.Piece}>Piece</MenuItem>
+                    <MenuItem value={EntityType.Dice}>Die</MenuItem>
                   </Select>
                 </FormControl>
               )}

@@ -36,6 +36,7 @@ export type EntityProps = {
   children?: React.ReactNode;
   hoverMessage?: string;
   positionOffset?: [number, number, number];
+  rotationOffset?: [number, number, number];
   preview?: boolean;
 };
 
@@ -58,6 +59,7 @@ export default observer((props: EntityProps) => {
     pivot = [0, 0, 0],
     deletable = true,
     positionOffset = [0, 0, 0],
+    rotationOffset = [0, 0, 0],
     preview = false
   } = props;
   const {
@@ -244,7 +246,11 @@ export default observer((props: EntityProps) => {
       <mesh
         ref={mesh}
         position={[-pivot[0], -pivot[1], -pivot[2]]}
-        rotation={[faceUp ? Math.PI : 0, 0, 0]}
+        rotation={[
+          (faceUp ? Math.PI : 0) + rotationOffset[0],
+          rotationOffset[1],
+          rotationOffset[2]
+        ]}
         onPointerDown={!preview ? handlePointerDown : undefined}
         onPointerUp={!preview ? handlePointerUp : undefined}
         onPointerMove={!preview ? handlePointerMove : undefined}

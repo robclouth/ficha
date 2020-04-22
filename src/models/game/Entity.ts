@@ -200,6 +200,11 @@ export default class Entity extends Model({
   }
 
   @modelAction
+  setScale(scale: number) {
+    this.scale.x = this.scale.y = this.scale.z = scale;
+  }
+
+  @modelAction
   rotate(radians: number) {
     this.angle += radians;
   }
