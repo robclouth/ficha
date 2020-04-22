@@ -48,8 +48,7 @@ export default class Dice extends ExtendedModel(Entity, {
   onInit() {
     super.onInit();
     this.type = EntityType.Dice;
-
-    this.stackable = false;
+    this.stackable = true;
   }
 
   @modelAction

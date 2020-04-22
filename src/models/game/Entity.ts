@@ -26,6 +26,7 @@ import { nanoid } from "nanoid";
 import EntitySet from "./EntitySet";
 import React from "react";
 import { omit } from "lodash";
+import HandArea from "./HandArea";
 
 export enum EntityType {
   Deck,
@@ -82,10 +83,13 @@ export default class Entity extends Model({
   locked: prop(false, { setterAction: true }),
   faceUp: prop(true, { setterAction: true }),
   stackable: prop(false, { setterAction: true }),
-
+  editable: prop(true, { setterAction: true }),
   controllingPeerId: prop<string | undefined>(undefined, { setterAction: true })
 }) {
   onSnapshotDisposer?: OnSnapshotDisposer;
+
+  @observable
+  handArea?: Entity = undefined;
 
   onInit() {
     when(
@@ -139,14 +143,21 @@ export default class Entity extends Model({
   @modelAction
   setPosition(x: number, z: number) {
     let y = 0;
+    this.handArea = undefined;
     if (this.boundingBox) {
       for (const otherEntity of this.gameState.entities) {
         if (otherEntity !== this && otherEntity.boundingBox) {
           const collision = this.boundingBox.intersectsBox(
             otherEntity.boundingBox
           );
-          if (collision && otherEntity.boundingBox.max.y > y) {
-            y = otherEntity.boundingBox.max.y;
+          if (collision) {
+            if (this.stackable && otherEntity.boundingBox.max.y > y) {
+              y = otherEntity.boundingBox.max.y;
+            }
+
+            if (otherEntity.$modelType === "HandArea") {
+              this.handArea = otherEntity;
+            }
           }
         }
       }

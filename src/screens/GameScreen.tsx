@@ -38,6 +38,7 @@ import Entity from "../models/game/Entity";
 import GameSettingsModal from "../components/modals/GameSettingsModal";
 import EntityLibraryModal from "../components/modals/EntityLibraryModal";
 import RulesModal from "../components/modals/RulesModal";
+import HandArea from "../models/game/HandArea";
 
 const useStyles = makeStyles(theme => ({
   root: {
@@ -96,7 +97,7 @@ const PlayersList = observer(() => {
         </CopyToClipboard>
       )}
       {gameState.connectedPlayers.map((player, i) => {
-        const color = randomColor.getColor({ text: player.userId });
+        const color = "#" + player.color.getHexString();
         return (
           <Chip
             key={i}
@@ -203,6 +204,23 @@ export default observer(() => {
           setOpenModal(Modals.EntityLibrary);
           handleContextMenuClose();
         }
+      },
+      {
+        label: "Add hand area",
+        type: "action",
+        action: () => {
+          gameState.addEntity(
+            new HandArea({
+              position: {
+                x: contextMenu.positionGroundPlane[0],
+                y: 0,
+                z: contextMenu.positionGroundPlane[1]
+              }
+            })
+          );
+
+          handleContextMenuClose();
+        }
       }
     ];
   }
@@ -231,18 +249,6 @@ export default observer(() => {
     <Box className={classes.root} onClick={handleContextMenuClose}>
       <GameCanvas />
       <PlayersList />
-      {/* <Box
-        zIndex={1}
-        width={250}
-        position="absolute"
-        top={theme.spacing(1)}
-        left={theme.spacing(1)}
-        display="flex"
-        flexDirection="column"
-      >
-        <PlayersTable />
-        <Chat />
-      </Box> */}
       <Box
         position="absolute"
         bottom={theme.spacing(1)}
@@ -335,11 +341,16 @@ export default observer(() => {
             : undefined
         }
       >
-        {contextMenu?.items?.map((item, i) => (
-          <MenuItem key={i} onClick={() => handleContextMenuSelect(item)}>
-            {item.label}
-          </MenuItem>
-        ))}
+        {contextMenu?.items
+          ?.filter(item => item)
+          .map((item, i) => (
+            <MenuItem
+              key={i}
+              onClick={() => handleContextMenuSelect(item as ContextMenuItem)}
+            >
+              {(item as ContextMenuItem).label}
+            </MenuItem>
+          ))}
         <EventListener target="window" onResize={handleContextMenuClose} />
       </Menu>
       {openModal === Modals.ImportGame && (

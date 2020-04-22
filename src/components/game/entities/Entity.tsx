@@ -20,6 +20,7 @@ import {
   Quaternion
 } from "three";
 import Entity from "../../../models/game/Entity";
+import HandArea from "../../../models/game/HandArea";
 import { useStore } from "../../../stores/RootStore";
 import { ContextMenuItem } from "../../../types";
 
@@ -29,7 +30,7 @@ export type EntityProps = {
   entity: Entity;
   dragAction?: (e: PointerEvent) => void;
   doubleClickAction?: (e: PointerEvent) => void;
-  contextMenuItems?: ContextMenuItem[];
+  contextMenuItems?: Array<ContextMenuItem | false>;
   pivot?: [number, number, number];
   geometry?: React.ReactElement<BufferGeometry>;
   materialParams?: MaterialParameters | MaterialParameters[];
@@ -75,14 +76,16 @@ export default observer((props: EntityProps) => {
     locked,
     faceUp,
     isDragging,
-    isOtherPlayerControlling
+    isOtherPlayerControlling,
+    editable,
+    handArea
   } = entity;
   const [hovered, setHovered] = useState(false);
   const [pressed, setPressed] = useState(false);
 
   const [pointerDownPos, setPointerDownPos] = React.useState({ x: 0, y: 0 });
 
-  const standardItems: ContextMenuItem[] = [
+  const standardItems: Array<ContextMenuItem | false> = [
     {
       label: "Rotate clockwise",
       type: "action",
@@ -93,7 +96,7 @@ export default observer((props: EntityProps) => {
       type: "action",
       action: () => entity.rotate(-Math.PI / 2)
     },
-    {
+    editable && {
       label: "Edit",
       type: "edit",
       target: entity,
@@ -104,7 +107,7 @@ export default observer((props: EntityProps) => {
       type: "action",
       action: () => entity.duplicate()
     },
-    {
+    editable && {
       label: "Add to library",
       type: "action",
       action: () => entityLibrary.addEntity(entity)
@@ -113,16 +116,13 @@ export default observer((props: EntityProps) => {
       label: locked ? "Unlock" : "Lock",
       type: "action",
       action: () => entity.toggleLocked()
-    }
-  ];
-
-  if (deletable) {
-    standardItems.push({
+    },
+    deletable && {
       label: "Delete",
       type: "action",
       action: () => gameState.removeEntity(entity)
-    });
-  }
+    }
+  ];
 
   const contextMenuItems = props.contextMenuItems
     ? [...props.contextMenuItems, ...standardItems]
@@ -238,8 +238,11 @@ export default observer((props: EntityProps) => {
     [materialParams, hovered]
   );
 
+  const visible =
+    !handArea || (handArea as HandArea).player === gameStore.player;
+
   return (
-    <a.group position={positionOffset}>
+    <a.group position={positionOffset} visible={visible}>
       <group
         position={[position.x, position.y, position.z]}
         rotation={[0, angle, 0]}

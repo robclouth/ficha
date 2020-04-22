@@ -14,7 +14,6 @@ export default class Card extends ExtendedModel(Entity, {
   onInit() {
     super.onInit();
     this.type = EntityType.Card;
-
     this.stackable = true;
   }
 

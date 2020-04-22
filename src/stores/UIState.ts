@@ -25,7 +25,7 @@ export type ContextMenuItem = {
 export type ContextMenu = {
   positionScreen: [number, number];
   positionGroundPlane: [number, number];
-  items?: ContextMenuItem[];
+  items?: Array<ContextMenuItem | false>;
   target?: Entity;
 };
 
@@ -60,7 +60,11 @@ export default class UIState extends Model({}) {
   }
 
   @modelAction
-  openContextMenu(e: PointerEvent, items?: ContextMenuItem[], target?: Entity) {
+  openContextMenu(
+    e: PointerEvent,
+    items?: Array<ContextMenuItem | false>,
+    target?: Entity
+  ) {
     let point = new Vector3();
     e.ray.intersectPlane(new Plane(new Vector3(0, 1, 0), 0), point);
     const positionGroundPlane: [number, number] = [point.x, point.z];

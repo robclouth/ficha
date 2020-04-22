@@ -3,6 +3,9 @@ import { DataConnection } from "peerjs";
 import { generateName } from "../utils/NameGenerator";
 import { StateData } from "./GameServer";
 import { computed } from "mobx";
+// @ts-ignore
+import randomColor from "random-material-color";
+import { Color } from "three";
 
 @model("Player")
 export default class Player extends Model({
@@ -12,6 +15,11 @@ export default class Player extends Model({
   isConnected: prop(true, { setterAction: true })
 }) {
   connection?: DataConnection;
+
+  @computed get color() {
+    const c = randomColor.getColor({ text: this.userId });
+    return new Color(c);
+  }
 
   sendState(stateData: StateData) {
     this.connection && this.connection.send(stateData);
