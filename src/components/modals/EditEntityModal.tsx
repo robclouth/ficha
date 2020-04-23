@@ -44,6 +44,7 @@ import PieceSet from "../../models/game/PieceSet";
 import { useStore } from "../../stores/RootStore";
 import Modal from "./Modal";
 import Board from "../../models/game/Board";
+import { runInAction } from "mobx";
 
 extend({ OrbitControls });
 
@@ -692,7 +693,9 @@ const DeckEditor = observer(
 
     const handleBulkAdd = (text: string) => {
       const urls = text.split(",").map(url => url.trim());
-      urls.forEach(url => handleAddEntity(url));
+      runInAction(() => {
+        urls.forEach(url => handleAddEntity(url));
+      });
     };
 
     const handleAddEntity = (frontImageUrl: string) => {
