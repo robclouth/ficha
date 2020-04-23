@@ -8,7 +8,7 @@ import Entity, { EntityProps, MaterialParameters } from "./Entity";
 
 export type BoardProps = Omit<EntityProps, "geometry"> & {};
 
-export const height = 0.001;
+export const height = 0.01;
 
 export default observer((props: BoardProps) => {
   const { assetCache } = useStore();
