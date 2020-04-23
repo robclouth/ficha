@@ -19,8 +19,10 @@ import {
   UndoStore,
   applySnapshot,
   SnapshotOutOf,
-  withoutUndo
+  withoutUndo,
+  clone
 } from "mobx-keystone";
+import { omit } from "lodash";
 // @ts-ignore
 import randomColor from "random-material-color";
 import localforage from "localforage";
@@ -240,8 +242,14 @@ export default class GameStore extends Model({
     return this.undoManager.canRedo;
   }
 
+  @modelAction
+  newGame() {
+    this.gameState.removeAllEntities();
+    this.gameState.setups = [];
+  }
+
   @modelFlow
-  loadGameStateFromUrl = _async(function*(this: GameStore, url: string) {
+  loadGameFromUrl = _async(function*(this: GameStore, url: string) {
     const response = yield* _await(fetch(`${url}/game.json`));
     const gameDefinitionJson = yield* _await(response.json());
     const gameDefinition = new GameDefinition({
@@ -254,4 +262,26 @@ export default class GameStore extends Model({
 
     this.gameState.entities = gameDefinition.entities;
   });
+
+  @modelAction
+  exportGame() {
+    const gameState = clone(this.gameState);
+    const gameStateJson = getSnapshot(gameState);
+
+    const cleanedJson = omit(gameStateJson, [
+      "players",
+      "hostPeerId",
+      "chatHistory",
+      "players"
+    ]);
+
+    const blob = new Blob([JSON.stringify(cleanedJson)], {
+      type: "application/json"
+    });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `game.json`;
+    a.click();
+  }
 }

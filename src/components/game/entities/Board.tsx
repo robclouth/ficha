@@ -2,7 +2,6 @@ import { range } from "lodash";
 import { observer } from "mobx-react";
 import React from "react";
 import { Color } from "three";
-import Board from "../../../models/game/Board";
 import { useStore } from "../../../stores/RootStore";
 import Entity, { EntityProps, MaterialParameters } from "./Entity";
 

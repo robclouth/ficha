@@ -181,16 +181,8 @@ export default observer(() => {
     }
   };
 
-  const handleSaveGame = () => {
-    const gameStateJson = getSnapshot(gameState);
-    const blob = new Blob([JSON.stringify(gameStateJson)], {
-      type: "application/json"
-    });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `game.json`;
-    a.click();
+  const handleExportGame = () => {
+    gameStore.exportGame();
   };
 
   if (contextMenu && !contextMenu.items) {
@@ -319,7 +311,7 @@ export default observer(() => {
         onClose={handleTopMenuClose}
       >
         <MenuItem
-          onClick={() => handleTopMenuSelect(() => gameState.removeAll())}
+          onClick={() => handleTopMenuSelect(() => gameStore.newGame())}
         >
           New game
         </MenuItem>
@@ -337,7 +329,7 @@ export default observer(() => {
         >
           Import
         </MenuItem>
-        <MenuItem onClick={() => handleTopMenuSelect(() => handleSaveGame())}>
+        <MenuItem onClick={() => handleTopMenuSelect(() => handleExportGame())}>
           Export
         </MenuItem>
         <MenuItem

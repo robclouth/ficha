@@ -49,7 +49,7 @@ export default observer(({ open, handleClose }: DialogProps) => {
     }
 
     try {
-      await gameStore.loadGameStateFromUrl(url);
+      await gameStore.loadGameFromUrl(url);
     } catch (err) {
       setError(err.message);
     }

@@ -58,7 +58,7 @@ export default class GameState extends Model({
   }
 
   @modelAction
-  removeAll() {
+  removeAllEntities() {
     this.entities = [];
   }
 
