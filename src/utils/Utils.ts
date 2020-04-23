@@ -14,17 +14,17 @@ export function generateId() {
 export function createPeer() {
   return new Promise<Peer>((resolve, reject) => {
     const peer = new Peer(generateId(), {
-      config: {
-        iceServers: [
-          { urls: "stun:stun.l.google.com:19302" },
-          {
-            urls: "turn:0.peerjs.com:3478",
-            username: "peerjs",
-            credential: "peerjsp"
-          }
-        ],
-        iceTransportPolicy: "relay"
-      },
+      // config: {
+      //   iceServers: [
+      //     { urls: "stun:stun.l.google.com:19302" },
+      //     {
+      //       urls: "turn:0.peerjs.com:3478",
+      //       username: "peerjs",
+      //       credential: "peerjsp"
+      //     }
+      //   ],
+      //   iceTransportPolicy: "relay"
+      // },
       debug: 3
     });
 
