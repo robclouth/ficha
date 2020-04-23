@@ -252,24 +252,29 @@ export default observer((props: EntityProps) => {
 
   const faded = isSelected;
 
-  const materials = useMemo(() => {
+  function createMaterial(params: any) {
+    // remove undefined params
+    Object.keys(params).forEach(key =>
+      params[key] === undefined ? delete params[key] : {}
+    );
+
     const newParams = {
       transparent: true,
       opacity: faded ? 0.5 : 1
     };
+
+    return new MeshStandardMaterial({
+      ...params,
+      ...newParams
+    });
+  }
+
+  const materials = useMemo(() => {
     if (Array.isArray(materialParams))
-      return (materialParams as MaterialParameters[]).map(
-        params =>
-          new MeshStandardMaterial({
-            ...params,
-            ...newParams
-          })
+      return (materialParams as MaterialParameters[]).map(params =>
+        createMaterial(params)
       );
-    else
-      return new MeshStandardMaterial({
-        ...materialParams,
-        ...newParams
-      });
+    else return createMaterial(materialParams);
   }, [JSON.stringify(materialParams), faded]);
 
   const inOtherPlayersArea =
