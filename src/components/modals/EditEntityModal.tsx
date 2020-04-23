@@ -603,33 +603,53 @@ const EntityList = observer(
           )}
         </Box>
         <Grid container alignItems="center" justify="space-evenly">
-          <Grid container alignItems="center" justify="center">
+          <Grid
+            item
+            xs
+            style={{ display: "flex" }}
+            alignItems="center"
+            justify="center"
+          >
             {entitySet.prototypes.length > 0 && (
               <IconButton onClick={handleRemove}>
                 <RemoveIcon />
               </IconButton>
             )}
           </Grid>
-          <Grid container alignItems="center" justify="center">
+          <Grid
+            item
+            xs
+            style={{ display: "flex" }}
+            alignItems="center"
+            justify="center"
+          >
             <Typography
               variant="body1"
               gutterBottom
             >{`${entitySet.prototypesWithDuplicates.length} ${childEntityName}`}</Typography>
           </Grid>
-          <Grid container alignItems="center" justify="center">
+          <Grid
+            item
+            xs
+            style={{ display: "flex" }}
+            alignItems="center"
+            justify="center"
+          >
             <IconButton onClick={() => handleAddEntity()}>
               <AddIcon />
             </IconButton>
           </Grid>
         </Grid>
-        <Pagination
-          size="small"
-          count={entitySet.prototypes.length}
-          siblingCount={1}
-          boundaryCount={1}
-          page={index + 1}
-          onChange={(e, value) => handleSelectedEntityChange(value - 1)}
-        />
+        {entitySet.prototypes.length > 0 && (
+          <Pagination
+            size="small"
+            count={entitySet.prototypes.length}
+            siblingCount={1}
+            boundaryCount={1}
+            page={index + 1}
+            onChange={(e, value) => handleSelectedEntityChange(value - 1)}
+          />
+        )}
       </Box>
     );
   }
@@ -749,7 +769,7 @@ export default observer(
     const { gameStore } = useStore();
     const { gameState } = gameStore;
 
-    const [type, setType] = React.useState(EntityType.Card);
+    const [type, setType] = React.useState(EntityType.Deck);
     const [previewEntity, setPreviewEntity] = React.useState<Entity>();
 
     const isEditing = !!entity;

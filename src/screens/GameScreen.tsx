@@ -357,8 +357,9 @@ export default observer(() => {
           >
             Add setup
           </MenuItem>
-          {gameState.setups.map(setup => (
+          {gameState.setups.map((setup, i) => (
             <MenuItem
+              key={i}
               style={{ display: "flex", justifyContent: "space-between" }}
               onClick={() =>
                 handleTopMenuSelect(() => gameState.activateSetup(setup))
