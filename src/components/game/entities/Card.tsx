@@ -1,12 +1,20 @@
 import { observer } from "mobx-react";
 import React, { useMemo } from "react";
-import Card from "../../../models/game/Card";
+import Card, { Shape } from "../../../models/game/Card";
 import Entity, { EntityProps, MaterialParameters } from "./Entity";
 import { ContextMenuItem } from "../../../types";
 import { useStore } from "../../../stores/RootStore";
 import defaultCardBack from "../../../assets/default-back.png";
-import { Color, Group, CanvasTexture } from "three";
+import {
+  Color,
+  Group,
+  CanvasTexture,
+  BufferGeometry,
+  Quaternion,
+  Object3D
+} from "three";
 import { Dom } from "react-three-fiber";
+import { range } from "lodash";
 
 export type CardProps = Omit<EntityProps, "geometry"> & {};
 
@@ -51,7 +59,8 @@ export default observer((props: CardProps) => {
     subtitle,
     body,
     centerValue,
-    cornerValue
+    cornerValue,
+    shape
   } = card;
 
   const contextMenuItems: ContextMenuItem[] = [
@@ -75,102 +84,168 @@ export default observer((props: CardProps) => {
     });
   }
 
-  const edgeMaterialParams = {
-    roughness: 1
-    // color: "white"
-  };
   const backTexture = backImageUrl
     ? assetCache.getTexture(backImageUrl)
     : assetCache.getTexture(defaultCardBack, false);
 
   const canvasTexture = useMemo(() => {
-    if (!(title || subtitle || body || centerValue || cornerValue)) return null;
+    if (frontImageUrl) return null;
     const canvas = document.createElement("canvas");
     canvas.height = 2048;
-    canvas.width = canvas.height * 0.7;
+    canvas.width = canvas.height * (shape === Shape.Card ? 0.7 : 1);
     const context = canvas.getContext("2d")!;
-    context.fillStyle = "white";
+    context.fillStyle =
+      "#" + new Color(color.r, color.b, color.g).getHexString();
     context.fillRect(0, 0, canvas.width, canvas.height);
+
     const fontSize = canvas.width * 0.15;
-    context.font = `${fontSize}px Roboto`;
-    context.textAlign = "left";
-    context.textBaseline = "top";
+    const padding = canvas.width * 0.05;
+
     context.fillStyle = "black";
 
-    const padding = canvas.width * 0.05;
-    context.fillText(title, padding, padding, canvas.width - padding * 2);
+    if (title) {
+      context.font = `${fontSize}px Roboto`;
+      context.textAlign = "left";
+      context.textBaseline = "top";
+      context.fillText(title, padding, padding, canvas.width - padding * 2);
+    }
 
-    context.font = `${fontSize * 0.7}px Roboto`;
-    context.fillText(
-      subtitle,
-      padding,
-      padding + fontSize,
-      canvas.width - padding * 2
-    );
+    if (subtitle) {
+      context.font = `${fontSize * 0.7}px Roboto`;
+      context.textBaseline = "top";
+      context.fillText(
+        subtitle,
+        padding,
+        padding + fontSize,
+        canvas.width - padding * 2
+      );
+    }
 
-    context.font = `${fontSize * 2}px Roboto`;
-    context.textAlign = "right";
-    context.fillText(
-      cornerValue,
-      canvas.width - padding,
-      padding,
-      canvas.width - padding * 2
-    );
-    context.textAlign = "left";
+    if (cornerValue) {
+      context.font = `${fontSize * 2}px Roboto`;
+      context.textAlign = "right";
+      context.textBaseline = "top";
+      context.fillText(
+        cornerValue,
+        canvas.width - padding,
+        padding,
+        canvas.width - padding * 2
+      );
+    }
 
-    context.font = `${fontSize * 4}px Roboto`;
-    context.textAlign = "center";
-    context.textBaseline = "middle";
-    context.fillText(
-      centerValue,
-      canvas.width / 2,
-      canvas.height / 2,
-      canvas.width - padding * 2
-    );
-    context.textAlign = "left";
-    context.textBaseline = "top";
+    if (centerValue) {
+      context.font = `${fontSize * 4}px Roboto`;
+      context.textAlign = "center";
+      context.textBaseline = "middle";
+      context.fillText(
+        centerValue,
+        canvas.width / 2,
+        canvas.height / 2,
+        canvas.width - padding * 2
+      );
+    }
 
-    context.font = `${fontSize * 0.5}px Roboto`;
-    wrapText(
-      context,
-      body,
-      padding,
-      canvas.height / 2,
-      canvas.width - padding * 2,
-      fontSize * 0.5
-    );
+    if (body) {
+      context.font = `${fontSize * 0.5}px Roboto`;
+      context.textAlign = "left";
+      context.textBaseline = "top";
+      wrapText(
+        context,
+        body,
+        padding,
+        canvas.height / 2,
+        canvas.width - padding * 2,
+        fontSize * 0.5
+      );
+    }
 
     return new CanvasTexture(canvas);
-  }, [title, subtitle, body, cornerValue, centerValue]);
+  }, [
+    frontImageUrl,
+    shape,
+    title,
+    subtitle,
+    body,
+    cornerValue,
+    centerValue,
+    JSON.stringify(color)
+  ]);
 
-  const materialParams: MaterialParameters[] = [
-    edgeMaterialParams,
-    edgeMaterialParams,
-    {
-      roughness: 0.2,
-      map: backTexture
-    },
-    {
-      roughness: 0.2,
-      map:
-        canvasTexture ||
-        (frontImageUrl ? assetCache.getTexture(frontImageUrl) : undefined),
-      color: new Color(color.r, color.g, color.b)
-    },
-    edgeMaterialParams,
-    edgeMaterialParams
-  ];
+  const edgeMaterial: MaterialParameters = {
+    roughness: 1,
+    color: new Color(1, 1, 1)
+  };
+
+  const backMaterial: MaterialParameters = {
+    roughness: 0.2,
+    map: backTexture
+  };
+
+  const frontMaterial: MaterialParameters = {
+    roughness: 0.2,
+    map:
+      canvasTexture ||
+      (frontImageUrl ? assetCache.getTexture(frontImageUrl) : undefined),
+    color: frontImageUrl
+      ? new Color(color.r, color.g, color.b)
+      : new Color(1, 1, 1)
+  };
+
+  let materialParams: MaterialParameters[];
+  let rotationOffset = new Quaternion();
+
+  let geometry: React.ReactElement<BufferGeometry>;
+  if (shape === Shape.Card) {
+    geometry = (
+      <boxBufferGeometry args={[0.7, cardHeight, 1]} attach="geometry" />
+    );
+
+    materialParams = range(6).map(i => edgeMaterial);
+    materialParams[2] = backMaterial;
+    materialParams[3] = frontMaterial;
+  } else if (shape === Shape.Hex) {
+    geometry = (
+      <cylinderBufferGeometry
+        args={[0.5, 0.5, cardHeight, 6]}
+        attach="geometry"
+      />
+    );
+    materialParams = range(3).map(i => edgeMaterial);
+    materialParams[1] = backMaterial;
+    materialParams[2] = frontMaterial;
+    materialParams.forEach(material => (material.flatShading = true));
+    rotationOffset.setFromAxisAngle(Object3D.DefaultUp, Math.PI / 2);
+  } else if (shape === Shape.Square) {
+    geometry = (
+      <boxBufferGeometry args={[1, cardHeight, 1]} attach="geometry" />
+    );
+
+    materialParams = range(6).map(i => edgeMaterial);
+    materialParams[2] = backMaterial;
+    materialParams[3] = frontMaterial;
+  } else {
+    geometry = (
+      <cylinderBufferGeometry
+        args={[0.5, 0.5, cardHeight, 30]}
+        attach="geometry"
+      />
+    );
+
+    materialParams = range(3).map(i => edgeMaterial);
+    materialParams[1] = backMaterial;
+    materialParams[2] = frontMaterial;
+    rotationOffset.setFromAxisAngle(Object3D.DefaultUp, Math.PI / 2);
+  }
 
   return (
     <Entity
       {...props}
       pivot={[0, -cardHeight / 2, 0]}
-      geometry={
-        <boxBufferGeometry args={[0.7, cardHeight, 1]} attach="geometry" />
-      }
+      geometry={geometry}
       materialParams={materialParams}
       contextMenuItems={contextMenuItems}
       doubleClickAction={() => card.flip()}
+      rotationOffset={rotationOffset}
       castShadows={false}
     >
       {canvasTexture && <primitive object={canvasTexture} />}

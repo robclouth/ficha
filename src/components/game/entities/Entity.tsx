@@ -301,28 +301,27 @@ export default observer((props: EntityProps) => {
           rotation={[0, angle, 0]}
           scale={[scale.x, scale.y, scale.z]}
         >
-          <a.group position={[-pivot[0], -pivot[1], -pivot[2]]}>
-            <a.mesh
-              ref={mesh}
-              userData={{ entity }}
-              quaternion={rotationOffset}
-              rotation={
-                rotationOffset ? undefined : [faceUp ? Math.PI : 0, 0, 0]
-              }
-              {...events}
-              castShadow={castShadows}
-              receiveShadow
-            >
-              {geometry}
-              {Array.isArray(materials) ? (
-                (materials as MeshStandardMaterial[]).map(material => (
-                  <primitive attachArray="material" object={material} />
-                ))
-              ) : (
-                <primitive attach="material" object={materials} />
-              )}
-            </a.mesh>
-          </a.group>
+          <group position={[-pivot[0], -pivot[1], -pivot[2]]}>
+            <group rotation={[faceUp ? Math.PI : 0, 0, 0]}>
+              <a.mesh
+                ref={mesh}
+                userData={{ entity }}
+                quaternion={rotationOffset}
+                {...events}
+                castShadow={castShadows}
+                receiveShadow
+              >
+                {geometry}
+                {Array.isArray(materials) ? (
+                  (materials as MeshStandardMaterial[]).map(material => (
+                    <primitive attachArray="material" object={material} />
+                  ))
+                ) : (
+                  <primitive attach="material" object={materials} />
+                )}
+              </a.mesh>
+            </group>
+          </group>
 
           {children}
           {hoverMessage && hovered && (

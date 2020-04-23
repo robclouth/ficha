@@ -40,17 +40,6 @@ export enum EntityType {
   HandArea
 }
 
-export enum Shape {
-  Cube,
-  Cylinder,
-  Cone,
-  Sphere,
-  Ring,
-  Tetrahedron,
-  Octahedron,
-  Dodecahedron
-}
-
 export const entityRef = rootRef<Entity>("EntityRef", {
   onResolvedValueChange(ref, newEntity, oldEntity) {
     if (oldEntity && !newEntity) detach(ref);
@@ -76,9 +65,6 @@ export default class Entity extends Model({
   ),
   frontImageUrl: prop<string>("", { setterAction: true }),
   backImageUrl: prop<string>("", { setterAction: true }),
-  shape: prop<Shape>(Shape.Cube, { setterAction: true }),
-  shapeParam1: prop(3, { setterAction: true }),
-  shapeParam2: prop(3, { setterAction: true }),
   locked: prop(false, { setterAction: true }),
   faceUp: prop(true, { setterAction: true }),
   stackable: prop(false, { setterAction: true }),

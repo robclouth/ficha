@@ -1,14 +1,10 @@
 import { observer } from "mobx-react";
 import React from "react";
-import Card from "../../../models/game/Card";
-import Entity, { EntityProps, MaterialParameters } from "./Entity";
-import { ContextMenuItem } from "../../../types";
+import { BufferGeometry, Color } from "three";
+import Piece, { Shape } from "../../../models/game/Piece";
 import { useStore } from "../../../stores/RootStore";
-import defaultCardBack from "../../../assets/default-back.png";
-import { Color, BufferGeometry } from "three";
-import Piece from "../../../models/game/Piece";
-import { Shape } from "../../../models/game/Entity";
-import { $enum } from "ts-enum-util";
+import { ContextMenuItem } from "../../../types";
+import Entity, { EntityProps } from "./Entity";
 
 export type PieceProps = Omit<EntityProps, "geometry"> & {};
 

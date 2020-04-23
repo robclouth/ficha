@@ -19,6 +19,8 @@ import {
   useTheme
 } from "@material-ui/core";
 import InsertEmoticonIcon from "@material-ui/icons/InsertEmoticon";
+import AddIcon from "@material-ui/icons/Add";
+import RemoveIcon from "@material-ui/icons/Remove";
 import Pagination from "@material-ui/lab/Pagination";
 //@ts-ignore
 import { Picker } from "emoji-mart";
@@ -30,12 +32,12 @@ import { CirclePicker } from "react-color";
 import { Canvas, extend, useFrame, useThree } from "react-three-fiber";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 import { $enum } from "ts-enum-util";
-import Card from "../../models/game/Card";
+import Card, { Shape as CardShape } from "../../models/game/Card";
 import Deck from "../../models/game/Deck";
 import Dice, { DiceType } from "../../models/game/Dice";
-import Entity, { EntityType, Shape } from "../../models/game/Entity";
+import Entity, { EntityType } from "../../models/game/Entity";
 import EntitySet, { entitySetRef } from "../../models/game/EntitySet";
-import Piece from "../../models/game/Piece";
+import Piece, { Shape } from "../../models/game/Piece";
 import PieceSet from "../../models/game/PieceSet";
 import { useStore } from "../../stores/RootStore";
 import Modal from "./Modal";
@@ -132,6 +134,40 @@ const Preview = observer(
   }
 );
 
+const ColorPicker = observer(({ entity }: { entity: Entity }) => {
+  const classes = useStyles();
+  return (
+    <FormControl className={classes.formControl} style={{ marginBottom: 0 }}>
+      <FormLabel>Color</FormLabel>
+      <Box
+        padding={1}
+        display="flex"
+        alignItems="center"
+        justifyContent="center"
+      >
+        <CirclePicker
+          colors={colorOptions}
+          circleSpacing={5}
+          circleSize={20}
+          color={{
+            r: Math.floor(entity.color.r * 255),
+            g: Math.floor(entity.color.g * 255),
+            b: Math.floor(entity.color.b * 255)
+          }}
+          onChange={color =>
+            (entity.color = {
+              r: color.rgb.r / 255,
+              g: color.rgb.g / 255,
+              b: color.rgb.b / 255
+            })
+          }
+          width={"230px"}
+        />
+      </Box>
+    </FormControl>
+  );
+});
+
 type EmojiInputProps = InputProps & {
   onTextChange: (text: string) => void;
 };
@@ -211,13 +247,45 @@ const CardEditor = observer(
       body,
       centerValue,
       cornerValue,
-      color
+      color,
+      shape
     } = card;
 
     return (
       <Box display="flex" flexDirection="column">
+        <FormControl
+          className={classes.formControl}
+          style={{ marginBottom: 12 }}
+        >
+          <Select
+            margin="dense"
+            fullWidth
+            value={shape}
+            onChange={e => (card.shape = e.target.value as CardShape)}
+          >
+            {$enum(CardShape)
+              .getEntries()
+              .map(entry => (
+                <MenuItem key={entry[1]} value={entry[1]}>
+                  {entry[0]}
+                </MenuItem>
+              ))}
+          </Select>
+        </FormControl>
+        <FormControl>
+          <FormLabel>Thickness</FormLabel>
+          <Slider
+            value={card.scale.y}
+            onChange={(e, value) => card.setScaleY(value as number)}
+            valueLabelDisplay="auto"
+            min={1}
+            max={10}
+            step={0.1}
+          />
+        </FormControl>
         <FormControl className={classes.formControl}>
           <Input
+            margin="dense"
             value={frontImageUrl}
             onChange={e => (card.frontImageUrl = e.target.value)}
             fullWidth
@@ -227,6 +295,7 @@ const CardEditor = observer(
         {showBackInput && (
           <FormControl className={classes.formControl}>
             <Input
+              margin="dense"
               value={backImageUrl}
               disabled={!!card.ownerSet}
               onChange={e => (card.backImageUrl = e.target.value)}
@@ -280,36 +349,7 @@ const CardEditor = observer(
             placeholder="Center text"
           />
         </FormControl>
-        <FormControl className={classes.formControl}>
-          <FormLabel>Color</FormLabel>
-          <div
-            style={{
-              padding: 10,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center"
-            }}
-          >
-            <CirclePicker
-              colors={colorOptions}
-              circleSpacing={5}
-              circleSize={20}
-              color={{
-                r: Math.floor(color.r * 255),
-                g: Math.floor(color.g * 255),
-                b: Math.floor(color.b * 255)
-              }}
-              onChange={color =>
-                (card.color = {
-                  r: color.rgb.r / 255,
-                  g: color.rgb.g / 255,
-                  b: color.rgb.b / 255
-                })
-              }
-              width={"240px"}
-            />
-          </div>
-        </FormControl>
+        <ColorPicker entity={card} />
       </Box>
     );
   }
@@ -438,43 +478,14 @@ const PieceEditor = observer(({ entity }: { entity: Entity }) => {
           step={0.1}
         />
       </FormControl>
-      <FormControl className={classes.formControl}>
-        <FormLabel>Color</FormLabel>
-        <div
-          style={{
-            padding: 10,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center"
-          }}
-        >
-          <CirclePicker
-            colors={colorOptions}
-            circleSpacing={5}
-            circleSize={20}
-            color={{
-              r: Math.floor(color.r * 255),
-              g: Math.floor(color.g * 255),
-              b: Math.floor(color.b * 255)
-            }}
-            onChange={color =>
-              (piece.color = {
-                r: color.rgb.r / 255,
-                g: color.rgb.g / 255,
-                b: color.rgb.b / 255
-              })
-            }
-            width={"240px"}
-          />
-        </div>
-      </FormControl>
+      <ColorPicker entity={piece} />
     </Box>
   );
 });
 
 const DiceEditor = observer(({ entity }: { entity: Entity }) => {
   const classes = useStyles();
-
+  const theme = useTheme();
   const dice = entity as Dice;
   const { color, diceType, labels } = dice;
 
@@ -482,6 +493,7 @@ const DiceEditor = observer(({ entity }: { entity: Entity }) => {
     <Box display="flex" flexDirection="column">
       <FormControl className={classes.formControl} style={{ marginBottom: 20 }}>
         <Select
+          margin="dense"
           fullWidth
           value={diceType}
           onChange={e => (dice.diceType = e.target.value as DiceType)}
@@ -515,101 +527,10 @@ const DiceEditor = observer(({ entity }: { entity: Entity }) => {
           step={0.1}
         />
       </FormControl>
-
-      <FormControl className={classes.formControl}>
-        <FormLabel>Color</FormLabel>
-        <div
-          style={{
-            padding: 10,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center"
-          }}
-        >
-          <CirclePicker
-            colors={colorOptions}
-            circleSpacing={5}
-            circleSize={20}
-            color={{
-              r: Math.floor(color.r * 255),
-              g: Math.floor(color.g * 255),
-              b: Math.floor(color.b * 255)
-            }}
-            onChange={color =>
-              (dice.color = {
-                r: color.rgb.r / 255,
-                g: color.rgb.g / 255,
-                b: color.rgb.b / 255
-              })
-            }
-            width={"240px"}
-          />
-        </div>
-      </FormControl>
+      <ColorPicker entity={dice} />
     </Box>
   );
 });
-
-type InputSliderProps = {
-  value: number;
-  min: number;
-  max: number;
-  onChange: (value: number) => void;
-};
-const InputSlider = observer(
-  ({ value, onChange, min, max }: InputSliderProps) => {
-    const classes = useStyles();
-
-    const handleSliderChange = (event: any, newValue: number | number[]) => {
-      onChange(newValue as number);
-    };
-
-    const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-      onChange(event.target.value === "" ? min : Number(event.target.value));
-    };
-
-    const handleBlur = () => {
-      if (value < min) {
-        onChange(min);
-      } else if (value > max) {
-        onChange(max);
-      }
-    };
-
-    return (
-      <Grid
-        container
-        spacing={2}
-        alignItems="center"
-        style={{ paddingLeft: 10 }}
-      >
-        <Grid item xs>
-          <Slider
-            value={value}
-            onChange={handleSliderChange}
-            aria-labelledby="input-slider"
-          />
-        </Grid>
-        <Grid item>
-          <Input
-            style={{ width: 42 }}
-            value={value}
-            margin="dense"
-            onChange={handleInputChange}
-            onBlur={handleBlur}
-            inputProps={{
-              step: 1,
-              min,
-              max,
-              type: "number",
-              "aria-labelledby": "input-slider"
-            }}
-          />
-        </Grid>
-      </Grid>
-    );
-  }
-);
 
 type EntityListProps = {
   entitySet: EntitySet;
@@ -628,20 +549,22 @@ const EntityList = observer(
     onPreviewEntityChange
   }: EntityListProps) => {
     const [index, setIndex] = useState(0);
-    const entity = entitySet.prototypes[index];
+    const entity =
+      entitySet.prototypes.length > 0 ? entitySet.prototypes[index] : undefined;
     const count = entity && entitySet.prototypeCounts[entity.$modelId];
 
     const handleAddEntity = () => {
       const prototype = getNewEntity();
       entitySet.addPrototype(prototype);
       if (entitySet.prototypes.length === 1) onPreviewEntityChange(prototype);
-      else handleSelectedEntityChange(index + 1);
+
+      handleSelectedEntityChange(entitySet.prototypes.length - 1);
     };
 
     const handleRemove = () => {
       if (index <= entitySet.prototypes.length)
-        handleSelectedEntityChange(entitySet.prototypes.length - 1);
-      entitySet.removePrototype(entity);
+        handleSelectedEntityChange(index - 1);
+      if (entity) entitySet.removePrototype(entity);
       if (entitySet.prototypes.length === 0) onPreviewEntityChange(undefined);
     };
 
@@ -652,25 +575,20 @@ const EntityList = observer(
 
     return (
       <Box display="flex" flexDirection="column" alignItems="center" flex={1}>
-        <Box>
-          <Button onClick={() => handleAddEntity()}>Add</Button>
+        <Box
+          flexDirection="column"
+          alignItems="stretch"
+          flex={1}
+          marginBottom={1}
+        >
           {entitySet.prototypes.length > 0 && (
-            <Button onClick={handleRemove}>Remove</Button>
-          )}
-        </Box>
-        {entitySet.prototypes.length > 0 && (
-          <>
-            <Box
-              flexDirection="column"
-              alignItems="stretch"
-              flex={1}
-              marginBottom={1}
-            >
+            <>
               <FormControl style={{ width: "100%" }}>
                 <FormLabel>Count</FormLabel>
                 <Slider
                   value={count}
                   onChange={(e, value) =>
+                    entity &&
                     entitySet.setPrototypeCount(entity, value as number)
                   }
                   valueLabelDisplay="auto"
@@ -679,21 +597,37 @@ const EntityList = observer(
                 />
               </FormControl>
               {React.createElement(editor, { entity, showBackInput: false })}
-            </Box>
+            </>
+          )}
+        </Box>
+        <Grid container alignItems="center" justify="space-evenly">
+          <Grid container alignItems="center" justify="center">
+            {entitySet.prototypes.length > 0 && (
+              <IconButton onClick={handleRemove}>
+                <RemoveIcon />
+              </IconButton>
+            )}
+          </Grid>
+          <Grid container alignItems="center" justify="center">
             <Typography
               variant="body1"
               gutterBottom
             >{`${entitySet.prototypesWithDuplicates.length} ${childEntityName}`}</Typography>
-            <Pagination
-              size="small"
-              count={entitySet.prototypes.length}
-              siblingCount={1}
-              boundaryCount={1}
-              page={index + 1}
-              onChange={(e, value) => handleSelectedEntityChange(value - 1)}
-            />
-          </>
-        )}
+          </Grid>
+          <Grid container alignItems="center" justify="center">
+            <IconButton onClick={() => handleAddEntity()}>
+              <AddIcon />
+            </IconButton>
+          </Grid>
+        </Grid>
+        <Pagination
+          size="small"
+          count={entitySet.prototypes.length}
+          siblingCount={1}
+          boundaryCount={1}
+          page={index + 1}
+          onChange={(e, value) => handleSelectedEntityChange(value - 1)}
+        />
       </Box>
     );
   }
@@ -735,6 +669,7 @@ const DeckEditor = observer(
       <Box display="flex" flexDirection="column" flex={1}>
         <FormControl className={classes.formControl}>
           <Input
+            margin="dense"
             value={backImageUrl}
             onChange={e => handleBackImageUrlChange(e.target.value)}
             fullWidth
@@ -743,6 +678,7 @@ const DeckEditor = observer(
         </FormControl>
         <FormControl className={classes.formControl}>
           <Input
+            margin="dense"
             value=""
             fullWidth
             placeholder="Bulk add"
@@ -909,7 +845,7 @@ export default observer(
         handleClose={handleClose}
         title={`${isEditing ? "Edit" : "Add"} entity`}
         content={
-          <Box display="flex" height={650}>
+          <Box display="flex" height={670}>
             <Box
               display="flex"
               flexDirection="column"
@@ -920,6 +856,7 @@ export default observer(
               {!isEditing && (
                 <FormControl className={classes.formControl}>
                   <Select
+                    margin="dense"
                     fullWidth
                     value={type}
                     onChange={e => setType(e.target.value as EntityType)}
@@ -934,6 +871,7 @@ export default observer(
               )}
               <FormControl className={classes.formControl}>
                 <Input
+                  margin="dense"
                   value={entityDraft.data.name}
                   onChange={e => (entityDraft.data.name = e.target.value)}
                   fullWidth
