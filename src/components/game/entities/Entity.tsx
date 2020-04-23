@@ -74,7 +74,7 @@ export default observer((props: EntityProps) => {
     position,
     angle,
     scale,
-    color,
+    ownerSet,
     locked,
     faceUp,
     isDragging,
@@ -105,6 +105,13 @@ export default observer((props: EntityProps) => {
       target: entity,
       action: () => {}
     },
+    editable &&
+      entity.prototype?.maybeCurrent !== undefined && {
+        label: "Edit prototype",
+        type: "edit",
+        target: entity.prototype?.maybeCurrent,
+        action: () => {}
+      },
     {
       label: "Duplicate",
       type: "action",
