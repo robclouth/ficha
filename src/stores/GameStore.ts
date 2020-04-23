@@ -1,43 +1,36 @@
-import { computed, observable, reaction, runInAction } from "mobx";
+import localforage from "localforage";
+import { omit } from "lodash";
+import { computed, observable, reaction } from "mobx";
 import {
   applyPatches,
+  applySnapshot,
+  clone,
   fromSnapshot,
+  getSnapshot,
+  model,
+  Model,
+  modelAction,
+  modelFlow,
   onPatches,
   OnPatchesDisposer,
   Patch,
-  SnapshotInOf,
-  modelFlow,
-  _async,
-  _await,
-  model,
-  Model,
   prop,
-  modelAction,
-  undoMiddleware,
-  UndoManager,
-  getSnapshot,
-  UndoStore,
-  applySnapshot,
+  SnapshotInOf,
   SnapshotOutOf,
+  UndoManager,
+  undoMiddleware,
   withoutUndo,
-  clone,
-  detach
+  _async,
+  _await
 } from "mobx-keystone";
-import { omit } from "lodash";
-// @ts-ignore
-import randomColor from "random-material-color";
-import localforage from "localforage";
+import { nanoid } from "nanoid";
 import Peer, { DataConnection } from "peerjs";
 import GameServer, { StateData, StateDataType } from "../models/GameServer";
 import GameState from "../models/GameState";
 import Player from "../models/Player";
-import { createPeer } from "../utils/Utils";
-import RootStore from "./RootStore";
-import GameDefinition from "../models/GameDefinition";
-import { nanoid } from "nanoid";
 import { generateName } from "../utils/NameGenerator";
-import Deck from "../models/game/Deck";
-import Card from "../models/game/Card";
+import { createPeer } from "../utils/Utils";
+import { gameRepoUrl } from "../constants";
 
 @model("GameStore")
 export default class GameStore extends Model({
@@ -267,9 +260,15 @@ export default class GameStore extends Model({
     this.gameState.name = gameState.name;
     this.gameState.assetsUrl = gameState.assetsUrl;
     this.gameState.setups = clone(gameState.setups);
-    this.gameState.activeSetup = gameState.activeSetup;
+    if (gameState.activeSetup)
+      this.gameState.activeSetup = clone(gameState.activeSetup);
     this.gameState.entities = clone(gameState.entities);
   });
+
+  @modelAction
+  loadGameByName(name: string) {
+    this.loadGameFromUrl(gameRepoUrl + "/" + name);
+  }
 
   @modelAction
   exportGame() {

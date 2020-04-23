@@ -23,11 +23,12 @@ import { autorun } from "mobx";
 import { getSnapshot } from "mobx-keystone";
 import { observer } from "mobx-react";
 import { useSnackbar } from "notistack";
+import { useParams } from "react-router";
 // @ts-ignore
 import EventListener from "react-event-listener";
 // @ts-ignore
 import randomColor from "random-material-color";
-import React, { useCallback } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 //@ts-ignore
 import { CopyToClipboard } from "react-copy-to-clipboard";
 import { PointerEvent } from "react-three-fiber";
@@ -144,15 +145,14 @@ export default observer(() => {
 
   const { gameState, canUndo, canRedo } = gameStore;
 
-  const theme = useTheme();
-  const [
-    topMenuAnchorEl,
-    setTopMenuAnchorEl
-  ] = React.useState<null | HTMLElement>(null);
+  const { game } = useParams();
 
-  const [openModal, setOpenModal] = React.useState<Modals | undefined>(
-    undefined
+  const theme = useTheme();
+  const [topMenuAnchorEl, setTopMenuAnchorEl] = useState<null | HTMLElement>(
+    null
   );
+
+  const [openModal, setOpenModal] = useState<Modals | undefined>(undefined);
 
   const handleTopMenuClick = (e: React.MouseEvent<HTMLElement>) => {
     setTopMenuAnchorEl(e.currentTarget);
@@ -226,7 +226,11 @@ export default observer(() => {
 
   const snackbar = useSnackbar();
 
-  React.useEffect(() => {
+  useEffect(() => {
+    if (game) gameStore.loadGameByName(game);
+  }, [game]);
+
+  useEffect(() => {
     gameStore.createGame();
     autorun(() => {
       gameStore.connectionError &&
