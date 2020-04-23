@@ -16,7 +16,9 @@ import {
   Select,
   Slider,
   Typography,
-  useTheme
+  useTheme,
+  FormControlLabel,
+  Switch
 } from "@material-ui/core";
 import InsertEmoticonIcon from "@material-ui/icons/InsertEmoticon";
 import AddIcon from "@material-ui/icons/Add";
@@ -876,6 +878,20 @@ export default observer(
                   onChange={e => (entityDraft.data.name = e.target.value)}
                   fullWidth
                   placeholder="Name"
+                />
+              </FormControl>
+              <FormControl className={classes.formControl}>
+                <FormControlLabel
+                  control={
+                    <Switch
+                      checked={entityDraft.data.stackable}
+                      onChange={e =>
+                        (entityDraft.data.stackable = e.target.checked)
+                      }
+                      color="primary"
+                    />
+                  }
+                  label="Stackable"
                 />
               </FormControl>
               <Preview entity={previewEntity} active={open} />
