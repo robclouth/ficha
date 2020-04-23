@@ -24,7 +24,7 @@ import {
   _await
 } from "mobx-keystone";
 import { nanoid } from "nanoid";
-import Peer, { DataConnection } from "peerjs";
+import Peer, { DataConnection, util } from "peerjs";
 import GameServer, { StateData, StateDataType } from "../models/GameServer";
 import GameState from "../models/GameState";
 import Player from "../models/Player";

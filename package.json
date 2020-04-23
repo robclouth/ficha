@@ -17,6 +17,7 @@
     "d3-ease": "^1.0.6",
     "delay": "^4.3.0",
     "emoji-mart": "^3.0.0",
+    "freeice": "^2.2.2",
     "is-url": "^1.2.4",
     "localforage": "^1.7.3",
     "lodash": "^4.17.15",
