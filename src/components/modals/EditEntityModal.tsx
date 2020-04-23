@@ -43,6 +43,7 @@ import Piece, { Shape } from "../../models/game/Piece";
 import PieceSet from "../../models/game/PieceSet";
 import { useStore } from "../../stores/RootStore";
 import Modal from "./Modal";
+import Board from "../../models/game/Board";
 
 extend({ OrbitControls });
 
@@ -534,6 +535,41 @@ const DiceEditor = observer(({ entity }: { entity: Entity }) => {
   );
 });
 
+const BoardEditor = observer(({ entity }: { entity: Entity }) => {
+  const classes = useStyles();
+  const theme = useTheme();
+  const board = entity as Board;
+  const { frontImageUrl, scale } = board;
+
+  return (
+    <Box display="flex" flexDirection="column">
+      <FormControl className={classes.formControl}>
+        <Input
+          margin="dense"
+          value={frontImageUrl}
+          onChange={e => (board.frontImageUrl = e.target.value)}
+          fullWidth
+          placeholder={"Image URL"}
+        />
+      </FormControl>
+      <FormControl>
+        <FormLabel>Scale</FormLabel>
+        <Slider
+          value={scale.x}
+          onChange={(e, value) => {
+            board.setScaleX(value as number);
+            board.setScaleZ(value as number);
+          }}
+          valueLabelDisplay="auto"
+          min={0.1}
+          max={10}
+          step={0.1}
+        />
+      </FormControl>
+    </Box>
+  );
+});
+
 type EntityListProps = {
   entitySet: EntitySet;
   editor: React.FunctionComponent<any>;
@@ -796,7 +832,7 @@ export default observer(
             diceType: DiceType.D6,
             scale: { x: 2, y: 2, z: 2 }
           });
-        else targetEntity = new Deck({});
+        else targetEntity = new Board({});
       }
 
       const newDraft = draft(targetEntity);
@@ -858,6 +894,9 @@ export default observer(
       } else if (entityDraft.data.type === EntityType.Dice) {
         handlePreviewEntityChange(entityDraft.data);
         return <DiceEditor entity={entityDraft.data} />;
+      } else if (entityDraft.data.type === EntityType.Board) {
+        handlePreviewEntityChange(entityDraft.data);
+        return <BoardEditor entity={entityDraft.data} />;
       }
     }, [entityDraft.data.type]);
 
@@ -888,6 +927,7 @@ export default observer(
                     <MenuItem value={EntityType.PieceSet}>Piece set</MenuItem>
                     <MenuItem value={EntityType.Piece}>Piece</MenuItem>
                     <MenuItem value={EntityType.Dice}>Die</MenuItem>
+                    <MenuItem value={EntityType.Board}>Board</MenuItem>
                   </Select>
                 </FormControl>
               )}

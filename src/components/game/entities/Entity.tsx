@@ -313,8 +313,12 @@ export default observer((props: EntityProps) => {
               >
                 {geometry}
                 {Array.isArray(materials) ? (
-                  (materials as MeshStandardMaterial[]).map(material => (
-                    <primitive attachArray="material" object={material} />
+                  (materials as MeshStandardMaterial[]).map((material, i) => (
+                    <primitive
+                      key={i}
+                      attachArray="material"
+                      object={material}
+                    />
                   ))
                 ) : (
                   <primitive attach="material" object={materials} />
