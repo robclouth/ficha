@@ -1,15 +1,12 @@
 import {
   Button,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
   FormControl,
+  LinearProgress,
   makeStyles,
   TextField
 } from "@material-ui/core";
 import { observer } from "mobx-react";
-import React from "react";
+import React, { useState, useRef } from "react";
 import { useStore } from "../../stores/RootStore";
 import Modal from "./Modal";
 
@@ -30,9 +27,10 @@ export default observer(({ open, handleClose }: JoinGameModalProps) => {
   const classes = useStyles();
 
   const { gameStore } = useStore();
-  const [error, setError] = React.useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const gameIdFieldRef = React.useRef<HTMLInputElement>();
+  const gameIdFieldRef = useRef<HTMLInputElement>();
 
   const handleJoinClick = async () => {
     const gameId = gameIdFieldRef.current!.value;
@@ -43,10 +41,13 @@ export default observer(({ open, handleClose }: JoinGameModalProps) => {
     }
 
     try {
+      setLoading(true);
       await gameStore.joinGame(gameId);
+      setLoading(false);
       handleClose();
     } catch (err) {
       setError(err.message);
+      setLoading(false);
     }
   };
 
@@ -54,23 +55,26 @@ export default observer(({ open, handleClose }: JoinGameModalProps) => {
     <Modal
       open={open}
       handleClose={handleClose}
-      title="Add from library"
+      title="Join game"
       content={
-        <FormControl className={classes.formControl}>
-          <TextField
-            inputRef={gameIdFieldRef}
-            autoFocus
-            margin="dense"
-            placeholder="Game ID"
-            fullWidth
-            error={error.length > 0}
-            helperText={error}
-          />
-        </FormControl>
+        <>
+          <FormControl className={classes.formControl}>
+            <TextField
+              inputRef={gameIdFieldRef}
+              autoFocus
+              margin="dense"
+              placeholder="Game ID"
+              fullWidth
+              error={error.length > 0}
+              helperText={error}
+            />
+          </FormControl>
+          {loading && <LinearProgress />}
+        </>
       }
       actions={
-        <Button onClick={handleJoinClick} color="primary">
-          Join
+        <Button variant="outlined" onClick={handleJoinClick} color="primary">
+          {loading ? "Joining" : "Join"}
         </Button>
       }
     />

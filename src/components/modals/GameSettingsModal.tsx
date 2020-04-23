@@ -56,7 +56,7 @@ export default observer(({ open, handleClose }: ModalProps) => {
     <Modal
       open={open}
       handleClose={handleClose}
-      title="Add from library"
+      title="Game settings"
       content={
         <>
           <FormControl className={classes.formControl}>
