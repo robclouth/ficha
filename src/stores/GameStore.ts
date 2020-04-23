@@ -1,4 +1,4 @@
-import { computed, observable, reaction } from "mobx";
+import { computed, observable, reaction, runInAction } from "mobx";
 import {
   applyPatches,
   fromSnapshot,
@@ -20,7 +20,8 @@ import {
   applySnapshot,
   SnapshotOutOf,
   withoutUndo,
-  clone
+  clone,
+  detach
 } from "mobx-keystone";
 import { omit } from "lodash";
 // @ts-ignore
@@ -123,9 +124,18 @@ export default class GameStore extends Model({
 
     this.peer = yield* _await(createPeer());
     this.hostPeerId = this.peer!.id;
-    this.gameState.players.find(
-      p => p.userId === this.userId
-    )!.peerId = this.peer!.id;
+
+    let thisPlayer = this.gameState.players.find(p => p.userId === this.userId);
+
+    if (!thisPlayer) {
+      thisPlayer = new Player({
+        userId: this.userId!,
+        name: this.userName!
+      });
+      this.gameState.addPlayer(thisPlayer);
+    }
+
+    thisPlayer.peerId = this.peer!.id;
 
     this.gameServer = new GameServer({});
 
@@ -251,16 +261,14 @@ export default class GameStore extends Model({
   @modelFlow
   loadGameFromUrl = _async(function*(this: GameStore, url: string) {
     const response = yield* _await(fetch(`${url}/game.json`));
-    const gameDefinitionJson = yield* _await(response.json());
-    const gameDefinition = new GameDefinition({
-      ...gameDefinitionJson,
-      baseUrl: url
-    });
-    const checkError = gameDefinition.typeCheck();
+    const gameJson = yield* _await(response.json());
 
-    if (checkError !== null) checkError.throw(gameDefinitionJson);
-
-    this.gameState.entities = gameDefinition.entities;
+    const gameState = fromSnapshot<GameState>(gameJson);
+    this.gameState.name = gameState.name;
+    this.gameState.assetsUrl = gameState.assetsUrl;
+    this.gameState.setups = clone(gameState.setups);
+    this.gameState.activeSetup = gameState.activeSetup;
+    this.gameState.entities = clone(gameState.entities);
   });
 
   @modelAction

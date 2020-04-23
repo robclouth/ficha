@@ -1,18 +1,15 @@
 import {
   Button,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
+  LinearProgress,
+  DialogContentText,
   FormControl,
   makeStyles,
-  TextField,
-  DialogContentText
+  TextField
 } from "@material-ui/core";
 // @ts-ignore
 import isUrl from "is-url";
 import { observer } from "mobx-react";
-import React from "react";
+import React, { useRef, useState } from "react";
 import { useStore } from "../../stores/RootStore";
 import Modal from "./Modal";
 
@@ -36,9 +33,10 @@ export default observer(({ open, handleClose }: DialogProps) => {
   const classes = useStyles();
 
   const { gameStore } = useStore();
-  const [error, setError] = React.useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const urlFieldRef = React.useRef<HTMLInputElement>();
+  const urlFieldRef = useRef<HTMLInputElement>();
 
   const handleLoadClick = async () => {
     const url = urlFieldRef.current!.value;
@@ -49,9 +47,13 @@ export default observer(({ open, handleClose }: DialogProps) => {
     }
 
     try {
+      setLoading(true);
       await gameStore.loadGameFromUrl(url);
+      setLoading(false);
+      handleClose();
     } catch (err) {
       setError(err.message);
+      setLoading(false);
     }
   };
 
@@ -59,7 +61,7 @@ export default observer(({ open, handleClose }: DialogProps) => {
     <Modal
       open={open}
       handleClose={handleClose}
-      title="Add from library"
+      title="Import game"
       content={
         <>
           <DialogContentText>
@@ -79,11 +81,12 @@ export default observer(({ open, handleClose }: DialogProps) => {
               helperText={error}
             />
           </FormControl>
+          {loading && <LinearProgress />}
         </>
       }
       actions={
-        <Button onClick={handleLoadClick} color="primary">
-          Load
+        <Button variant="outlined" onClick={handleLoadClick} color="primary">
+          {loading ? "Loading" : "Load"}
         </Button>
       }
     />
