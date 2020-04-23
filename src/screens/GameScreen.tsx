@@ -10,14 +10,15 @@ import {
   MenuItem,
   TextField,
   Typography,
-  useTheme
+  useTheme,
+  ListItemIcon
 } from "@material-ui/core";
 import MoreVertIcon from "@material-ui/icons/MoreVert";
 import UndoIcon from "@material-ui/icons/Undo";
 import RedoIcon from "@material-ui/icons/Redo";
 import HostIcon from "@material-ui/icons/Router";
 import VideocamIcon from "@material-ui/icons/Videocam";
-
+import DeleteIcon from "@material-ui/icons/Delete";
 import { autorun } from "mobx";
 import { getSnapshot } from "mobx-keystone";
 import { observer } from "mobx-react";
@@ -41,6 +42,8 @@ import GameSettingsModal from "../components/modals/GameSettingsModal";
 import EntityLibraryModal from "../components/modals/EntityLibraryModal";
 import RulesModal from "../components/modals/RulesModal";
 import HandArea from "../models/game/HandArea";
+import NestedMenuItem from "../components/NestedMenuItem";
+import EditSetupModal from "../components/modals/EditSetupModal";
 
 const useStyles = makeStyles(theme => ({
   root: {
@@ -75,11 +78,11 @@ const PlayersList = observer(() => {
     <Box
       position="absolute"
       top={theme.spacing(1)}
-      left={theme.spacing(1)}
+      right={theme.spacing(1)}
       zIndex={1}
       display="flex"
       flexDirection="column"
-      alignItems="flex-start"
+      alignItems="flex-end"
     >
       {gameStore.isHost && (
         <CopyToClipboard
@@ -131,7 +134,8 @@ enum Modals {
   GameSettings,
   ImportGame,
   JoinGame,
-  Rules
+  Rules,
+  EditSetup
 }
 
 export default observer(() => {
@@ -251,7 +255,6 @@ export default observer(() => {
   return (
     <Box className={classes.root} onClick={handleContextMenuClose}>
       <GameCanvas />
-
       <PlayersList />
       <Box
         position="absolute"
@@ -284,7 +287,7 @@ export default observer(() => {
         style={{
           position: "absolute",
           top: theme.spacing(1),
-          right: theme.spacing(1)
+          left: theme.spacing(1)
         }}
       >
         <MoreVertIcon />
@@ -342,6 +345,32 @@ export default observer(() => {
         >
           Game rules
         </MenuItem>
+        <NestedMenuItem
+          label="Setups"
+          rightSide={true}
+          parentMenuOpen={topMenuAnchorEl !== null ? true : false}
+        >
+          <MenuItem
+            onClick={() =>
+              handleTopMenuSelect(() => setOpenModal(Modals.EditSetup))
+            }
+          >
+            Add setup
+          </MenuItem>
+          {gameState.setups.map(setup => (
+            <MenuItem
+              style={{ display: "flex", justifyContent: "space-between" }}
+              onClick={() =>
+                handleTopMenuSelect(() => gameState.activateSetup(setup))
+              }
+            >
+              {`${setup.name} (${setup.numPlayers} players)`}
+              <IconButton onClick={() => gameState.removeSetup(setup)}>
+                <DeleteIcon fontSize="small" />
+              </IconButton>
+            </MenuItem>
+          ))}
+        </NestedMenuItem>
         <MenuItem
           onClick={() =>
             handleTopMenuSelect(() => setOpenModal(Modals.GameSettings))
@@ -413,6 +442,12 @@ export default observer(() => {
       {openModal === Modals.Rules && (
         <RulesModal
           open={openModal === Modals.Rules}
+          handleClose={handleModalClose}
+        />
+      )}{" "}
+      {openModal === Modals.EditSetup && (
+        <EditSetupModal
+          open={openModal === Modals.EditSetup}
           handleClose={handleModalClose}
         />
       )}
