@@ -639,38 +639,20 @@ const EntityList = observer(
           )}
         </Box>
         <Grid container alignItems="center" justify="space-evenly">
-          <Grid
-            item
-            xs
-            style={{ display: "flex" }}
-            alignItems="center"
-            justify="center"
-          >
+          <Grid item xs style={{ display: "flex", justifyContent: "center" }}>
             {entitySet.prototypes.length > 0 && (
               <IconButton onClick={handleRemove}>
                 <RemoveIcon />
               </IconButton>
             )}
           </Grid>
-          <Grid
-            item
-            xs
-            style={{ display: "flex" }}
-            alignItems="center"
-            justify="center"
-          >
+          <Grid item xs style={{ display: "flex", justifyContent: "center" }}>
             <Typography
               variant="body1"
               gutterBottom
             >{`${entitySet.prototypesWithDuplicates.length} ${childEntityName}`}</Typography>
           </Grid>
-          <Grid
-            item
-            xs
-            style={{ display: "flex" }}
-            alignItems="center"
-            justify="center"
-          >
+          <Grid item xs style={{ display: "flex", justifyContent: "center" }}>
             <IconButton onClick={() => handleAddEntity()}>
               <AddIcon />
             </IconButton>
