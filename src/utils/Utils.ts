@@ -17,17 +17,21 @@ export function createPeer() {
       config: {
         iceServers: [
           {
-            urls: [
-              "stun:stun.l.google.com:19302",
-              "stun:stun1.l.google.com:19302",
-              "stun:stun2.l.google.com:19302",
-              "stun:stun.l.google.com:19302?transport=udp"
-            ]
+            urls: "stun:stun.l.google.com:19302"
           },
           {
-            urls: "turn:0.peerjs.com:3478",
-            username: "peerjs",
-            credential: "peerjsp"
+            urls: "stun:stun1.l.google.com:19302"
+          },
+          {
+            urls: "stun:stun2.l.google.com:19302"
+          },
+          {
+            urls: "stun:stun.l.google.com:19302?transport=udp"
+          },
+          {
+            urls: "numb.viagenie.ca",
+            username: "rob.clouth@gmail.com",
+            credential: "ch4Q2%Cr&Y0G"
           }
         ],
         iceTransportPolicy: "all"
