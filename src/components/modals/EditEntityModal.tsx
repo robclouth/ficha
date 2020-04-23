@@ -830,6 +830,7 @@ export default observer(
       entityDraft.resetByPath(["position"]);
       entityDraft.resetByPath(["angle"]);
       entityDraft.commit();
+
       if (!isEditing) {
         if (positionGroundPlane)
           entityDraft.originalData.position = {

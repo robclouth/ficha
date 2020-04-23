@@ -95,7 +95,7 @@ export default observer((props: CardProps) => {
     canvas.width = canvas.height * (shape === Shape.Card ? 0.7 : 1);
     const context = canvas.getContext("2d")!;
     context.fillStyle =
-      "#" + new Color(color.r, color.b, color.g).getHexString();
+      "#" + new Color(color.r, color.g, color.b).getHexString();
     context.fillRect(0, 0, canvas.width, canvas.height);
 
     const fontSize = canvas.width * 0.15;
