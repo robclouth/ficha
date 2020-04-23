@@ -2,7 +2,7 @@ import RootStore from "./RootStore";
 import { observable, action, computed } from "mobx";
 import Entity from "../models/game/Entity";
 import { PointerEvent } from "react-three-fiber";
-import { Vector3, Plane, Vector, Vector2 } from "three";
+import { Vector3, Plane, Vector, Vector2, Camera, Matrix4, Euler } from "three";
 import {
   model,
   Model,
@@ -29,6 +29,10 @@ export type ContextMenu = {
   target?: Entity;
 };
 
+export type View = {
+  camera?: Camera;
+};
+
 @model("UIState")
 export default class UIState extends Model({}) {
   @observable draggingEntity?: Entity;
@@ -45,6 +49,11 @@ export default class UIState extends Model({}) {
   @observable allContextMenuItems: {
     [key: string]: Array<ContextMenuItem>;
   } = {};
+
+  @observable views: [View | undefined, View | undefined] = [
+    undefined,
+    undefined
+  ];
 
   @computed get gameStore() {
     return getRootStore<RootStore>(this)?.gameStore;
@@ -186,6 +195,13 @@ export default class UIState extends Model({}) {
   @modelAction
   closeContextMenu() {
     this.isContextMenuOpen = false;
+  }
+
+  @modelAction
+  toggleView(viewIndex: number) {
+    if (!this.views[viewIndex]) {
+      this.views[viewIndex] = {};
+    } else this.views[viewIndex] = undefined;
   }
 
   @modelAction

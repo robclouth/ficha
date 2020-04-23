@@ -16,7 +16,8 @@ import {
   Color,
   WebGLRenderer,
   Vector2,
-  MeshStandardMaterial
+  MeshStandardMaterial,
+  PerspectiveCamera
 } from "three";
 import { DragControls } from "three/examples/jsm/controls/DragControls";
 import Entity, { EntityType } from "../../models/game/Entity";
@@ -152,16 +153,9 @@ const Selection = observer(() => {
   return <primitive object={selectionBox} />;
 });
 
-export type GameCanvasProps = {};
-
-export default observer<React.FC<GameCanvasProps>>(() => {
-  const { gameStore, uiState, assetCache } = useStore();
-  const {
-    draggingEntity,
-    isDraggingEntity,
-    selectionBoxStart,
-    selectionBoxEnd
-  } = uiState;
+const Scene = observer(() => {
+  const { gameStore, uiState } = useStore();
+  const { draggingEntity, isDraggingEntity } = uiState;
 
   const gameState = gameStore.gameState;
 
@@ -201,6 +195,87 @@ export default observer<React.FC<GameCanvasProps>>(() => {
     } else uiState.handleSelectionBoxMove(e);
   };
 
+  const { gl, scene, camera, size, setDefaultCamera } = useThree();
+
+  // useEffect(() => {
+  //   gl.domElement.addEventListener("mousemove", e => {
+  //     if (
+  //       uiState.views[0]?.camera &&
+  //       e.clientX > size.width / 2 &&
+  //       e.clientY < size.height / 2
+  //     ) {
+  //       setDefaultCamera(uiState.views[0]!.camera! as PerspectiveCamera);
+  //     }
+  //   });
+  // }, []);
+
+  useFrame(() => {
+    gl.setViewport(0, 0, size.width, size.height);
+    gl.setScissor(0, 0, size.width, size.height);
+    gl.setScissorTest(true);
+    gl.setClearColor(new Color(0, 0, 0));
+    gl.render(scene, camera);
+
+    if (uiState.views[0]) {
+      const left = Math.floor(size.width * 0.5);
+      const bottom = Math.floor(size.height * 0.5);
+      const width = Math.floor(size.width * 0.5);
+      const height = Math.floor(size.height * 0.5);
+
+      gl.setViewport(left, bottom, width, height);
+      gl.setScissor(left, bottom, width, height);
+      gl.setScissorTest(true);
+      gl.setClearColor(new Color(0, 0, 0));
+
+      let viewCamera = uiState.views[0].camera;
+
+      if (!viewCamera) {
+        viewCamera = uiState.views[0].camera = camera.clone();
+      }
+
+      gl.render(scene, viewCamera);
+    }
+  }, 1);
+
+  return (
+    <>
+      <ambientLight args={["white", 0.2]} />
+      <directionalLight
+        position={[10, 10, 5]}
+        intensity={1}
+        castShadow
+        shadowMapWidth={2048}
+        shadowMapHeight={2048}
+      />
+      {gameState?.entities.map((entity, i) =>
+        entity.render({ entity, key: i })
+      )}
+      <mesh
+        rotation={[-Math.PI / 2, 0, 0]}
+        receiveShadow
+        onPointerDown={handlePointerDown}
+        onPointerUp={handlePointerUp}
+        onPointerMove={handlePointerMove}
+      >
+        <meshStandardMaterial
+          attach="material"
+          color={new Color(0.2, 0.2, 0.2)}
+        />
+        <planeBufferGeometry attach="geometry" args={[50, 50]} />
+      </mesh>
+      <gridHelper args={[50, 50]} position={[0, 0.001, 0]} />
+      <CameraControl />
+      <Selection />
+    </>
+  );
+});
+
+export type GameCanvasProps = {};
+
+export default observer<React.FC<GameCanvasProps>>(() => {
+  const { gameStore, uiState, assetCache } = useStore();
+  const { selectionBoxStart, selectionBoxEnd } = uiState;
+
   return (
     <>
       {selectionBoxStart && (
@@ -225,47 +300,7 @@ export default observer<React.FC<GameCanvasProps>>(() => {
           gl.shadowMap.type = THREE.PCFSoftShadowMap;
         }}
       >
-        >
-        <ambientLight args={["white", 0.2]} />
-        <directionalLight
-          position={[10, 10, 5]}
-          intensity={1}
-          castShadow
-          shadowMapWidth={2048}
-          shadowMapHeight={2048}
-        />
-        {gameState?.entities.map((entity, i) =>
-          entity.render({ entity, key: i })
-        )}
-        <mesh
-          rotation={[-Math.PI / 2, 0, 0]}
-          receiveShadow
-          onPointerDown={handlePointerDown}
-          onPointerUp={handlePointerUp}
-          onPointerMove={handlePointerMove}
-        >
-          <meshStandardMaterial
-            attach="material"
-            color={new Color(0.2, 0.2, 0.2)}
-            // map={assetCache.getTexture(
-            //   require("../../assets/Wood034_2K_Color.jpg"),
-            //   false
-            // )}
-            // normalMap={assetCache.getTexture(
-            //   require("../../assets/Wood034_2K_Normal.jpg"),
-            //   false
-            // )}
-            // roughnessMap={assetCache.getTexture(
-            //   require("../../assets/Wood034_2K_Roughness.jpg"),
-            //   false
-            // )}
-          />
-          <planeBufferGeometry attach="geometry" args={[50, 50]} />
-        </mesh>
-        <gridHelper args={[50, 50]} position={[0, 0.001, 0]} />
-        <CameraControl />
-        <Selection />
-        {/* <Outline /> */}
+        <Scene />
       </Canvas>
     </>
   );

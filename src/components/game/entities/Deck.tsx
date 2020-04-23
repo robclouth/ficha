@@ -6,6 +6,7 @@ import { cardHeight } from "./Card";
 import { ContextMenuItem } from "../../../types";
 import { useStore } from "../../../stores/RootStore";
 import Card from "../../../models/game/Card";
+import CardComponent from "./Card";
 import { PointerEvent } from "react-three-fiber";
 import { Color } from "three";
 import defaultCardBack from "../../../assets/default-back.png";
@@ -19,7 +20,7 @@ export default observer((props: DeckProps) => {
 
   const { entity } = props;
   const deck = entity as Deck;
-  const { cards, allCards, name, externalEntities, savedDeal } = deck;
+  const { containedEntities, name, externalEntities, savedDeal } = deck;
 
   const contextMenuItems: ContextMenuItem[] = [
     {
@@ -29,7 +30,7 @@ export default observer((props: DeckProps) => {
     }
   ];
 
-  if (cards.length > 0) {
+  if (containedEntities.length > 0) {
     const items: ContextMenuItem[] = [
       {
         label: "Take one",
@@ -72,58 +73,7 @@ export default observer((props: DeckProps) => {
     });
   }
 
-  let height = cardHeight * Math.max(cards.length, 1);
-
-  const edgeMaterialParams = {
-    roughness: 1
-    // color: "white"
-  };
-
-  let materialParams: MaterialParameters[];
-  if (cards.length > 0) {
-    const frontTexture = cards[0].frontImageUrl
-      ? assetCache.getTexture(cards[0].frontImageUrl)
-      : undefined;
-
-    const backTexture = cards[0].backImageUrl
-      ? assetCache.getTexture(cards[0].backImageUrl)
-      : assetCache.getTexture(defaultCardBack, false);
-
-    const color = cards[0].color;
-    materialParams = [
-      edgeMaterialParams,
-      edgeMaterialParams,
-      {
-        roughness: 0.2,
-        map: backTexture,
-        color: new Color(1, 1, 1)
-      },
-      {
-        roughness: 0.2,
-        map: frontTexture,
-        color: new Color(color.r, color.g, color.b)
-      },
-      edgeMaterialParams,
-      edgeMaterialParams
-    ];
-  } else {
-    materialParams = [
-      edgeMaterialParams,
-      edgeMaterialParams,
-      {
-        roughness: 0.2,
-        map: undefined,
-        color: new Color(1, 0, 1)
-      },
-      {
-        roughness: 0.2,
-        map: undefined,
-        color: new Color(1, 0, 1)
-      },
-      edgeMaterialParams,
-      edgeMaterialParams
-    ];
-  }
+  let height = cardHeight * Math.max(containedEntities.length, 1);
 
   const handleDrag = (e: PointerEvent) => {
     const card = deck.take(1);
@@ -135,10 +85,21 @@ export default observer((props: DeckProps) => {
       {...props}
       pivot={[0, -height / 2, 0]}
       geometry={<boxBufferGeometry args={[0.7, height, 1]} attach="geometry" />}
-      materialParams={materialParams}
+      materialParams={{
+        roughness: 1,
+        color: "white"
+      }}
       contextMenuItems={contextMenuItems}
-      dragAction={cards.length > 0 ? handleDrag : undefined}
-      hoverMessage={`${name} (${cards.length})`}
-    />
+      dragAction={containedEntities.length > 0 ? handleDrag : undefined}
+      hoverMessage={`${name} (${containedEntities.length})`}
+    >
+      {containedEntities.length > 0 && (
+        <CardComponent
+          entity={containedEntities[0]}
+          blockInteraction
+          positionOffset={[0, height, 0]}
+        />
+      )}
+    </Entity>
   );
 });

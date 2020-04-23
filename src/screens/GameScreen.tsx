@@ -16,6 +16,8 @@ import MoreVertIcon from "@material-ui/icons/MoreVert";
 import UndoIcon from "@material-ui/icons/Undo";
 import RedoIcon from "@material-ui/icons/Redo";
 import HostIcon from "@material-ui/icons/Router";
+import VideocamIcon from "@material-ui/icons/Videocam";
+
 import { autorun } from "mobx";
 import { getSnapshot } from "mobx-keystone";
 import { observer } from "mobx-react";
@@ -287,6 +289,25 @@ export default observer(() => {
       >
         <MoreVertIcon />
       </IconButton>
+      {/* <Box
+        position="absolute"
+        bottom={theme.spacing(1)}
+        right={theme.spacing(1)}
+        display="flex"
+        flexDirection="column"
+        zIndex={2}
+      >
+        <IconButton
+          aria-label="cam1"
+          onClick={() => uiState.toggleView(0)}
+          style={{ marginRight: theme.spacing(1) }}
+        >
+          <VideocamIcon />
+        </IconButton>
+        <IconButton aria-label="cam2" onClick={() => uiState.toggleView(1)}>
+          <VideocamIcon />
+        </IconButton>
+      </Box> */}
       <Menu
         id="long-menu"
         anchorEl={topMenuAnchorEl}

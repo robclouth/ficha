@@ -85,6 +85,7 @@ export default class EntitySet extends ExtendedModel(Entity, {
   addPrototype(prototype: Entity) {
     this.prototypes.push(prototype);
     this.setPrototypeCount(prototype, 1);
+    this.addEntity(this.instantiateFromPrototype(prototype));
   }
 
   @modelAction
@@ -142,7 +143,6 @@ export default class EntitySet extends ExtendedModel(Entity, {
       entities.forEach(entity => {
         this.removeEntity(entity);
         entity.position = { ...this.position };
-        entity.faceUp = this.faceUp;
         this.gameState.addEntity(entity);
       });
     }
@@ -196,11 +196,19 @@ export default class EntitySet extends ExtendedModel(Entity, {
     });
 
     this.containedEntities = [];
-    this.prototypesWithDuplicates.forEach(prototype =>
-      this.addEntity(this.instantiateFromPrototype(prototype))
-    );
+    this.prototypesWithDuplicates.forEach(prototype => {
+      const entity = this.instantiateFromPrototype(prototype);
+      entity.faceUp = this.faceUp;
+      this.addEntity(entity);
+    });
 
     this.shuffle();
+  }
+
+  @modelAction
+  flip() {
+    super.flip();
+    this.containedEntities.forEach(entity => entity.flip());
   }
 
   @modelAction

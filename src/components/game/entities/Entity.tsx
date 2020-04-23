@@ -18,7 +18,8 @@ import {
   Plane,
   Vector3,
   Quaternion,
-  BackSide
+  BackSide,
+  MeshStandardMaterial
 } from "three";
 import Entity from "../../../models/game/Entity";
 import HandArea from "../../../models/game/HandArea";
@@ -251,37 +252,40 @@ export default observer((props: EntityProps) => {
 
   const faded = isSelected;
 
-  const renderMaterial = useCallback(
-    (params: MaterialParameters, i?: number) => {
-      const updatedParams: MaterialParameters = {
-        ...params,
-        transparent: true,
-        opacity: faded ? 0.5 : 1
-      };
-      const key =
-        i &&
-        Object.values(updatedParams)
-          .map(value => (value ? value.toString() : ""))
-          .join() + i;
-
-      const material = (
-        <meshStandardMaterial
-          key={key}
-          attachArray={i !== undefined ? "material" : undefined}
-          attach={i === undefined ? "material" : undefined}
-          {...(updatedParams as any)}
-        />
+  const materials = useMemo(() => {
+    const newParams = {
+      transparent: true,
+      opacity: faded ? 0.5 : 1
+    };
+    if (Array.isArray(materialParams))
+      return (materialParams as MaterialParameters[]).map(
+        params =>
+          new MeshStandardMaterial({
+            ...params,
+            ...newParams
+          })
       );
-
-      return material;
-    },
-    [materialParams, faded]
-  );
+    else
+      return new MeshStandardMaterial({
+        ...materialParams,
+        ...newParams
+      });
+  }, [JSON.stringify(materialParams), faded]);
 
   const inOtherPlayersArea =
     handArea && (handArea as HandArea).player !== gameStore.player;
   const visible = !inOtherPlayersArea;
-  const interactive = !blockInteraction && !inOtherPlayersArea;
+
+  const events = !blockInteraction
+    ? {
+        onPointerDown: !inOtherPlayersArea ? handlePointerDown : undefined,
+        onPointerUp: handlePointerUp,
+        onPointerMove: !inOtherPlayersArea ? handlePointerMove : undefined,
+        onPointerOver: !inOtherPlayersArea ? handlePointerHoverOver : undefined,
+        onPointerOut: handlePointerHoverOut,
+        onClick: !inOtherPlayersArea ? handleClick : undefined
+      }
+    : undefined;
 
   return (
     <>
@@ -300,19 +304,18 @@ export default observer((props: EntityProps) => {
               rotation={
                 rotationOffset ? undefined : [faceUp ? Math.PI : 0, 0, 0]
               }
-              onPointerDown={interactive ? handlePointerDown : undefined}
-              onPointerUp={handlePointerUp}
-              onPointerMove={interactive ? handlePointerMove : undefined}
-              onPointerOver={interactive ? handlePointerHoverOver : undefined}
-              onPointerOut={handlePointerHoverOut}
-              onClick={interactive ? handleClick : undefined}
+              {...events}
               castShadow={castShadows}
               receiveShadow
             >
               {geometry}
-              {Array.isArray(materialParams)
-                ? materialParams.map(renderMaterial)
-                : renderMaterial(materialParams)}
+              {Array.isArray(materials) ? (
+                (materials as MeshStandardMaterial[]).map(material => (
+                  <primitive attachArray="material" object={material} />
+                ))
+              ) : (
+                <primitive attach="material" object={materials} />
+              )}
             </a.mesh>
           </a.group>
 

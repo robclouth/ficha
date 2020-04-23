@@ -105,7 +105,7 @@ function PreviewControls() {
 }
 
 const Preview = observer(
-  ({ entity, active }: { entity: Entity; active: boolean }) => {
+  ({ entity, active }: { entity?: Entity; active: boolean }) => {
     const theme = useTheme();
     return (
       <Paper
@@ -122,9 +122,9 @@ const Preview = observer(
           camera={{ position: [0, 3, 3], fov: 30 }}
         >
           <directionalLight position={[10, 10, 5]} intensity={1} />
-          <ambientLight args={["white", 0.2]} />
+          <ambientLight args={["white", 0.5]} />
           <PreviewControls />
-          {entity.render({ entity, pivot: [0, 0, 0] })}
+          {entity && entity.render({ entity, pivot: [0, 0, 0] })}
           <gridHelper args={[11, 11]} />
         </Canvas>
       </Paper>
@@ -616,23 +616,38 @@ type EntityListProps = {
   editor: React.FunctionComponent<any>;
   childEntityName: string;
   getNewEntity: () => Entity;
+  onPreviewEntityChange: (entity?: Entity) => void;
 };
 
 const EntityList = observer(
-  ({ entitySet, editor, getNewEntity, childEntityName }: EntityListProps) => {
+  ({
+    entitySet,
+    editor,
+    getNewEntity,
+    childEntityName,
+    onPreviewEntityChange
+  }: EntityListProps) => {
     const [index, setIndex] = useState(0);
     const entity = entitySet.prototypes[index];
     const count = entity && entitySet.prototypeCounts[entity.$modelId];
 
     const handleAddEntity = () => {
-      entitySet.addPrototype(getNewEntity());
-      if (entitySet.prototypes.length > 1) setIndex(index + 1);
+      const prototype = getNewEntity();
+      entitySet.addPrototype(prototype);
+      if (entitySet.prototypes.length === 1) onPreviewEntityChange(prototype);
+      else handleSelectedEntityChange(index + 1);
     };
 
     const handleRemove = () => {
       if (index <= entitySet.prototypes.length)
-        setIndex(entitySet.prototypes.length - 1);
+        handleSelectedEntityChange(entitySet.prototypes.length - 1);
       entitySet.removePrototype(entity);
+      if (entitySet.prototypes.length === 0) onPreviewEntityChange(undefined);
+    };
+
+    const handleSelectedEntityChange = (index: number) => {
+      onPreviewEntityChange(entitySet.prototypes[index]);
+      setIndex(index);
     };
 
     return (
@@ -675,7 +690,7 @@ const EntityList = observer(
               siblingCount={1}
               boundaryCount={1}
               page={index + 1}
-              onChange={(e, value) => setIndex(value - 1)}
+              onChange={(e, value) => handleSelectedEntityChange(value - 1)}
             />
           </>
         )}
@@ -686,82 +701,91 @@ const EntityList = observer(
 
 type SetEditorProps = {
   entitySet: EntitySet;
+  onPreviewEntityChange: (entity?: Entity) => void;
 };
 
-const DeckEditor = observer(({ entitySet }: SetEditorProps) => {
-  const classes = useStyles();
-  const [backImageUrl, setBackImageUrl] = useState("");
+const DeckEditor = observer(
+  ({ entitySet, onPreviewEntityChange }: SetEditorProps) => {
+    const classes = useStyles();
+    const [backImageUrl, setBackImageUrl] = useState("");
 
-  const handleBackImageUrlChange = (url: string) => {
-    entitySet.containedEntities.forEach(entity => (entity.backImageUrl = url));
-    setBackImageUrl(url);
-  };
+    const handleBackImageUrlChange = (url: string) => {
+      entitySet.containedEntities.forEach(
+        entity => (entity.backImageUrl = url)
+      );
+      setBackImageUrl(url);
+    };
 
-  const handleBulkAdd = (text: string) => {
-    const urls = text.split(",").map(url => url.trim());
-    urls.forEach(url => handleAddEntity(url));
-  };
+    const handleBulkAdd = (text: string) => {
+      const urls = text.split(",").map(url => url.trim());
+      urls.forEach(url => handleAddEntity(url));
+    };
 
-  const handleAddEntity = (frontImageUrl: string) => {
-    entitySet.addPrototype(
-      new Card({
-        frontImageUrl,
-        backImageUrl,
-        ownerSet: entitySetRef(entitySet)
-      })
+    const handleAddEntity = (frontImageUrl: string) => {
+      entitySet.addPrototype(
+        new Card({
+          frontImageUrl,
+          backImageUrl,
+          ownerSet: entitySetRef(entitySet)
+        })
+      );
+    };
+
+    return (
+      <Box display="flex" flexDirection="column" flex={1}>
+        <FormControl className={classes.formControl}>
+          <Input
+            value={backImageUrl}
+            onChange={e => handleBackImageUrlChange(e.target.value)}
+            fullWidth
+            placeholder="Back image URL"
+          />
+        </FormControl>
+        <FormControl className={classes.formControl}>
+          <Input
+            value=""
+            fullWidth
+            placeholder="Bulk add"
+            onChange={e => handleBulkAdd(e.target.value)}
+          />
+        </FormControl>
+        <EntityList
+          entitySet={entitySet}
+          editor={CardEditor}
+          childEntityName="cards"
+          onPreviewEntityChange={onPreviewEntityChange}
+          getNewEntity={() =>
+            new Card({
+              backImageUrl,
+              frontImageUrl: "",
+              ownerSet: entitySetRef(entitySet)
+            })
+          }
+        />
+      </Box>
     );
-  };
+  }
+);
 
-  return (
-    <Box display="flex" flexDirection="column" flex={1}>
-      <FormControl className={classes.formControl}>
-        <Input
-          value={backImageUrl}
-          onChange={e => handleBackImageUrlChange(e.target.value)}
-          fullWidth
-          placeholder="Back image URL"
+const PieceSetEditor = observer(
+  ({ entitySet, onPreviewEntityChange }: SetEditorProps) => {
+    return (
+      <Box display="flex" flexDirection="column" flex={1}>
+        <EntityList
+          entitySet={entitySet}
+          onPreviewEntityChange={onPreviewEntityChange}
+          editor={PieceEditor}
+          childEntityName="pieces"
+          getNewEntity={() =>
+            new Piece({
+              ownerSet: entitySetRef(entitySet)
+            })
+          }
         />
-      </FormControl>
-      <FormControl className={classes.formControl}>
-        <Input
-          value=""
-          fullWidth
-          placeholder="Bulk add"
-          onChange={e => handleBulkAdd(e.target.value)}
-        />
-      </FormControl>
-      <EntityList
-        entitySet={entitySet}
-        editor={CardEditor}
-        childEntityName="cards"
-        getNewEntity={() =>
-          new Card({
-            backImageUrl,
-            frontImageUrl: "",
-            ownerSet: entitySetRef(entitySet)
-          })
-        }
-      />
-    </Box>
-  );
-});
-
-const PieceSetEditor = observer(({ entitySet }: SetEditorProps) => {
-  return (
-    <Box display="flex" flexDirection="column" flex={1}>
-      <EntityList
-        entitySet={entitySet}
-        editor={PieceEditor}
-        childEntityName="pieces"
-        getNewEntity={() =>
-          new Piece({
-            ownerSet: entitySetRef(entitySet)
-          })
-        }
-      />
-    </Box>
-  );
-});
+      </Box>
+    );
+  }
+);
 
 type EntityEditorProps = {
   entity: Entity;
@@ -782,11 +806,13 @@ export type ModalProps = {
 
 export default observer(
   ({ open, handleClose, positionGroundPlane, entity }: ModalProps) => {
+    const classes = useStyles();
+
     const { gameStore } = useStore();
     const { gameState } = gameStore;
 
-    const [type, setType] = React.useState(EntityType.Dice);
-    const classes = useStyles();
+    const [type, setType] = React.useState(EntityType.Card);
+    const [previewEntity, setPreviewEntity] = React.useState<Entity>();
 
     const isEditing = !!entity;
 
@@ -798,7 +824,10 @@ export default observer(
         if (type === EntityType.Deck)
           targetEntity = new Deck({ name: "New Deck" });
         else if (type === EntityType.Card)
-          targetEntity = new Card({ name: "New Card" });
+          targetEntity = new Card({
+            name: "New Card",
+            color: { r: 1, g: 1, b: 1 }
+          });
         else if (type === EntityType.PieceSet)
           targetEntity = new PieceSet({ name: "New Piece Set" });
         else if (type === EntityType.Piece)
@@ -806,7 +835,7 @@ export default observer(
         else if (type === EntityType.Dice)
           targetEntity = new Dice({
             name: "New Die",
-            diceType: DiceType.D8,
+            diceType: DiceType.D6,
             scale: { x: 2, y: 2, z: 2 }
           });
         else targetEntity = new Deck({});
@@ -837,16 +866,39 @@ export default observer(
       handleClose();
     };
 
+    const handlePreviewEntityChange = (entity?: Entity) => {
+      setPreviewEntity(entity);
+    };
+
     let typeEditor: React.ReactNode = useMemo(() => {
       if (entityDraft.data.type === EntityType.Deck) {
-        return <DeckEditor entitySet={entityDraft.data as EntitySet} />;
+        handlePreviewEntityChange(
+          (entityDraft.data as EntitySet).prototypes[0]
+        );
+        return (
+          <DeckEditor
+            entitySet={entityDraft.data as EntitySet}
+            onPreviewEntityChange={handlePreviewEntityChange}
+          />
+        );
       } else if (entityDraft.data.type === EntityType.Card) {
+        handlePreviewEntityChange(entityDraft.data);
         return <CardEditor entity={entityDraft.data} />;
       } else if (entityDraft.data.type === EntityType.PieceSet) {
-        return <PieceSetEditor entitySet={entityDraft.data as EntitySet} />;
+        handlePreviewEntityChange(
+          (entityDraft.data as EntitySet).prototypes[0]
+        );
+        return (
+          <PieceSetEditor
+            entitySet={entityDraft.data as EntitySet}
+            onPreviewEntityChange={handlePreviewEntityChange}
+          />
+        );
       } else if (entityDraft.data.type === EntityType.Piece) {
+        handlePreviewEntityChange(entityDraft.data);
         return <PieceEditor entity={entityDraft.data} />;
       } else if (entityDraft.data.type === EntityType.Dice) {
+        handlePreviewEntityChange(entityDraft.data);
         return <DiceEditor entity={entityDraft.data} />;
       }
     }, [entityDraft.data.type]);
@@ -888,7 +940,7 @@ export default observer(
                   placeholder="Name"
                 />
               </FormControl>
-              <Preview entity={entityDraft.data} active={open} />
+              <Preview entity={previewEntity} active={open} />
             </Box>
             <Box
               display="flex"

@@ -117,7 +117,6 @@ export default observer((props: PieceSetProps) => {
             key: i,
             blockInteraction: true,
             entity: prototype,
-            position: [0, 0],
             positionOffset: [
               Math.cos(angle) * radius,
               height,

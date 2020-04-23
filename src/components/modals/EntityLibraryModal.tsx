@@ -90,7 +90,7 @@ export default observer(
       let description = libraryEntity.$modelType;
       if (libraryEntity.type === EntityType.Deck) {
         const deck = libraryEntity as Deck;
-        description += ` - ${deck.cards.length} cards`;
+        description += ` - ${deck.totalEntities} cards`;
       }
       return (
         <ListItem button onClick={() => setSelectedEntity(libraryEntity)}>
