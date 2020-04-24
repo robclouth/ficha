@@ -20,6 +20,7 @@ import {
   undoMiddleware
 } from "../utils/undoMiddleware";
 import GameState from "../models/GameState";
+import { OptionsObject } from "notistack";
 
 export type ContextMenuItem = {
   label?: string;
@@ -39,6 +40,11 @@ export type View = {
   camera?: Camera;
 };
 
+export type Message = {
+  text: string;
+  options?: OptionsObject;
+};
+
 @model("UIState")
 export default class UIState extends Model({}) {
   @observable draggingEntity?: Entity;
@@ -56,6 +62,7 @@ export default class UIState extends Model({}) {
   @observable allContextMenuItems: {
     [key: string]: Array<ContextMenuItem>;
   } = {};
+  @observable snackbarMessage?: Message;
 
   undoManager?: UndoManager;
 
@@ -244,6 +251,10 @@ export default class UIState extends Model({}) {
 
   @computed get canRedo() {
     return this.undoManager?.canRedo;
+  }
+
+  showMessage(message: Message) {
+    this.snackbarMessage = message;
   }
 
   setupUndoManager(gameState: GameState) {

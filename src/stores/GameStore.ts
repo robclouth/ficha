@@ -35,6 +35,7 @@ import {
 } from "../utils/undoMiddleware";
 import { gameRepoUrl } from "../constants/constants";
 import RootStore from "./RootStore";
+import * as serviceWorker from "../serviceWorker";
 
 @model("GameStore")
 export default class GameStore extends Model({
@@ -50,7 +51,6 @@ export default class GameStore extends Model({
   @observable peer?: Peer;
   @observable hostPeerId?: string;
   @observable serverConnection?: DataConnection;
-  @observable connectionError: string | null = null;
 
   localStatePatchDisposer: OnPatchesDisposer = () => {};
 
@@ -184,7 +184,13 @@ export default class GameStore extends Model({
     this.gameServer = new GameServer({});
     yield* _await(this.gameServer.setup(this.peer!, this.gameState));
 
-    this.connectionError = "The host disconnected";
+    this.uiState.showMessage({
+      text: "The host disconnected",
+      options: {
+        variant: "error",
+        preventDuplicate: true
+      }
+    });
   });
 
   connectToGame() {

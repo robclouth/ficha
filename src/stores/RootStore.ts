@@ -39,7 +39,7 @@ export default class RootStore extends Model({
   });
 }
 
-const rootStore = new RootStore({});
+export const rootStore = new RootStore({});
 
 // if (module?.hot?.data?.store) {
 //   applySnapshot(rootStore, module.hot.data.store);

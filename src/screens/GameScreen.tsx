@@ -235,12 +235,11 @@ export default observer(() => {
   useEffect(() => {
     gameStore.createGame();
     autorun(() => {
-      gameStore.connectionError &&
-        snackbar.enqueueSnackbar(gameStore.connectionError, {
-          variant: "error",
-          preventDuplicate: true
-        });
-      gameStore.connectionError = null;
+      uiState.snackbarMessage &&
+        snackbar.enqueueSnackbar(
+          uiState.snackbarMessage.text,
+          uiState.snackbarMessage.options
+        );
     });
   }, []);
 
