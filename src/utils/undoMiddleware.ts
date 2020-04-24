@@ -327,21 +327,25 @@ export function undoMiddleware(
     },
     onResume(ctx) {
       const patchRecorderData = getPatchRecorderData(ctx);
-      patchRecorderData.recorderStack++;
-      patchRecorderData.recorder.recording =
-        patchRecorderData.recorderStack > 0;
+      if (patchRecorderData) {
+        patchRecorderData.recorderStack++;
+        patchRecorderData.recorder.recording =
+          patchRecorderData.recorderStack > 0;
+      }
     },
     onSuspend(ctx) {
       const patchRecorderData = getPatchRecorderData(ctx);
-      patchRecorderData.recorderStack--;
-      patchRecorderData.recorder.recording =
-        patchRecorderData.recorderStack > 0;
+      if (patchRecorderData) {
+        patchRecorderData.recorderStack--;
+        patchRecorderData.recorder.recording =
+          patchRecorderData.recorderStack > 0;
+      }
     },
     onFinish(ctx) {
       if (ctx === ctx.rootContext) {
-        const patchRecorder = getPatchRecorderData(ctx).recorder;
+        const patchRecorder = getPatchRecorderData(ctx)?.recorder;
 
-        if (patchRecorder.events.length > 0) {
+        if (patchRecorder && patchRecorder.events.length > 0) {
           const patches: Patch[] = [];
           const inversePatches: Patch[] = [];
 
