@@ -107,7 +107,6 @@ export default class UIState extends Model({}) {
       this.isDraggingEntity = true;
       entity.controllingPeerId = this.gameStore?.peerId;
       this.draggingEntity = entity;
-
       this.dragGroupOffsets = {};
 
       Object.values(this.selectedEntities).forEach(entity => {
