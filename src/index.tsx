@@ -33,6 +33,7 @@ serviceWorker.register({
         persist: true,
         action: (
           <Button
+            style={{ color: "#7986cb" }}
             onClick={() => {
               if (registration && registration.waiting) {
                 registration.waiting.postMessage({ type: "SKIP_WAITING" });
