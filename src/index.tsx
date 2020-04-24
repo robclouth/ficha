@@ -33,7 +33,8 @@ serviceWorker.register({
         persist: true,
         action: (
           <Button
-            style={{ color: "#7986cb" }}
+            color="primary"
+            size="small"
             onClick={() => {
               if (registration && registration.waiting) {
                 registration.waiting.postMessage({ type: "SKIP_WAITING" });
@@ -48,10 +49,3 @@ serviceWorker.register({
     });
   }
 });
-
-// if (module.hot) {
-//   module.hot.accept("./App", () => {
-//     const NextApp = require("./App").default;
-//     render(NextApp);
-//   });
-// }
