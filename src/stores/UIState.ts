@@ -43,8 +43,9 @@ export default class UIState extends Model({}) {
   @observable contextMenu?: ContextMenu;
   @observable isContextMenuOpen = false;
   @observable selectedEntities: { [id: string]: Entity } = {};
-  @observable selectionBoxStart?: [number, number];
-  @observable selectionBoxEnd?: [number, number];
+  @observable selectionTopLeft?: [number, number];
+  @observable selectionBottomRight?: [number, number];
+  selectionStartPoint: [number, number] = [0, 0];
   @observable dragGroupOffsets: { [key: string]: [number, number] } = {};
   @observable allContextMenuItems: {
     [key: string]: Array<ContextMenuItem>;
@@ -131,25 +132,44 @@ export default class UIState extends Model({}) {
 
   @modelAction
   handleSelectionBoxStart(e: React.MouseEvent) {
-    this.selectionBoxStart = this.selectionBoxEnd = [e.clientX, e.clientY];
+    this.selectionTopLeft = this.selectionBottomRight = [e.clientX, e.clientY];
+
+    this.selectionStartPoint = [e.clientX, e.clientY];
   }
 
   @modelAction
   handleSelectionBoxMove(e: React.MouseEvent) {
-    if (this.selectionBoxStart && this.selectionBoxEnd) {
-      if (e.clientX <= this.selectionBoxStart[0])
-        this.selectionBoxStart[0] = e.clientX;
-      else this.selectionBoxEnd[0] = e.clientX;
+    if (this.selectionTopLeft && this.selectionBottomRight) {
+      this.selectionBottomRight[0] = Math.max(
+        this.selectionStartPoint[0],
+        e.clientX
+      );
+      this.selectionBottomRight[1] = Math.max(
+        this.selectionStartPoint[1],
+        e.clientY
+      );
+      this.selectionTopLeft[0] = Math.min(
+        this.selectionStartPoint[0],
+        e.clientX
+      );
+      this.selectionTopLeft[1] = Math.min(
+        this.selectionStartPoint[1],
+        e.clientY
+      );
 
-      if (e.clientY <= this.selectionBoxStart[1])
-        this.selectionBoxStart[1] = e.clientY;
-      else this.selectionBoxEnd[1] = e.clientY;
+      // if (e.clientX <= this.selectionBoxStart[0])
+      //   this.selectionBoxStart[0] = e.clientX;
+      // else this.selectionBoxEnd[0] = e.clientX;
+
+      // if (e.clientY <= this.selectionBoxStart[1])
+      //   this.selectionBoxStart[1] = e.clientY;
+      // else this.selectionBoxEnd[1] = e.clientY;
     }
   }
 
   @modelAction
   handleSelectionBoxEnd(e: React.MouseEvent) {
-    this.selectionBoxStart = this.selectionBoxEnd = undefined;
+    this.selectionTopLeft = this.selectionBottomRight = undefined;
   }
 
   @modelAction

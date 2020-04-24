@@ -123,7 +123,10 @@ const CameraControl = observer(() => {
 const Selection = observer(() => {
   const { scene, camera, gl } = useThree();
   const { uiState } = useStore();
-  const { selectionBoxStart, selectionBoxEnd } = uiState;
+  const {
+    selectionTopLeft: selectionBoxStart,
+    selectionBottomRight: selectionBoxEnd
+  } = uiState;
 
   const selectionBox = useMemo(() => {
     return new SelectionBox(camera, scene);
@@ -274,18 +277,18 @@ export type GameCanvasProps = {};
 
 export default observer<React.FC<GameCanvasProps>>(() => {
   const { gameStore, uiState, assetCache } = useStore();
-  const { selectionBoxStart, selectionBoxEnd } = uiState;
+  const { selectionTopLeft, selectionBottomRight } = uiState;
 
   return (
     <>
-      {selectionBoxStart && (
+      {selectionTopLeft && (
         <div
           style={{
             position: "absolute",
-            left: selectionBoxStart[0],
-            top: selectionBoxStart[1],
-            width: selectionBoxEnd![0] - selectionBoxStart[0],
-            height: selectionBoxEnd![1] - selectionBoxStart[1],
+            left: selectionTopLeft[0],
+            top: selectionTopLeft[1],
+            width: selectionBottomRight![0] - selectionTopLeft[0],
+            height: selectionBottomRight![1] - selectionTopLeft[1],
             border: "dashed white 1px",
             zIndex: 1,
             pointerEvents: "none"
