@@ -26,9 +26,6 @@ type DialogProps = {
   handleClose: () => void;
 };
 
-const gameUrl =
-  "https://raw.githubusercontent.com/robclouth/p2p-game/master/games/The%20Young%20Kings/";
-
 export default observer(({ open, handleClose }: DialogProps) => {
   const classes = useStyles();
 
@@ -74,7 +71,6 @@ export default observer(({ open, handleClose }: DialogProps) => {
               margin="dense"
               id="url"
               placeholder="URL"
-              defaultValue={gameUrl}
               type="url"
               fullWidth
               error={error.length > 0}

@@ -256,7 +256,15 @@ export default class GameStore extends Model({
 
   @modelFlow
   loadGameFromUrl = _async(function*(this: GameStore, url: string) {
-    const response = yield* _await(fetch(`${url}/game.json`));
+    const response = yield* _await(
+      fetch(`${url}/game.json`, {
+        mode: "cors",
+        headers: {
+          "X-Requested-With	": "XMLHttpRequest",
+          Origin: "https://ficha.now.sh/"
+        }
+      })
+    );
     const gameJson = yield* _await(response.json());
 
     const gameState = fromSnapshot<GameState>(gameJson);
