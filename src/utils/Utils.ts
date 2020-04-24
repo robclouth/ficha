@@ -30,13 +30,13 @@ export function createPeer() {
           // },
           {
             urls: "stun:llllllll.link:443",
-            username: "test",
-            credential: "test"
+            username: "ficha",
+            credential: "R0J3Y88GsjVYvbdI8m6H"
           },
           {
             urls: "turn:llllllll.link:443",
-            username: "test",
-            credential: "test"
+            username: "ficha",
+            credential: "R0J3Y88GsjVYvbdI8m6H"
           }
           // {
           //   urls: "numb.viagenie.ca",
