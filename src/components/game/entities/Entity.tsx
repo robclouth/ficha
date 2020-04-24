@@ -147,6 +147,10 @@ export default observer((props: EntityProps) => {
   uiState.registerContextMenuItems(entity, allContextMenuItems);
 
   const handlePointerDown = (e: any) => {
+    setPointerDownPos({
+      x: e.clientX,
+      y: e.clientY
+    });
     e.stopPropagation();
     if (e.button === 0) {
       if (!isOtherPlayerControlling) {
@@ -156,11 +160,6 @@ export default observer((props: EntityProps) => {
         if (!isSelected && Object.values(uiState.selectedEntities).length > 0) {
           uiState.deselectAll();
         }
-
-        setPointerDownPos({
-          x: e.clientX,
-          y: e.clientY
-        });
 
         clickCount++;
         if (clickCount === 1) {
@@ -178,22 +177,19 @@ export default observer((props: EntityProps) => {
   };
 
   const handlePointerUp = (e: any) => {
+    const distance = Math.sqrt(
+      Math.pow(e.clientX - pointerDownPos.x, 2) +
+        Math.pow(e.clientY - pointerDownPos.y, 2)
+    );
     if (e.button === 0) {
       uiState.setDraggingEntity();
       setPressed(false);
       e.target.releasePointerCapture(e.pointerId);
 
-      const distance = Math.sqrt(
-        Math.pow(e.clientX - pointerDownPos.x, 2) +
-          Math.pow(e.clientY - pointerDownPos.y, 2)
-      );
-
-      if (distance < 10) {
-        // singleClickTimer && clearTimeout(singleClickTimer);
-        // clickCount = 0;
+      if (distance < 10 && !locked) {
         handleSelect();
       }
-    } else if (e.button === 2) {
+    } else if (e.button === 2 && distance < 10) {
       uiState.openContextMenu(e, allContextMenuItems, entity);
       e.stopPropagation();
     }
