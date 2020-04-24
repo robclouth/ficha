@@ -48,5 +48,20 @@
       To begin the development, run `npm start` or `yarn start`.
       To create a production bundle, use `npm run build` or `yarn build`.
     -->
+    <script>
+      if (document.addEventListener) {
+        document.addEventListener(
+          "contextmenu",
+          function(e) {
+            e.preventDefault();
+          },
+          false
+        );
+      } else {
+        document.attachEvent("oncontextmenu", function() {
+          window.event.returnValue = false;
+        });
+      }
+    </script>
   </body>
 </html>
