@@ -27,8 +27,7 @@ export default class AssetCache extends Model({}) {
   addTexture(url: string, makeAbsolute = true) {
     if (makeAbsolute) url = this.makeUrlAbsolute(url);
 
-    if (!this.textureCache[url])
-      this.textureCache[url] = new TextureLoader().load(url);
+    if (!this.textureCache[url]) this.textureCache[url] = this.loadTexture(url);
   }
 
   @modelAction
@@ -39,10 +38,14 @@ export default class AssetCache extends Model({}) {
 
     if (texture) return texture;
     else {
-      texture = new TextureLoader().load(url);
+      texture = this.loadTexture(url);
       this.textureCache[url] = texture;
       texture.wrapS = texture.wrapT = RepeatWrapping;
       return texture;
     }
+  }
+
+  loadTexture(url: string) {
+    return new TextureLoader().setCrossOrigin("anonymous").load(url);
   }
 }
