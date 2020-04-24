@@ -260,7 +260,7 @@ export default class GameStore extends Model({
       fetch(`${url}/game.json`, {
         mode: "cors",
         headers: {
-          "X-Requested-With	": "XMLHttpRequest",
+          "X-Requested-With": "XMLHttpRequest",
           Origin: "https://ficha.now.sh/"
         }
       })
