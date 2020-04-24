@@ -44,17 +44,12 @@ export default observer((props: PieceSetProps) => {
   if (containedEntities.length > 0) {
     const items: ContextMenuItem[] = [
       {
-        label: "Take one",
-        type: "action",
-        action: () => pieceSet.take(1)
-      },
-      {
         label: "Draw one",
         type: "action",
-        action: () => pieceSet.take(1)
+        action: () => pieceSet.drawOne()
       },
       {
-        label: "Shuffle",
+        label: "Randomise",
         type: "action",
         action: () => pieceSet.shuffle()
       }

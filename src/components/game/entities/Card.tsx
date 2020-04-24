@@ -77,11 +77,11 @@ export default observer((props: CardProps) => {
       type: "action",
       action: () => card.returnToSet()
     });
-    contextMenuItems.push({
-      label: "Remove from deck",
-      type: "action",
-      action: () => card.removeFromSet()
-    });
+    // contextMenuItems.push({
+    //   label: "Remove from deck",
+    //   type: "action",
+    //   action: () => card.removeFromSet()
+    // });
   }
 
   const backTexture = backImageUrl

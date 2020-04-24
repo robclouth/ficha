@@ -151,6 +151,14 @@ export default class EntitySet extends ExtendedModel(Entity, {
   }
 
   @modelAction
+  drawOne() {
+    if (this.containedEntities.length > 0) {
+      const card = this.take(1)[0];
+      card.position.x += 1;
+    }
+  }
+
+  @modelAction
   takeRandom(count: number) {
     if (this.totalEntities === 0) return undefined;
 

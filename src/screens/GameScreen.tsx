@@ -188,7 +188,7 @@ export default observer(() => {
   if (contextMenu && !contextMenu.items) {
     contextMenu.items = [
       {
-        label: "New entity",
+        label: "New object",
         type: "action",
         action: () => {
           setOpenModal(Modals.EditEntity);
@@ -197,7 +197,7 @@ export default observer(() => {
         }
       },
       {
-        label: "Add entity from library",
+        label: "Add object from library",
         type: "action",
         action: () => {
           setOpenModal(Modals.EntityLibrary);

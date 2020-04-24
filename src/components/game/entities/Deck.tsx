@@ -33,14 +33,9 @@ export default observer((props: DeckProps) => {
   if (containedEntities.length > 0) {
     const items: ContextMenuItem[] = [
       {
-        label: "Take one",
-        type: "action",
-        action: () => deck.take(1)
-      },
-      {
         label: "Draw one",
         type: "action",
-        action: () => deck.take(1)
+        action: () => deck.drawOne()
       },
       {
         label: "Flip",
@@ -67,7 +62,7 @@ export default observer((props: DeckProps) => {
 
   if (savedDeal) {
     contextMenuItems.push({
-      label: "Deal",
+      label: "Restore deal",
       type: "action",
       action: () => deck.deal()
     });

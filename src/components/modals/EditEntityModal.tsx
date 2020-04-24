@@ -890,7 +890,7 @@ export default observer(
       <Modal
         open={open}
         handleClose={handleClose}
-        title={`${isEditing ? "Edit" : "Add"} entity`}
+        title={`${isEditing ? "Edit" : "Add"} object`}
         content={
           <Box display="flex" height={670}>
             <Box
