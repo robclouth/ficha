@@ -15,17 +15,9 @@ Ficha is a work in progress and anyone is welcome to contribute. Get in touch if
 
 Check it out [here](www.ficha.now.sh).
 
-## Instructions
+For usage instructions see below.
 
-### Collaboration
-
-#### Hosting
-Click on the [You are hosting] button in the top right of the screen to copy the game id to the clip board. Share that with the other players.
-
-#### Joining games
-From the top left menu, select [Join game] and enter the game id given to you by the host.
-
-### Editor
+## Editor
 #### Camera
 Use the mouse to move the camera around the scene.
 * Pan - right click and drag
@@ -108,4 +100,12 @@ TODO
 
 #### Exporting / importing
 TODO
+
+## Collaboration
+
+#### Hosting
+Click on the [You are hosting] button in the top right of the screen to copy the game id to the clip board. Share that with the other players.
+
+#### Joining games
+From the top left menu, select [Join game] and enter the game id given to you by the host.
 
