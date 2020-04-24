@@ -1,4 +1,14 @@
-import { makeStyles, TextField, Box, Fab, InputBase } from "@material-ui/core";
+import {
+  makeStyles,
+  TextField,
+  Box,
+  Fab,
+  InputBase,
+  Typography,
+  Link,
+  withStyles,
+  Theme
+} from "@material-ui/core";
 import { observer } from "mobx-react";
 import React, { useState } from "react";
 import { useStore } from "../../stores/RootStore";
@@ -18,6 +28,43 @@ const useStyles = makeStyles(theme => ({
 type ModalProps = {
   open: boolean;
   handleClose: () => void;
+};
+
+const styles = (theme: Theme) => ({
+  listItem: {
+    marginTop: theme.spacing(1)
+  }
+});
+
+const options = {
+  overrides: {
+    h1: {
+      component: Typography,
+      props: {
+        gutterBottom: true,
+        variant: "h5"
+      }
+    },
+    h2: { component: Typography, props: { gutterBottom: true, variant: "h6" } },
+    h3: {
+      component: Typography,
+      props: { gutterBottom: true, variant: "subtitle1" }
+    },
+    h4: {
+      component: Typography,
+      props: { gutterBottom: true, variant: "caption", paragraph: true }
+    },
+    p: { component: Typography, props: { paragraph: true } },
+    a: { component: Link },
+    li: {
+      //@ts-ignore
+      component: withStyles(styles)(({ classes, ...props }) => (
+        <li className={classes.listItem}>
+          <Typography component="span" {...props} />
+        </li>
+      ))
+    }
+  }
 };
 
 export default observer(({ open, handleClose }: ModalProps) => {
@@ -58,7 +105,7 @@ export default observer(({ open, handleClose }: ModalProps) => {
               multiline
             />
           ) : (
-            <Markdown children={markdown} />
+            <Markdown options={options} children={markdown} />
           )}
 
           <Fab

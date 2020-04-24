@@ -22,7 +22,9 @@ export default class GameState extends Model({
   players: prop<Player[]>(() => [], { setterAction: true }),
   chatHistory: prop<string[]>(() => [], { setterAction: true }),
   entities: prop<Entity[]>(() => [], { setterAction: true }),
-  rules: prop<string[]>(() => [], { setterAction: true }),
+  rules: prop<string[]>(() => [], {
+    setterAction: true
+  }),
   setups: prop<GameSetup[]>(() => [], { setterAction: true }),
   activeSetup: prop<Ref<GameSetup> | undefined>(undefined, {
     setterAction: true

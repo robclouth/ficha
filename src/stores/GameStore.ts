@@ -78,6 +78,8 @@ export default class GameStore extends Model({
     } else {
       this.gameState = new GameState({});
 
+      this.newGame();
+
       this.gameState.addPlayer(
         new Player({
           userId: this.userId!,
@@ -249,6 +251,9 @@ export default class GameStore extends Model({
   newGame() {
     this.gameState.removeAllEntities();
     this.gameState.setups = [];
+    this.gameState.rules = [
+      "Write the rules of the game here using [Markdown](https://www.markdownguide.org/basic-syntax/)"
+    ];
   }
 
   @modelFlow
