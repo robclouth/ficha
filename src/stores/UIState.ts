@@ -65,7 +65,8 @@ export default class UIState extends Model({}) {
 
   @modelAction
   selectEntity(entity: Entity) {
-    if (entity) this.selectedEntities[entity.$modelId] = entity;
+    if (entity && !entity.locked)
+      this.selectedEntities[entity.$modelId] = entity;
   }
 
   @modelAction
