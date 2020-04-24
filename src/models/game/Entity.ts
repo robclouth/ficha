@@ -1,32 +1,24 @@
-import { observable, computed, when, reaction } from "mobx";
+import { omit } from "lodash";
+import { computed, observable, reaction, when } from "mobx";
 import {
+  applySnapshot,
+  clone,
+  detach,
+  findParent,
+  getRootStore,
+  getSnapshot,
   Model,
   model,
   modelAction,
-  prop,
-  findParent,
-  getRootPath,
-  getRoot,
-  getRootStore,
-  clone,
-  Ref,
-  rootRef,
-  detach,
-  onSnapshot,
   OnSnapshotDisposer,
-  SnapshotOutOfModel,
-  applySnapshot,
-  getSnapshot
+  prop,
+  Ref,
+  rootRef
 } from "mobx-keystone";
-import GameState from "../GameState";
 import { Box3, Mesh } from "three";
-import UIState from "../../stores/UIState";
 import RootStore from "../../stores/RootStore";
-import { nanoid } from "nanoid";
+import GameState from "../GameState";
 import EntitySet from "./EntitySet";
-import React from "react";
-import { omit } from "lodash";
-import HandArea from "./HandArea";
 
 export enum EntityType {
   Deck,

@@ -1,5 +1,5 @@
 import RootStore from "./RootStore";
-import { observable, action, computed } from "mobx";
+import { observable, action, computed, runInAction } from "mobx";
 import Entity from "../models/game/Entity";
 import { PointerEvent } from "react-three-fiber";
 import { Vector3, Plane, Vector, Vector2, Camera, Matrix4, Euler } from "three";
@@ -11,9 +11,15 @@ import {
   modelFlow,
   _async,
   _await,
-  getRootStore,
-  withoutUndo
+  getRootStore
 } from "mobx-keystone";
+
+import {
+  withoutUndo,
+  UndoManager,
+  undoMiddleware
+} from "../utils/undoMiddleware";
+import GameState from "../models/GameState";
 
 export type ContextMenuItem = {
   label?: string;
@@ -50,6 +56,8 @@ export default class UIState extends Model({}) {
   @observable allContextMenuItems: {
     [key: string]: Array<ContextMenuItem>;
   } = {};
+
+  undoManager?: UndoManager;
 
   @observable views: [View | undefined, View | undefined] = [
     undefined,
@@ -88,6 +96,7 @@ export default class UIState extends Model({}) {
   @modelAction
   setDraggingEntity(entity?: Entity) {
     if (entity) {
+      this.undoManager?.startGroup();
       this.isDraggingEntity = true;
       entity.controllingPeerId = this.gameStore?.peerId;
       this.draggingEntity = entity;
@@ -107,26 +116,26 @@ export default class UIState extends Model({}) {
       if (this.draggingEntity) {
         this.draggingEntity.controllingPeerId = undefined;
       }
+
+      this.undoManager?.endGroup();
     }
   }
 
   // @modelAction
   dragEntity(x: number, z: number) {
-    withoutUndo(() => {
-      this.draggingEntity!.setPosition(x, z);
+    this.draggingEntity!.setPosition(x, z);
 
-      if (!this.draggingEntity) return;
-      Object.values(this.selectedEntities).forEach(entity => {
-        if (entity !== this.draggingEntity) {
-          const offset = this.dragGroupOffsets[entity.$modelId];
+    if (!this.draggingEntity) return;
+    Object.values(this.selectedEntities).forEach(entity => {
+      if (entity !== this.draggingEntity) {
+        const offset = this.dragGroupOffsets[entity.$modelId];
 
-          entity.setPosition(
-            this.draggingEntity!.position.x - offset[0],
-            this.draggingEntity!.position.z - offset[1],
-            Object.values(this.selectedEntities)
-          );
-        }
-      });
+        entity.setPosition(
+          this.draggingEntity!.position.x - offset[0],
+          this.draggingEntity!.position.z - offset[1],
+          Object.values(this.selectedEntities)
+        );
+      }
     });
   }
 
@@ -156,14 +165,6 @@ export default class UIState extends Model({}) {
         this.selectionStartPoint[1],
         e.clientY
       );
-
-      // if (e.clientX <= this.selectionBoxStart[0])
-      //   this.selectionBoxStart[0] = e.clientX;
-      // else this.selectionBoxEnd[0] = e.clientX;
-
-      // if (e.clientY <= this.selectionBoxStart[1])
-      //   this.selectionBoxStart[1] = e.clientY;
-      // else this.selectionBoxEnd[1] = e.clientY;
     }
   }
 
@@ -193,17 +194,19 @@ export default class UIState extends Model({}) {
   }
 
   doContextMenuAction(item: ContextMenuItem) {
-    item.action && item.action();
+    this.undoManager?.undoGroup(() => {
+      item.action && item.action();
 
-    Object.values(this.selectedEntities).forEach(entity => {
-      if (
-        entity !== item.target &&
-        entity.$modelType === item.target?.$modelType
-      ) {
-        const items = this.allContextMenuItems[entity.$modelId];
-        const matchedItem = items.find(i => i.label === item.label);
-        if (matchedItem?.action) matchedItem.action();
-      }
+      Object.values(this.selectedEntities).forEach(entity => {
+        if (
+          entity !== item.target &&
+          entity.$modelType === item.target?.$modelType
+        ) {
+          const items = this.allContextMenuItems[entity.$modelId];
+          const matchedItem = items.find(i => i.label === item.label);
+          if (matchedItem?.action) matchedItem.action();
+        }
+      });
     });
   }
 
@@ -223,6 +226,28 @@ export default class UIState extends Model({}) {
     if (!this.views[viewIndex]) {
       this.views[viewIndex] = {};
     } else this.views[viewIndex] = undefined;
+  }
+
+  undo() {
+    if (this.canUndo) {
+      this.undoManager?.undo();
+    }
+  }
+
+  redo() {
+    if (this.canRedo) this.undoManager?.redo();
+  }
+
+  @computed get canUndo() {
+    return this.undoManager?.canUndo;
+  }
+
+  @computed get canRedo() {
+    return this.undoManager?.canRedo;
+  }
+
+  setupUndoManager(gameState: GameState) {
+    this.undoManager = undoMiddleware(gameState, ["players"]);
   }
 
   @modelAction

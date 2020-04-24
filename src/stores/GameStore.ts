@@ -17,11 +17,9 @@ import {
   prop,
   SnapshotInOf,
   SnapshotOutOf,
-  UndoManager,
-  undoMiddleware,
-  withoutUndo,
   _async,
-  _await
+  _await,
+  getRootStore
 } from "mobx-keystone";
 import { nanoid } from "nanoid";
 import Peer, { DataConnection, util } from "peerjs";
@@ -30,7 +28,13 @@ import GameState from "../models/GameState";
 import Player from "../models/Player";
 import { generateName } from "../utils/NameGenerator";
 import { createPeer } from "../utils/Utils";
+import {
+  undoMiddleware,
+  UndoManager,
+  withoutUndo
+} from "../utils/undoMiddleware";
 import { gameRepoUrl } from "../constants/constants";
+import RootStore from "./RootStore";
 
 @model("GameStore")
 export default class GameStore extends Model({
@@ -47,7 +51,6 @@ export default class GameStore extends Model({
   @observable hostPeerId?: string;
   @observable serverConnection?: DataConnection;
   @observable connectionError: string | null = null;
-  @observable undoManager?: UndoManager;
 
   localStatePatchDisposer: OnPatchesDisposer = () => {};
 
@@ -76,7 +79,7 @@ export default class GameStore extends Model({
         if (player.userId !== this.userId) player.isConnected = false;
       });
 
-      this.setupUndoManager();
+      this.uiState.setupUndoManager(this.gameState);
     } else {
       this.gameState = new GameState({});
 
@@ -100,6 +103,10 @@ export default class GameStore extends Model({
 
     this.isInitialised = true;
   });
+
+  @computed get uiState() {
+    return getRootStore<RootStore>(this)?.uiState!;
+  }
 
   @computed get isHost(): boolean {
     return this.gameServer !== null;
@@ -221,7 +228,7 @@ export default class GameStore extends Model({
         this.gameState = fromSnapshot<GameState>(
           stateData.data as SnapshotInOf<GameState>
         );
-        this.setupUndoManager();
+        this.uiState.setupUndoManager(this.gameState);
       }
     });
     this.trackLocalState(true);
@@ -231,22 +238,6 @@ export default class GameStore extends Model({
     this.serverConnection && this.serverConnection.send(stateData);
   }
 
-  undo() {
-    if (this.canUndo) this.undoManager?.undo();
-  }
-
-  redo() {
-    if (this.canRedo) this.undoManager?.redo();
-  }
-
-  @computed get canUndo() {
-    return this.undoManager?.canUndo;
-  }
-
-  @computed get canRedo() {
-    return this.undoManager?.canRedo;
-  }
-
   @modelAction
   newGame() {
     this.gameState.removeAllEntities();
@@ -254,7 +245,7 @@ export default class GameStore extends Model({
     this.gameState.rules = [
       "Write the rules of the game here using [Markdown](https://www.markdownguide.org/basic-syntax/)"
     ];
-    this.setupUndoManager();
+    this.uiState.setupUndoManager(this.gameState);
   }
 
   @modelFlow
@@ -274,11 +265,6 @@ export default class GameStore extends Model({
   @modelAction
   loadGameByName(name: string) {
     this.loadGameFromUrl(gameRepoUrl + "/" + name);
-  }
-
-  @modelAction
-  setupUndoManager() {
-    this.undoManager = undoMiddleware(this.gameState.entities);
   }
 
   @modelAction

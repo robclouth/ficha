@@ -143,9 +143,9 @@ enum Modals {
 
 export default observer(() => {
   const { gameStore, uiState } = useStore();
-  const { contextMenu, isContextMenuOpen } = uiState;
+  const { contextMenu, isContextMenuOpen, canUndo, canRedo } = uiState;
 
-  const { gameState, canUndo, canRedo } = gameStore;
+  const { gameState } = gameStore;
 
   const { game } = useParams();
 
@@ -263,7 +263,7 @@ export default observer(() => {
       >
         <IconButton
           aria-label="undo"
-          onClick={() => gameStore.undo()}
+          onClick={() => uiState.undo()}
           disabled={!canUndo}
           style={{ marginRight: theme.spacing(1) }}
         >
@@ -271,7 +271,7 @@ export default observer(() => {
         </IconButton>
         <IconButton
           aria-label="redo"
-          onClick={() => gameStore.redo()}
+          onClick={() => uiState.redo()}
           disabled={!canRedo}
         >
           <RedoIcon />
