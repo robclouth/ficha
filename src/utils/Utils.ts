@@ -16,23 +16,33 @@ export function createPeer() {
     const peer = new Peer(generateId(), {
       config: {
         iceServers: [
+          // {
+          //   urls: "stun:stun.l.google.com:19302"
+          // },
+          // {
+          //   urls: "stun:stun1.l.google.com:19302"
+          // },
+          // {
+          //   urls: "stun:stun2.l.google.com:19302"
+          // },
+          // {
+          //   urls: "stun:stun.l.google.com:19302?transport=udp"
+          // },
           {
-            urls: "stun:stun.l.google.com:19302"
+            urls: "stun:llllllll.link:443",
+            username: "test",
+            credential: "test"
           },
           {
-            urls: "stun:stun1.l.google.com:19302"
-          },
-          {
-            urls: "stun:stun2.l.google.com:19302"
-          },
-          {
-            urls: "stun:stun.l.google.com:19302?transport=udp"
-          },
-          {
-            urls: "numb.viagenie.ca",
-            username: "rob.clouth@gmail.com",
-            credential: "ch4Q2%Cr&Y0G"
+            urls: "turn:llllllll.link:443",
+            username: "test",
+            credential: "test"
           }
+          // {
+          //   urls: "numb.viagenie.ca",
+          //   username: "rob.clouth@gmail.com",
+          //   credential: "ch4Q2%Cr&Y0G"
+          // }
         ],
         iceTransportPolicy: "all"
       },
