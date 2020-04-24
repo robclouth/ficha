@@ -515,7 +515,7 @@ const DiceEditor = observer(({ entity }: { entity: Entity }) => {
         <EmojiInput
           multiline
           value={labels.join(" ")}
-          onTextChange={text => (dice.labels = text.trim().split(" "))}
+          onTextChange={text => (dice.labels = text.trimStart().split(" "))}
           fullWidth
           placeholder="Body"
         />
