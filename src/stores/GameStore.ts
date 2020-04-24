@@ -47,7 +47,7 @@ export default class GameStore extends Model({
   @observable hostPeerId?: string;
   @observable serverConnection?: DataConnection;
   @observable connectionError: string | null = null;
-  @observable undoManager!: UndoManager;
+  @observable undoManager?: UndoManager;
 
   localStatePatchDisposer: OnPatchesDisposer = () => {};
 
@@ -75,6 +75,8 @@ export default class GameStore extends Model({
       this.gameState.players.forEach(player => {
         if (player.userId !== this.userId) player.isConnected = false;
       });
+
+      this.setupUndoManager();
     } else {
       this.gameState = new GameState({});
 
@@ -95,8 +97,6 @@ export default class GameStore extends Model({
       },
       { delay: 1000 }
     );
-
-    this.undoManager = undoMiddleware(this.gameState.entities);
 
     this.isInitialised = true;
   });
@@ -221,7 +221,7 @@ export default class GameStore extends Model({
         this.gameState = fromSnapshot<GameState>(
           stateData.data as SnapshotInOf<GameState>
         );
-        this.undoManager = undoMiddleware(this.gameState.entities);
+        this.setupUndoManager();
       }
     });
     this.trackLocalState(true);
@@ -232,19 +232,19 @@ export default class GameStore extends Model({
   }
 
   undo() {
-    if (this.undoManager.canUndo) this.undoManager.undo();
+    if (this.canUndo) this.undoManager?.undo();
   }
 
   redo() {
-    if (this.undoManager.canRedo) this.undoManager.redo();
+    if (this.canRedo) this.undoManager?.redo();
   }
 
   @computed get canUndo() {
-    return this.undoManager.canUndo;
+    return this.undoManager?.canUndo;
   }
 
   @computed get canRedo() {
-    return this.undoManager.canRedo;
+    return this.undoManager?.canRedo;
   }
 
   @modelAction
@@ -254,6 +254,7 @@ export default class GameStore extends Model({
     this.gameState.rules = [
       "Write the rules of the game here using [Markdown](https://www.markdownguide.org/basic-syntax/)"
     ];
+    this.setupUndoManager();
   }
 
   @modelFlow
@@ -273,6 +274,11 @@ export default class GameStore extends Model({
   @modelAction
   loadGameByName(name: string) {
     this.loadGameFromUrl(gameRepoUrl + "/" + name);
+  }
+
+  @modelAction
+  setupUndoManager() {
+    this.undoManager = undoMiddleware(this.gameState.entities);
   }
 
   @modelAction
