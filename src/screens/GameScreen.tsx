@@ -45,6 +45,7 @@ import RulesModal from "../components/modals/RulesModal";
 import HandArea from "../models/game/HandArea";
 import NestedMenuItem from "../components/NestedMenuItem";
 import EditSetupModal from "../components/modals/EditSetupModal";
+import HelpModal from "../components/modals/HelpModal";
 
 const useStyles = makeStyles(theme => ({
   root: {
@@ -136,7 +137,8 @@ enum Modals {
   ImportGame,
   JoinGame,
   Rules,
-  EditSetup
+  EditSetup,
+  Help
 }
 
 export default observer(() => {
@@ -375,6 +377,11 @@ export default observer(() => {
         >
           Game settings
         </MenuItem>
+        <MenuItem
+          onClick={() => handleTopMenuSelect(() => setOpenModal(Modals.Help))}
+        >
+          Help
+        </MenuItem>
       </Menu>
       <Menu
         keepMounted
@@ -441,10 +448,16 @@ export default observer(() => {
           open={openModal === Modals.Rules}
           handleClose={handleModalClose}
         />
-      )}{" "}
+      )}
       {openModal === Modals.EditSetup && (
         <EditSetupModal
           open={openModal === Modals.EditSetup}
+          handleClose={handleModalClose}
+        />
+      )}
+      {openModal === Modals.Help && (
+        <HelpModal
+          open={openModal === Modals.Help}
           handleClose={handleModalClose}
         />
       )}

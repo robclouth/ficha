@@ -30,7 +30,7 @@ import GameState from "../models/GameState";
 import Player from "../models/Player";
 import { generateName } from "../utils/NameGenerator";
 import { createPeer } from "../utils/Utils";
-import { gameRepoUrl } from "../constants";
+import { gameRepoUrl } from "../constants/constants";
 
 @model("GameStore")
 export default class GameStore extends Model({
