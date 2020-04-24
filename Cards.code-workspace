@@ -7,5 +7,9 @@
 		"path": "games/The Young Kings"
 	}
 ],
-  "settings": {}
+	"settings": {
+		"files.exclude": {
+			"**/node_modules": true
+		}
+	}
 }
