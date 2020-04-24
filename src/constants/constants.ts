@@ -1,2 +1,2 @@
 export const gameRepoUrl =
-  "https://raw.githubusercontent.com/robclouth/p2p-game/master/games";
+  "https://raw.githubusercontent.com/robclouth/ficha/master/games";

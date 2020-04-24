@@ -23,7 +23,7 @@ import { autorun } from "mobx";
 import { getSnapshot } from "mobx-keystone";
 import { observer } from "mobx-react";
 import { useSnackbar } from "notistack";
-import { useParams } from "react-router";
+import { useParams, useHistory } from "react-router";
 // @ts-ignore
 import EventListener from "react-event-listener";
 // @ts-ignore
@@ -148,6 +148,7 @@ export default observer(() => {
   const { gameState } = gameStore;
 
   const { game } = useParams();
+  const history = useHistory();
 
   const theme = useTheme();
   const [topMenuAnchorEl, setTopMenuAnchorEl] = useState<null | HTMLElement>(
@@ -228,12 +229,19 @@ export default observer(() => {
 
   const snackbar = useSnackbar();
 
+  async function loadGame(gameName: string) {
+    await gameStore.loadGameByName(gameName);
+    history.push("/");
+  }
+
   useEffect(() => {
-    if (game) gameStore.loadGameByName(game);
+    if (game) {
+      loadGame(game);
+    }
   }, [game]);
 
   useEffect(() => {
-    gameStore.createGame();
+    if (!game) gameStore.createGame();
     autorun(() => {
       uiState.snackbarMessage &&
         snackbar.enqueueSnackbar(

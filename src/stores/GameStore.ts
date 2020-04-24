@@ -258,11 +258,7 @@ export default class GameStore extends Model({
   loadGameFromUrl = _async(function*(this: GameStore, url: string) {
     const response = yield* _await(
       fetch(`${url}/game.json`, {
-        mode: "cors",
-        headers: {
-          "X-Requested-With": "XMLHttpRequest",
-          Origin: "https://ficha.now.sh/"
-        }
+        mode: "cors"
       })
     );
     const gameJson = yield* _await(response.json());
@@ -276,9 +272,8 @@ export default class GameStore extends Model({
     this.gameState.entities = clone(gameState.entities);
   });
 
-  @modelAction
-  loadGameByName(name: string) {
-    this.loadGameFromUrl(gameRepoUrl + "/" + name);
+  async loadGameByName(name: string) {
+    await this.loadGameFromUrl(gameRepoUrl + "/" + name);
   }
 
   @modelAction
