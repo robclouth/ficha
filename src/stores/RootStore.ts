@@ -41,13 +41,6 @@ export default class RootStore extends Model({
 
 export const rootStore = new RootStore({});
 
-// if (module?.hot?.data?.store) {
-//   applySnapshot(rootStore, module.hot.data.store);
-// }
-// module?.hot?.dispose(data => {
-//   data.store = getSnapshot(rootStore);
-// });
-
 registerRootStore(rootStore);
 
 const context = React.createContext<RootStore>(rootStore);
