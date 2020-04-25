@@ -6,3 +6,5 @@ export type ContextMenuItem = {
   target?: Entity;
   action?: () => void;
 };
+
+export type Vector3 = { x: number; y: number; z: number };

@@ -95,6 +95,11 @@ const CameraControl = observer(() => {
   const cameraControlsRef = useRef<CameraControls>();
   const clock = useMemo(() => new Clock(), []);
 
+  useEffect(() => {
+    if (cameraControlsRef.current)
+      uiState.cameraControls = cameraControlsRef.current;
+  }, [cameraControlsRef]);
+
   useFrame(state => {
     cameraControlsRef.current!.update(clock.getDelta());
   });

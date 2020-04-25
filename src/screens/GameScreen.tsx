@@ -130,6 +130,84 @@ const PlayersList = observer(() => {
   );
 });
 
+const ViewList = observer(() => {
+  const { gameStore, uiState } = useStore();
+  const { gameState } = gameStore;
+  const theme = useTheme();
+
+  const classes = useStyles();
+
+  const handArea = gameStore.player.handArea;
+
+  return (
+    <Box
+      position="absolute"
+      bottom={theme.spacing(1)}
+      right={theme.spacing(1)}
+      zIndex={1}
+      display="flex"
+      flexDirection="column"
+      alignItems="flex-end"
+    >
+      <Chip
+        onClick={() => gameState.addView()}
+        className={classes.chip}
+        clickable
+        avatar={
+          <Avatar>
+            <VideocamIcon fontSize="small" />
+          </Avatar>
+        }
+        label={"Add view"}
+      />
+      {handArea && (
+        <Chip
+          onClick={() => uiState.activateView("hand")}
+          className={classes.chip}
+          clickable
+          avatar={
+            <Avatar
+              style={{
+                backgroundColor:
+                  uiState.activeView === "hand"
+                    ? theme.palette.secondary.light
+                    : theme.palette.action.selected
+              }}
+            >
+              {"1"}
+            </Avatar>
+          }
+          label={"Hand"}
+        />
+      )}
+      {gameState.views.map((view, i) => {
+        return (
+          <Chip
+            key={i}
+            onClick={() => uiState.activateView(view)}
+            className={classes.chip}
+            clickable
+            avatar={
+              <Avatar
+                style={{
+                  backgroundColor:
+                    uiState.activeView === view
+                      ? theme.palette.secondary.light
+                      : theme.palette.action.selected
+                }}
+              >
+                {i + (handArea ? 2 : 1)}
+              </Avatar>
+            }
+            label={view.name}
+            onDelete={() => gameState.removeView(view)}
+          />
+        );
+      })}
+    </Box>
+  );
+});
+
 enum Modals {
   EditEntity,
   EntityLibrary,
@@ -261,6 +339,7 @@ export default observer(() => {
     <Box className={classes.root} onClick={handleContextMenuClose}>
       <GameCanvas />
       <PlayersList />
+      <ViewList />
       <Box
         position="absolute"
         bottom={theme.spacing(1)}

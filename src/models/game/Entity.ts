@@ -19,6 +19,7 @@ import { Box3, Mesh } from "three";
 import RootStore from "../../stores/RootStore";
 import GameState from "../GameState";
 import EntitySet from "./EntitySet";
+import { Vector3 } from "../../types";
 
 export enum EntityType {
   Deck,
@@ -37,8 +38,6 @@ export const entityRef = rootRef<Entity>("EntityRef", {
     if (oldEntity && !newEntity) detach(ref);
   }
 });
-
-export type Vector3 = { x: number; y: number; z: number };
 
 @model("Entity")
 export default class Entity extends Model({

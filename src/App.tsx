@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import {
   makeStyles,
   ThemeProvider,
@@ -43,12 +43,16 @@ export default observer(() => {
   const rootStore = useStore();
   const { uiState } = rootStore;
 
-  React.useEffect(() => {
+  useEffect(() => {
     rootStore.init();
   }, [rootStore]);
 
+  useEffect(() => {
+    document.addEventListener("keydown", e => uiState.handleKeyPress(e));
+  }, []);
+
   return (
-    <div className={classes.root} onKeyPress={e => uiState.handleKeyPress(e)}>
+    <div className={classes.root}>
       <SnackbarProvider autoHideDuration={3000} maxSnack={3}>
         <ThemeProvider theme={darkTheme}>
           <CssBaseline />

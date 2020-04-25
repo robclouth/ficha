@@ -1,4 +1,5 @@
-import { computed, reaction, autorun } from "mobx";
+import { take as take_ } from "lodash";
+import { computed } from "mobx";
 import {
   clone,
   detach,
@@ -6,17 +7,12 @@ import {
   model,
   modelAction,
   prop,
-  rootRef,
-  prop_mapObject,
-  getSnapshot,
-  applySnapshot,
-  SnapshotOutOfModel
+  rootRef
 } from "mobx-keystone";
 //@ts-ignore
 import shuffleArray from "shuffle-array";
-import Entity, { EntityType, entityRef } from "./Entity";
-import { Vector3 } from "./Entity";
-import { take as take_ } from "lodash";
+import { Vector3 } from "../../types";
+import Entity, { entityRef, EntityType } from "./Entity";
 
 export const entitySetRef = rootRef<EntitySet>("EntitySetRef", {
   onResolvedValueChange(ref, newSet, oldSet) {
