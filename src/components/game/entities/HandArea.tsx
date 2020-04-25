@@ -42,14 +42,15 @@ export default observer((props: HandAreaProps) => {
       geometry={<boxBufferGeometry args={[6, height, 4]} attach="geometry" />}
       materialParams={{
         roughness: 1,
-        opacity: 0.5,
+        opacity: 0.3,
         color: player
           ? new Color(player.color.r, player.color.g, player.color.b)
           : new Color(0.4, 0.4, 0.4)
       }}
       contextMenuItems={contextMenuItems}
-      hoverMessage={player !== gameStore.player ? player?.name : undefined}
+      hoverMessage={player?.name || undefined}
       blockInteraction={claimed && player !== gameStore.player}
+      castShadows={false}
     />
   );
 });

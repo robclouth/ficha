@@ -263,7 +263,7 @@ export default observer((props: EntityProps) => {
 
     const newParams = {
       transparent: true,
-      opacity: faded ? 0.5 : 1
+      opacity: (params.opacity ?? 1) * (faded ? 0.5 : 1)
     };
 
     return new MeshStandardMaterial({
