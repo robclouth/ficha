@@ -33,7 +33,7 @@ import {
   UndoManager,
   withoutUndo
 } from "../utils/undoMiddleware";
-import { gameRepoUrl } from "../constants/constants";
+import { gameRepoUrl, serverRoot } from "../constants/constants";
 import RootStore from "./RootStore";
 import * as serviceWorker from "../serviceWorker";
 
@@ -257,7 +257,7 @@ export default class GameStore extends Model({
   @modelFlow
   loadGameFromUrl = _async(function*(this: GameStore, url: string) {
     const response = yield* _await(
-      fetch(`${url}/game.json`, {
+      fetch(`${serverRoot}:9001/${url}`, {
         mode: "cors"
       })
     );
