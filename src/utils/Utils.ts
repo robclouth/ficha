@@ -14,7 +14,7 @@ export function generateId() {
 export function createPeer() {
   return new Promise<Peer>((resolve, reject) => {
     const peer = new Peer(generateId(), {
-      host: "ficha-server.llllllll.link",
+      host: "llllllll.link",
       port: 9000,
       path: "/peer",
       config: {
