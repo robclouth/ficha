@@ -839,10 +839,14 @@ export default observer(
             z: positionGroundPlane[1]
           };
         gameState.addEntity(entityDraft.originalData);
-      } else {
-        if (entityDraft.originalData instanceof EntitySet)
-          (entityDraft.originalData as EntitySet).updateInstances();
       }
+
+      if (entityDraft.originalData instanceof EntitySet) {
+        const entitySet = entityDraft.originalData as EntitySet;
+        entitySet.refill();
+        entitySet.updateInstances();
+      }
+
       handleClose();
     };
 

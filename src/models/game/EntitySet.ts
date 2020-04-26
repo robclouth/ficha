@@ -210,6 +210,36 @@ export default class EntitySet extends ExtendedModel(Entity, {
   }
 
   @modelAction
+  refill() {
+    this.prototypes.forEach(prototype => {
+      const count = this.prototypeCounts[prototype.$modelId];
+      const instanceCount = this.allEntities.filter(
+        entity => entity.prototype?.maybeCurrent === prototype
+      ).length;
+      let amountNeeded = count - instanceCount;
+
+      // card deficit - need to add new cards to the deck
+      if (amountNeeded >= 0) {
+        for (let i = 0; i < amountNeeded; i++) {
+          const entity = this.instantiateFromPrototype(prototype);
+          entity.faceUp = this.faceUp;
+          this.addEntity(entity);
+        }
+      } else {
+        // card excess - remove cards first from cards in the deck, then from placed cards
+        amountNeeded *= -1;
+        const max = Math.min(amountNeeded, this.allEntities.length);
+        const containedCount = this.containedEntities.length;
+        for (let i = 0; i < max; i++) {
+          const entity = this.allEntities[i];
+          if (i < containedCount) this.removeEntity(entity);
+          else this.gameState.removeEntity(entity);
+        }
+      }
+    });
+  }
+
+  @modelAction
   flip() {
     super.flip();
     this.containedEntities.forEach(entity => entity.flip());
