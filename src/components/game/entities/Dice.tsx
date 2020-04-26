@@ -2,7 +2,14 @@ import { easeBounceOut, easeQuadOut, easeLinear } from "d3-ease";
 import { observer } from "mobx-react";
 import React, { useMemo, useState } from "react";
 import { useSpring } from "react-spring/three";
-import { Color, Quaternion, Texture, FlatShading } from "three";
+import {
+  Color,
+  Quaternion,
+  Texture,
+  FlatShading,
+  CylinderBufferGeometry,
+  Vector3
+} from "three";
 import Dice, { DiceType } from "../../../models/game/Dice";
 import { useStore } from "../../../stores/RootStore";
 import { ContextMenuItem } from "../../../types";
@@ -65,9 +72,20 @@ export default observer((props: DiceProps) => {
   };
 
   const diceData = useMemo(() => {
-    let die: DiceObject;
+    let die: any;
     let pivot: [number, number, number] = [0, -0.05, 0];
-    if (diceType === DiceType.D4) {
+    if (diceType === DiceType.Coin) {
+      const d6 = new DiceD6({ labels });
+      const flipped = new Quaternion();
+      flipped.setFromAxisAngle(new Vector3(1, 0, 0), Math.PI);
+      die = {
+        geometry: new CylinderBufferGeometry(0.2, 0.2, 0.05, 30),
+        textures: [d6.textures[0], d6.textures[2], d6.textures[3]],
+        faceRotations: [new Quaternion(), flipped],
+        labelIndices: [1, 0]
+      };
+      pivot = [0, -0.05 / 2, 0];
+    } else if (diceType === DiceType.D4) {
       die = new DiceD4({ labels });
       pivot = [0, -0.04, 0];
     } else if (diceType === DiceType.D6) die = new DiceD6({ labels });
@@ -87,6 +105,7 @@ export default observer((props: DiceProps) => {
       geometry: die.geometry,
       textures: die.textures,
       faceRotations: die.faceRotations as Quaternion[],
+      sideLabels: die.labelIndices.map((i: number) => labels[i]),
       pivot
     };
   }, [diceType, labels]);
@@ -116,7 +135,7 @@ export default observer((props: DiceProps) => {
       rotationOffset={diceData.faceRotations[value]}
       positionOffset={animation.position}
       doubleClickAction={handleRoll}
-      hoverMessage={labels[value]}
+      hoverMessage={diceData.sideLabels[value]}
     />
   );
 });

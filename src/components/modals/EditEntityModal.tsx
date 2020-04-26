@@ -517,7 +517,7 @@ const DiceEditor = observer(({ entity }: { entity: Entity }) => {
           value={labels.join(" ")}
           onTextChange={text => (dice.labels = text.trimStart().split(" "))}
           fullWidth
-          placeholder="Body"
+          placeholder="Sides"
         />
       </FormControl>
       <FormControl>

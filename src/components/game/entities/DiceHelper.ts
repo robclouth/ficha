@@ -60,6 +60,18 @@ export class DiceObject {
     });
   }
 
+  getLabelIndices() {
+    const uniqueFaces = uniqBy(
+      this.geometry.faces.filter(face => face.materialIndex !== 0),
+      face => face.materialIndex
+    );
+
+    return uniqueFaces.map(face => {
+      let index = face.materialIndex - 2;
+      return this.invertUpside ? index : uniqueFaces.length - index - 1;
+    });
+  }
+
   getUpsideValue() {
     let vector = new THREE.Vector3(0, this.invertUpside ? -1 : 1);
     let closest_face;
@@ -273,6 +285,7 @@ export class DiceObject {
     this.geometry = this.getGeometry();
     this.textures = this.getTextures();
     this.faceRotations = this.getFaceRotations();
+    this.labelIndices = this.getLabelIndices();
   }
 }
 
