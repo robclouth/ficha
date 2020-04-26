@@ -16,6 +16,7 @@ export function createPeer() {
     const peer = new Peer(generateId(), {
       host: "llllllll.link",
       port: 9000,
+      secure: true,
       path: "/peer",
       config: {
         iceServers: [
