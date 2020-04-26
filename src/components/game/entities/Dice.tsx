@@ -2,6 +2,7 @@ import { easeBounceOut, easeQuadOut, easeLinear } from "d3-ease";
 import { observer } from "mobx-react";
 import React, { useMemo, useState } from "react";
 import { useSpring } from "react-spring/three";
+import { Dom } from "react-three-fiber";
 import {
   Color,
   Quaternion,
@@ -10,6 +11,7 @@ import {
   CylinderBufferGeometry,
   Vector3
 } from "three";
+
 import Dice, { DiceType } from "../../../models/game/Dice";
 import { useStore } from "../../../stores/RootStore";
 import { ContextMenuItem } from "../../../types";
@@ -31,7 +33,8 @@ const size = 0.1;
 enum RollPhase {
   None,
   Rising,
-  Falling
+  Falling,
+  ShowValue
 }
 
 export default observer((props: DiceProps) => {
@@ -68,6 +71,8 @@ export default observer((props: DiceProps) => {
     setRollPhase(RollPhase.Falling);
     await delay(750);
     dice.roll();
+    setRollPhase(RollPhase.ShowValue);
+    await delay(3000);
     setRollPhase(RollPhase.None);
   };
 
@@ -136,6 +141,26 @@ export default observer((props: DiceProps) => {
       positionOffset={animation.position}
       doubleClickAction={handleRoll}
       hoverMessage={diceData.sideLabels[value]}
-    />
+    >
+      {rollPhase === RollPhase.ShowValue && (
+        <Dom
+          position={[0, 0.5, 0]}
+          center
+          style={{ pointerEvents: "none", userSelect: "none" }}
+          onContextMenu={() => false}
+        >
+          <h1
+            style={{
+              pointerEvents: "none",
+              userSelect: "none",
+              textShadow: "0px 0px 4px black"
+            }}
+            onContextMenu={() => false}
+          >
+            {diceData.sideLabels[value]}
+          </h1>
+        </Dom>
+      )}
+    </Entity>
   );
 });

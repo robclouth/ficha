@@ -339,7 +339,11 @@ export default observer((props: EntityProps) => {
               onContextMenu={() => false}
             >
               <h3
-                style={{ pointerEvents: "none", userSelect: "none" }}
+                style={{
+                  pointerEvents: "none",
+                  userSelect: "none",
+                  textShadow: "0px 0px 4px black"
+                }}
                 onContextMenu={() => false}
               >
                 {hoverMessage}

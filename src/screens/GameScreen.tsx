@@ -8,47 +8,40 @@ import {
   makeStyles,
   Menu,
   MenuItem,
-  TextField,
-  Typography,
-  useTheme,
-  ListItemIcon
+  useTheme
 } from "@material-ui/core";
+import DeleteIcon from "@material-ui/icons/Delete";
+import EditIcon from "@material-ui/icons/Edit";
 import MoreVertIcon from "@material-ui/icons/MoreVert";
-import UndoIcon from "@material-ui/icons/Undo";
 import RedoIcon from "@material-ui/icons/Redo";
 import HostIcon from "@material-ui/icons/Router";
-import EditIcon from "@material-ui/icons/Edit";
+import UndoIcon from "@material-ui/icons/Undo";
 import VideocamIcon from "@material-ui/icons/Videocam";
-import DeleteIcon from "@material-ui/icons/Delete";
 import { autorun } from "mobx";
-import { getSnapshot } from "mobx-keystone";
 import { observer } from "mobx-react";
 import { useSnackbar } from "notistack";
-import { useParams, useHistory } from "react-router";
-// @ts-ignore
-import EventListener from "react-event-listener";
-// @ts-ignore
-import randomColor from "random-material-color";
 import React, { useCallback, useEffect, useState } from "react";
 //@ts-ignore
 import { CopyToClipboard } from "react-copy-to-clipboard";
-import { PointerEvent } from "react-three-fiber";
+// @ts-ignore
+import EventListener from "react-event-listener";
+import { useHistory, useParams } from "react-router";
 import GameCanvas from "../components/game/GameCanvas";
-import EditEntityModal from "../components/modals/EditEntityModal";
-import JoinGameModal from "../components/modals/JoinGameModal";
-import ImportGameModal from "../components/modals/ImportGameModal";
-import { useStore } from "../stores/RootStore";
-import { ContextMenuItem } from "../types";
-import Entity from "../models/game/Entity";
 import AboutGameModal from "../components/modals/AboutGameModal";
-import EntityLibraryModal from "../components/modals/EntityLibraryModal";
-import RulesModal from "../components/modals/RulesModal";
-import HandArea from "../models/game/HandArea";
-import NestedMenuItem from "../components/NestedMenuItem";
+import EditEntityModal from "../components/modals/EditEntityModal";
 import EditSetupModal from "../components/modals/EditSetupModal";
-import HelpModal from "../components/modals/HelpModal";
+import EntityLibraryModal from "../components/modals/EntityLibraryModal";
 import GameLibraryModal from "../components/modals/GameLibraryModal";
+import HelpModal from "../components/modals/HelpModal";
+import ImportGameModal from "../components/modals/ImportGameModal";
+import JoinGameModal from "../components/modals/JoinGameModal";
+import RulesModal from "../components/modals/RulesModal";
+import NestedMenuItem from "../components/NestedMenuItem";
+import Entity from "../models/game/Entity";
+import HandArea from "../models/game/HandArea";
+import { useStore } from "../stores/RootStore";
 import { Modals } from "../stores/UIState";
+import { ContextMenuItem } from "../types";
 
 const useStyles = makeStyles(theme => ({
   root: {
