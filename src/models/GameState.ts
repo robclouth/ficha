@@ -40,6 +40,8 @@ export const gameStateRef = rootRef<GameState>("gameStateRef", {
 export default class GameState extends Model({
   gameId: prop(nanoid(), { setterAction: true }),
   name: prop("Untitled", { setterAction: true }),
+  author: prop("", { setterAction: true }),
+  description: prop("", { setterAction: true }),
   imageUrl: prop("", { setterAction: true }),
   recommendedPlayers: prop<[number, number]>(() => [1, 8], {
     setterAction: true

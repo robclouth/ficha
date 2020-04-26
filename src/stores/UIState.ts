@@ -30,6 +30,18 @@ export type ContextMenuItem = {
   action?: () => void;
 };
 
+export enum Modals {
+  EditEntity,
+  EntityLibrary,
+  AboutGame,
+  ImportGame,
+  JoinGame,
+  Rules,
+  EditSetup,
+  GameLibrary,
+  Help
+}
+
 export type ContextMenu = {
   positionScreen: [number, number];
   positionGroundPlane: [number, number];
@@ -63,6 +75,8 @@ export default class UIState extends Model({}) {
   @observable cameraControls!: CameraControls;
   @observable activeView?: View | "hand";
   undoManager?: UndoManager;
+
+  @observable openModal?: Modals | undefined;
 
   @computed get gameStore() {
     return getRootStore<RootStore>(this)?.gameStore;
@@ -268,6 +282,11 @@ export default class UIState extends Model({}) {
       this.cameraControls.setPosition(position.x, position.y, position.z);
       this.cameraControls.setTarget(target.x, target.y, target.z);
     }
+  }
+
+  @modelAction
+  setOpenModal(modal?: Modals) {
+    this.openModal = modal;
   }
 
   @modelAction
