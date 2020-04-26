@@ -83,6 +83,11 @@ const GameTile = observer(({ game, onClick, inProgress }: GameTileProps) => {
     popupState.close();
   };
 
+  const handleAddToLibraryClick = () => {
+    gameLibrary.addGameToLibrary(game);
+    popupState.close();
+  };
+
   const subtitle = inProgress ? (
     <span>{new Date(dateModified).toDateString()}</span>
   ) : (
@@ -128,9 +133,7 @@ const GameTile = observer(({ game, onClick, inProgress }: GameTileProps) => {
       />
       <Menu {...bindMenu(popupState)}>
         {inProgress && (
-          <MenuItem onClick={() => gameLibrary.addGameToLibrary(game)}>
-            Add to library
-          </MenuItem>
+          <MenuItem onClick={handleAddToLibraryClick}>Add to library</MenuItem>
         )}
         <MenuItem onClick={handleRemoveClick}>Remove</MenuItem>
       </Menu>
@@ -302,7 +305,7 @@ export default observer(
               <Tab label="Library" />
             </Tabs>
             {tabIndex === 1 && (
-              <Box margin={1} display="flex" justifyContent="center">
+              <Box margin={1} display="flex" justifyContent="space-around">
                 <AddFromUrl />
               </Box>
             )}
