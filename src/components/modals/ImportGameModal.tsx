@@ -29,7 +29,7 @@ type DialogProps = {
 export default observer(({ open, handleClose }: DialogProps) => {
   const classes = useStyles();
 
-  const { gameStore } = useStore();
+  const { gameLibrary } = useStore();
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -45,7 +45,7 @@ export default observer(({ open, handleClose }: DialogProps) => {
 
     try {
       setLoading(true);
-      await gameStore.loadGameFromUrl(url);
+      await gameLibrary.loadGameFromUrl(url);
       setLoading(false);
       handleClose();
     } catch (err) {

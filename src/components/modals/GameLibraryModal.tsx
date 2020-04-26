@@ -11,7 +11,14 @@ import {
   ButtonBase,
   Menu,
   MenuItem,
-  Typography
+  Typography,
+  Chip,
+  Button,
+  Divider,
+  Popover,
+  FormControl,
+  TextField,
+  LinearProgress
 } from "@material-ui/core";
 import MoreVertIcon from "@material-ui/icons/MoreVert";
 import {
@@ -19,6 +26,8 @@ import {
   bindTrigger,
   bindMenu
 } from "material-ui-popup-state/hooks";
+// @ts-ignore
+import isUrl from "is-url";
 //@ts-ignore
 import AutoSizer from "react-virtualized-auto-sizer";
 //@ts-ignore
@@ -27,7 +36,7 @@ import { FixedSizeList, ListChildComponentProps } from "react-window";
 import randomColor from "random-material-color";
 import { chunk } from "lodash";
 import { observer } from "mobx-react";
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useRef } from "react";
 import GameState from "../../models/GameState";
 import { useStore } from "../../stores/RootStore";
 import Modal from "./Modal";
@@ -58,7 +67,7 @@ export type GameTileProps = {
 };
 
 const GameTile = observer(({ game, onClick, inProgress }: GameTileProps) => {
-  const { gameStore } = useStore();
+  const { gameStore, gameLibrary } = useStore();
   const { name, gameId, imageUrl, recommendedPlayers, dateModified } = game;
   const classes = useStyles();
   const theme = useTheme();
@@ -69,8 +78,8 @@ const GameTile = observer(({ game, onClick, inProgress }: GameTileProps) => {
   const popupState = usePopupState({ variant: "popover", popupId: "gameMenu" });
 
   const handleRemoveClick = () => {
-    if (inProgress) gameStore.stopGame(game);
-    else gameStore.removeGameFromLibrary(game);
+    if (inProgress) gameLibrary.stopGame(game);
+    else gameLibrary.removeGameFromLibrary(game);
     popupState.close();
   };
 
@@ -96,6 +105,17 @@ const GameTile = observer(({ game, onClick, inProgress }: GameTileProps) => {
         ) : (
           <div dangerouslySetInnerHTML={{ __html: svg }}></div>
         )}
+        {gameStore.currentGame?.maybeCurrent === game && (
+          <Chip
+            label="Playing"
+            variant="outlined"
+            style={{
+              position: "absolute",
+              top: theme.spacing(1),
+              left: theme.spacing(1)
+            }}
+          />
+        )}
       </ButtonBase>
       <GridListTileBar
         title={name}
@@ -107,6 +127,11 @@ const GameTile = observer(({ game, onClick, inProgress }: GameTileProps) => {
         }
       />
       <Menu {...bindMenu(popupState)}>
+        {inProgress && (
+          <MenuItem onClick={() => gameLibrary.addGameToLibrary(game)}>
+            Add to library
+          </MenuItem>
+        )}
         <MenuItem onClick={handleRemoveClick}>Remove</MenuItem>
       </Menu>
     </GridListTile>
@@ -124,6 +149,7 @@ const Row = observer(({ games, onClick, inProgress }: RowProps) => {
     <Box marginBottom={1} flex={1} display="flex">
       {games.map((game, i) => (
         <div
+          key={i}
           style={{
             marginRight: i === games.length - 1 ? 0 : 10
           }}
@@ -135,6 +161,77 @@ const Row = observer(({ games, onClick, inProgress }: RowProps) => {
   );
 });
 
+const AddFromUrl = observer(() => {
+  const { gameLibrary } = useStore();
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const urlFieldRef = useRef<HTMLInputElement>();
+  const popupState = usePopupState({
+    variant: "popover",
+    popupId: "addFromUrl"
+  });
+
+  const handleLoad = async () => {
+    const url = urlFieldRef.current!.value;
+
+    if (!isUrl(url)) {
+      setError("Invalid URL");
+      return;
+    }
+
+    try {
+      setLoading(true);
+      await gameLibrary.loadGameFromUrl(url);
+      setLoading(false);
+      popupState.close();
+    } catch (err) {
+      setError(err.message);
+      setLoading(false);
+    }
+  };
+
+  return (
+    <>
+      <Button {...bindTrigger(popupState)}>Add from URL</Button>
+      <Popover
+        {...bindMenu(popupState)}
+        anchorOrigin={{
+          vertical: "bottom",
+          horizontal: "center"
+        }}
+        transformOrigin={{
+          vertical: "top",
+          horizontal: "center"
+        }}
+      >
+        <Box width={400} padding={1} display="flex" alignItems="flex-start">
+          <TextField
+            style={{ flex: 1 }}
+            inputRef={urlFieldRef}
+            autoFocus
+            margin="dense"
+            id="url"
+            placeholder="URL"
+            type="url"
+            error={error.length > 0}
+            helperText={error}
+          />
+          <Button
+            variant="outlined"
+            onClick={handleLoad}
+            color="primary"
+            style={{ marginLeft: 10 }}
+          >
+            {loading ? "Loading" : "Load"}
+          </Button>
+        </Box>
+        {loading && <LinearProgress />}
+      </Popover>
+    </>
+  );
+});
+
 export type ModalProps = {
   open: boolean;
   positionGroundPlane?: [number, number];
@@ -143,48 +240,38 @@ export type ModalProps = {
 
 export default observer(
   ({ open, handleClose, positionGroundPlane }: ModalProps) => {
-    const { gameStore, uiState } = useStore();
-    const { inProgressGames, gameLibrary } = gameStore;
+    const { gameStore, gameLibrary } = useStore();
+    const { inProgressGamesOrderedByDate, library } = gameLibrary;
     const { gameState } = gameStore;
     const classes = useStyles();
     const theme = useTheme();
 
     const [tabIndex, setTabIndex] = useState(0);
 
-    const rows = chunk(gameLibrary, 3);
+    const rows = chunk(
+      tabIndex === 0 ? inProgressGamesOrderedByDate : library,
+      3
+    );
 
     const handleGameClick = (game: GameState) => {
-      gameStore.newGame(game);
+      gameLibrary.newGame(game);
       handleClose();
     };
 
     const handleInProgressClick = (game: GameState) => {
-      gameStore.playGame(game);
+      gameLibrary.resumeGame(game);
       handleClose();
-    };
-
-    const renderInProgressGame = ({
-      data,
-      index,
-      style
-    }: ListChildComponentProps) => {
-      const game = inProgressGames[index];
-      return (
-        <div style={style}>
-          <GameTile
-            game={game}
-            onClick={handleInProgressClick}
-            inProgress={true}
-          />
-        </div>
-      );
     };
 
     const renderRow = ({ data, index, style }: ListChildComponentProps) => {
       const games = rows[index];
       return (
-        <div style={style}>
-          <Row games={games} onClick={handleGameClick} inProgress={false} />
+        <div style={style} key={index}>
+          <Row
+            games={games}
+            onClick={tabIndex === 0 ? handleInProgressClick : handleGameClick}
+            inProgress={tabIndex === 0}
+          />
         </div>
       );
     };
@@ -193,62 +280,52 @@ export default observer(
       <Modal
         open={open}
         handleClose={handleClose}
+        noPadding
         content={
           <Box
-            width={550}
+            width={580}
             height={600}
             display="flex"
             flexDirection="column"
             alignItems="stretch"
           >
-            {inProgressGames.length > 0 && (
-              <>
-                <Typography variant="h6" gutterBottom>
-                  In Progress
-                </Typography>
-                <div>
-                  <AutoSizer disableHeight>
-                    {(size: any) => (
-                      <FixedSizeList
-                        style={{
-                          listStyleType: "none",
-                          overflow: "overlay"
-                        }}
-                        layout="horizontal"
-                        height={tileSize}
-                        itemCount={inProgressGames.length}
-                        itemSize={tileSize + 10}
-                        width={size.width}
-                      >
-                        {renderInProgressGame}
-                      </FixedSizeList>
-                    )}
-                  </AutoSizer>
-                </div>
-              </>
+            <Tabs
+              value={tabIndex}
+              onChange={(e, index) => setTabIndex(index)}
+              indicatorColor="primary"
+              textColor="primary"
+              variant="scrollable"
+              scrollButtons="auto"
+              style={{ marginBottom: theme.spacing(1) }}
+            >
+              <Tab label="In Progress" />
+              <Tab label="Library" />
+            </Tabs>
+            {tabIndex === 1 && (
+              <Box margin={1} display="flex" justifyContent="center">
+                <AddFromUrl />
+              </Box>
             )}
-            <Typography variant="h6" gutterBottom>
-              Library
-            </Typography>
-
-            <div style={{ flex: 1 }}>
-              <AutoSizer>
-                {(size: any) => (
-                  <FixedSizeList
-                    style={{
-                      listStyleType: "none",
-                      overflow: "overlay"
-                    }}
-                    height={size.height}
-                    itemCount={rows.length}
-                    itemSize={tileSize + 10}
-                    width={size.width}
-                  >
-                    {renderRow}
-                  </FixedSizeList>
-                )}
-              </AutoSizer>
-            </div>
+            {
+              <Box flex={1} padding={2}>
+                <AutoSizer disableWidth>
+                  {(size: any) => (
+                    <FixedSizeList
+                      style={{
+                        listStyleType: "none",
+                        overflow: "overlay"
+                      }}
+                      height={size.height}
+                      itemCount={rows.length}
+                      itemSize={tileSize + 10}
+                      width={560}
+                    >
+                      {renderRow}
+                    </FixedSizeList>
+                  )}
+                </AutoSizer>
+              </Box>
+            }
           </Box>
         }
       />

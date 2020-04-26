@@ -251,7 +251,7 @@ export default class UIState extends Model({}) {
     this.activeView = view;
 
     if (view === "hand") {
-      const handArea = this.gameStore?.player.handArea;
+      const handArea = this.gameStore?.thisPlayer.handArea;
       const boundingBox = handArea?.boundingBox;
       if (boundingBox) {
         this.cameraControls.rotateTo(handArea!.angle, -Math.PI / 2, false);
@@ -284,7 +284,7 @@ export default class UIState extends Model({}) {
       case "9":
         const viewIndex = parseInt(e.key) - 1;
         let startIndex = 0;
-        if (this.gameStore?.player.handArea) {
+        if (this.gameStore?.thisPlayer.handArea) {
           startIndex = 1;
           if (viewIndex === 0) {
             this.activateView("hand");

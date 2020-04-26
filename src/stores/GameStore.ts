@@ -20,13 +20,15 @@ import {
   _async,
   _await,
   getRootStore,
-  SnapshotOutOfModel
+  SnapshotOutOfModel,
+  Ref,
+  onSnapshot
 } from "mobx-keystone";
 import { nanoid } from "nanoid";
 import gameListUrls from "../constants/gameList";
 import Peer, { DataConnection, util } from "peerjs";
 import GameServer, { StateData, StateDataType } from "../models/GameServer";
-import GameState from "../models/GameState";
+import GameState, { gameStateRef } from "../models/GameState";
 import Player from "../models/Player";
 import { generateName } from "../utils/NameGenerator";
 import { createPeer, loadJson } from "../utils/Utils";
@@ -45,9 +47,10 @@ export default class GameStore extends Model({
   gameState: prop<GameState>(() => new GameState({}), {
     setterAction: true
   }),
-  gameLibrary: prop<GameState[]>(() => [], { setterAction: true }),
-  inProgressGames: prop<GameState[]>(() => [], { setterAction: true })
-  // currentGame: prop<Ref<GameState>>(0, { setterAction: true })
+
+  currentGame: prop<Ref<GameState> | undefined>(undefined, {
+    setterAction: true
+  })
 }) {
   userId?: string;
   userName?: string;
@@ -63,8 +66,6 @@ export default class GameStore extends Model({
 
   @modelFlow
   init = _async(function*(this: GameStore) {
-    // yield* _await(localforage.clear());
-
     this.userId = yield* _await(localforage.getItem<string>("userId"));
     if (!this.userId) {
       this.userId = nanoid();
@@ -76,78 +77,35 @@ export default class GameStore extends Model({
       yield* _await(localforage.setItem("userName", this.userName));
     }
 
-    const gameStoreJson = yield* _await(
-      localforage.getItem<SnapshotOutOf<GameStore>>("gameStore")
-    );
-    if (gameStoreJson) {
-      applySnapshot(this, { ...gameStoreJson, $modelId: this.$modelId });
+    const hasHydrated = yield* _await(persist(this, "gameStore"));
 
-      this.gameState.players.forEach(player => {
-        if (player.userId !== this.userId) player.isConnected = false;
-      });
-
-      this.uiState.setupUndoManager(this.gameState);
-    } else {
-      this.gameState = new GameState({});
-
-      this.newGame();
-
-      this.gameState.addPlayer(
-        new Player({
-          userId: this.userId!,
-          name: this.userName!
-        })
-      );
+    if (!hasHydrated) {
+      this.gameLibrary.newGame();
     }
 
-    yield* _await(persist(this.inProgressGames, "inProgressGames", () => []));
-    yield* _await(persist(this.gameLibrary, "gameLibrary", () => []));
+    // disconnect all saved players
+    this.gameState.players.forEach(player => {
+      if (player.userId !== this.userId) player.isConnected = false;
+    });
 
-    // save state to local storage
-    reaction(
-      () => getSnapshot(this),
-      snapshot => {
-        localforage.setItem("gameStore", snapshot);
-      },
-      { delay: 1000 }
-    );
-
-    this.loadGames();
+    this.uiState.setupUndoManager(this.gameState);
 
     this.isInitialised = true;
   });
 
-  async loadGames() {
-    let gameJsons;
-    if (process.env.NODE_ENV === "development") {
-      gameJsons = [require("../testGames/Azulito/game.json")];
-    } else {
-      gameJsons = await Promise.all(
-        gameListUrls.map(
-          gameUrl => loadJson(gameUrl) as Promise<SnapshotOutOfModel<GameState>>
-        )
-      );
-    }
-    gameJsons.forEach(gameJson => {
-      const existingGame = this.gameLibrary.find(
-        game => game.gameId === gameJson.gameId
-      );
-      if (existingGame) existingGame.setFromJson(gameJson);
-      else {
-        this.addGameFromJson(gameJson);
-      }
-    });
-  }
-
   @computed get uiState() {
     return getRootStore<RootStore>(this)?.uiState!;
+  }
+
+  @computed get gameLibrary() {
+    return getRootStore<RootStore>(this)?.gameLibrary!;
   }
 
   @computed get isHost(): boolean {
     return this.gameServer !== null;
   }
 
-  @computed get player(): Player {
+  @computed get thisPlayer(): Player {
     return this.gameState.players.find(p => p.userId === this.userId)!;
   }
 
@@ -162,17 +120,7 @@ export default class GameStore extends Model({
     this.peer = yield* _await(createPeer());
     this.hostPeerId = this.peer!.id;
 
-    let thisPlayer = this.gameState.players.find(p => p.userId === this.userId);
-
-    if (!thisPlayer) {
-      thisPlayer = new Player({
-        userId: this.userId!,
-        name: this.userName!
-      });
-      this.gameState.addPlayer(thisPlayer);
-    }
-
-    thisPlayer.peerId = this.peer!.id;
+    this.thisPlayer.peerId = this.peer!.id;
 
     this.gameServer = new GameServer({});
 
@@ -206,7 +154,7 @@ export default class GameStore extends Model({
   handleHostDisconnect = _async(function*(this: GameStore) {
     // set all other players to disconnected
     this.gameState.players.forEach(p => {
-      if (p !== this.player) p.isConnected = false;
+      if (p !== this.thisPlayer) p.isConnected = false;
     });
 
     // remove entity control of all players
@@ -280,63 +228,33 @@ export default class GameStore extends Model({
   }
 
   @modelAction
-  addGameFromJson(gameJson: SnapshotOutOfModel<GameState>) {
-    this.gameLibrary.push(fromSnapshot<GameState>(gameJson));
-  }
-
-  @modelAction
-  newGame(game?: GameState) {
-    if (game) {
-      game = clone(game);
-    } else {
-      game = new GameState({});
-    }
-    this.inProgressGames.push(game);
-
-    this.playGame(game);
-  }
-
-  @modelAction
-  removeGameFromLibrary(game: GameState) {
-    this.gameLibrary.splice(this.gameLibrary.indexOf(game), 1);
-  }
-
-  @modelAction
-  stopGame(game: GameState) {
-    this.inProgressGames.splice(this.inProgressGames.indexOf(game), 1);
-  }
-
-  @modelFlow
-  loadGameFromUrl = _async(function*(this: GameStore, url: string) {
-    const response = yield* _await(
-      fetch(`${serverRoot}:9001/${url}`, {
-        mode: "cors"
-      })
-    );
-    const gameJson = yield* _await(response.json());
-
-    const gameState = fromSnapshot<GameState>(gameJson);
-    this.gameState.name = gameState.name;
-    this.gameState.assetsUrl = gameState.assetsUrl;
-    this.gameState.setups = clone(gameState.setups);
-    if (gameState.activeSetup)
-      this.gameState.activeSetup = clone(gameState.activeSetup);
-    this.gameState.entities = clone(gameState.entities);
-  });
-
-  async loadGameByName(name: string) {
-    await this.loadGameFromUrl(gameRepoUrl + "/" + name);
-  }
-
-  @modelAction
   playGame(game: GameState) {
-    const newGame = clone(game);
-    newGame.players = clone(this.gameState.players);
-    newGame.chatHistory = clone(this.gameState.chatHistory);
+    const previousGame = this.currentGame?.maybeCurrent;
+    if (previousGame) {
+      // update the previous game in the game library
+      applySnapshot(previousGame, {
+        ...getSnapshot<GameState>(this.gameState),
+        $modelId: previousGame.$modelId
+      });
+    }
+
+    this.currentGame = gameStateRef(game);
+
     applySnapshot(this.gameState, {
-      ...getSnapshot(newGame),
+      ...getSnapshot(game),
       $modelId: this.gameState.$modelId
     });
+
+    // add a player for this user
+    if (!this.thisPlayer) {
+      this.gameState.addPlayer(
+        new Player({
+          userId: this.userId!,
+          name: this.userName!
+        })
+      );
+    }
+
     this.uiState.setupUndoManager(this.gameState);
   }
 

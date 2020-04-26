@@ -1,16 +1,14 @@
-import { _await, getSnapshot } from "mobx-keystone";
+import { _await, getSnapshot, applySnapshot } from "mobx-keystone";
 import localforage from "localforage";
 import { reaction } from "mobx";
 
-export default async function persist(
-  target: any,
-  propertyKey: string,
-  factory: () => any
-) {
-  const targetJson = await localforage.getItem<string>(propertyKey);
+export default async function persist(target: any, propertyKey: string) {
+  const targetJson = await localforage.getItem<any>(propertyKey);
+
   if (!targetJson) {
-    target = factory();
-    await localforage.setItem(propertyKey, target);
+    await localforage.setItem(propertyKey, getSnapshot(target));
+  } else {
+    applySnapshot(target, { ...targetJson, $modelId: target.$modelId });
   }
 
   reaction(
@@ -20,4 +18,6 @@ export default async function persist(
     },
     { delay: 1000 }
   );
+
+  return !!targetJson;
 }

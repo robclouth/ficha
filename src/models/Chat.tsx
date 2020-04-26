@@ -6,7 +6,7 @@ import { useStore } from "../stores/RootStore";
 export default observer(() => {
   const [message, setMessage] = React.useState("");
   const { gameStore } = useStore();
-  const { player, gameState } = gameStore;
+  const { thisPlayer: player, gameState } = gameStore;
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.which === 13) {

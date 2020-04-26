@@ -281,7 +281,7 @@ export default observer((props: EntityProps) => {
   }, [JSON.stringify(materialParams), faded]);
 
   const inOtherPlayersArea =
-    handArea && (handArea as HandArea).player !== gameStore.player;
+    handArea && (handArea as HandArea).player !== gameStore.thisPlayer;
   const visible = !inOtherPlayersArea;
 
   const events = !blockInteraction

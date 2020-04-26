@@ -26,7 +26,7 @@ export default observer((props: HandAreaProps) => {
     contextMenuItems.push({
       label: "Claim",
       type: "action",
-      action: () => handArea.claim(gameStore.player)
+      action: () => handArea.claim(gameStore.thisPlayer)
     });
 
   contextMenuItems.push({
@@ -49,7 +49,7 @@ export default observer((props: HandAreaProps) => {
       }}
       contextMenuItems={contextMenuItems}
       hoverMessage={player?.name || undefined}
-      blockInteraction={claimed && player !== gameStore.player}
+      blockInteraction={claimed && player !== gameStore.thisPlayer}
       castShadows={false}
     />
   );

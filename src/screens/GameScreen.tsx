@@ -123,10 +123,10 @@ const PlayersList = observer(() => {
               </Avatar>
             }
             label={`${player.name} ${
-              gameStore.player === player ? " (You)" : ""
+              gameStore.thisPlayer === player ? " (You)" : ""
             }`}
             deleteIcon={<EditIcon fontSize="small" />}
-            onDelete={gameStore.player === player ? () => {} : undefined}
+            onDelete={gameStore.thisPlayer === player ? () => {} : undefined}
           />
         );
       })}
@@ -141,7 +141,7 @@ const ViewList = observer(() => {
 
   const classes = useStyles();
 
-  const handArea = gameStore.player.handArea;
+  const handArea = gameStore.thisPlayer.handArea;
 
   return (
     <Box
@@ -314,19 +314,9 @@ export default observer(() => {
 
   const snackbar = useSnackbar();
 
-  async function loadGame(gameName: string) {
-    await gameStore.loadGameByName(gameName);
-    history.push("/");
-  }
-
-  useEffect(() => {
-    if (game) {
-      loadGame(game);
-    }
-  }, [game]);
-
   useEffect(() => {
     if (!game) gameStore.createGame();
+    else gameStore.joinGame(game);
     autorun(() => {
       uiState.snackbarMessage &&
         snackbar.enqueueSnackbar(
@@ -440,7 +430,7 @@ export default observer(() => {
         onClose={handleTopMenuClose}
       >
         <MenuItem
-          onClick={() => handleTopMenuSelect(() => gameStore.newGame())}
+        // onClick={() => handleTopMenuSelect(() => gameStore.newGame())}
         >
           New game
         </MenuItem>
