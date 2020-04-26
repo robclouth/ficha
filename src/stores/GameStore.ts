@@ -1,6 +1,6 @@
 import localforage from "localforage";
 import { omit } from "lodash";
-import { computed, observable, reaction } from "mobx";
+import { computed, observable, reaction, autorun } from "mobx";
 import {
   applyPatches,
   applySnapshot,
@@ -19,15 +19,17 @@ import {
   SnapshotOutOf,
   _async,
   _await,
-  getRootStore
+  getRootStore,
+  SnapshotOutOfModel
 } from "mobx-keystone";
 import { nanoid } from "nanoid";
+import gameListUrls from "../constants/gameList";
 import Peer, { DataConnection, util } from "peerjs";
 import GameServer, { StateData, StateDataType } from "../models/GameServer";
 import GameState from "../models/GameState";
 import Player from "../models/Player";
 import { generateName } from "../utils/NameGenerator";
-import { createPeer } from "../utils/Utils";
+import { createPeer, loadJson } from "../utils/Utils";
 import {
   undoMiddleware,
   UndoManager,
@@ -35,14 +37,17 @@ import {
 } from "../utils/undoMiddleware";
 import { gameRepoUrl, serverRoot } from "../constants/constants";
 import RootStore from "./RootStore";
-import * as serviceWorker from "../serviceWorker";
+import persist from "../utils/persistent";
 
 @model("GameStore")
 export default class GameStore extends Model({
   gameServer: prop<GameServer | null>(null, { setterAction: true }),
   gameState: prop<GameState>(() => new GameState({}), {
     setterAction: true
-  })
+  }),
+  gameLibrary: prop<GameState[]>(() => [], { setterAction: true }),
+  inProgressGames: prop<GameState[]>(() => [], { setterAction: true })
+  // currentGame: prop<Ref<GameState>>(0, { setterAction: true })
 }) {
   userId?: string;
   userName?: string;
@@ -53,6 +58,8 @@ export default class GameStore extends Model({
   @observable serverConnection?: DataConnection;
 
   localStatePatchDisposer: OnPatchesDisposer = () => {};
+
+  onInit() {}
 
   @modelFlow
   init = _async(function*(this: GameStore) {
@@ -93,6 +100,10 @@ export default class GameStore extends Model({
       );
     }
 
+    yield* _await(persist(this.inProgressGames, "inProgressGames", () => []));
+    yield* _await(persist(this.gameLibrary, "gameLibrary", () => []));
+
+    // save state to local storage
     reaction(
       () => getSnapshot(this),
       snapshot => {
@@ -101,8 +112,32 @@ export default class GameStore extends Model({
       { delay: 1000 }
     );
 
+    this.loadGames();
+
     this.isInitialised = true;
   });
+
+  async loadGames() {
+    let gameJsons;
+    if (process.env.NODE_ENV === "development") {
+      gameJsons = [require("../testGames/Azulito/game.json")];
+    } else {
+      gameJsons = await Promise.all(
+        gameListUrls.map(
+          gameUrl => loadJson(gameUrl) as Promise<SnapshotOutOfModel<GameState>>
+        )
+      );
+    }
+    gameJsons.forEach(gameJson => {
+      const existingGame = this.gameLibrary.find(
+        game => game.gameId === gameJson.gameId
+      );
+      if (existingGame) existingGame.setFromJson(gameJson);
+      else {
+        this.addGameFromJson(gameJson);
+      }
+    });
+  }
 
   @computed get uiState() {
     return getRootStore<RootStore>(this)?.uiState!;
@@ -245,13 +280,30 @@ export default class GameStore extends Model({
   }
 
   @modelAction
-  newGame() {
-    this.gameState.removeAllEntities();
-    this.gameState.setups = [];
-    this.gameState.rules = [
-      "Write the rules of the game here using [Markdown](https://www.markdownguide.org/basic-syntax/)"
-    ];
-    this.uiState.setupUndoManager(this.gameState);
+  addGameFromJson(gameJson: SnapshotOutOfModel<GameState>) {
+    this.gameLibrary.push(fromSnapshot<GameState>(gameJson));
+  }
+
+  @modelAction
+  newGame(game?: GameState) {
+    if (game) {
+      game = clone(game);
+    } else {
+      game = new GameState({});
+    }
+    this.inProgressGames.push(game);
+
+    this.playGame(game);
+  }
+
+  @modelAction
+  removeGameFromLibrary(game: GameState) {
+    this.gameLibrary.splice(this.gameLibrary.indexOf(game), 1);
+  }
+
+  @modelAction
+  stopGame(game: GameState) {
+    this.inProgressGames.splice(this.inProgressGames.indexOf(game), 1);
   }
 
   @modelFlow
@@ -277,16 +329,23 @@ export default class GameStore extends Model({
   }
 
   @modelAction
+  playGame(game: GameState) {
+    const newGame = clone(game);
+    newGame.players = clone(this.gameState.players);
+    newGame.chatHistory = clone(this.gameState.chatHistory);
+    applySnapshot(this.gameState, {
+      ...getSnapshot(newGame),
+      $modelId: this.gameState.$modelId
+    });
+    this.uiState.setupUndoManager(this.gameState);
+  }
+
+  @modelAction
   exportGame() {
     const gameState = clone(this.gameState);
     const gameStateJson = getSnapshot(gameState);
 
-    const cleanedJson = omit(gameStateJson, [
-      "players",
-      "hostPeerId",
-      "chatHistory",
-      "players"
-    ]);
+    const cleanedJson = omit(gameStateJson, ["players", "chatHistory"]);
 
     const blob = new Blob([JSON.stringify(cleanedJson)], {
       type: "application/json"

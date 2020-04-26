@@ -2,6 +2,7 @@ import { customAlphabet } from "nanoid";
 import Peer from "peerjs";
 //@ts-ignore
 import freeice from "freeice";
+import { proxyUrl } from "../constants/constants";
 
 const nanoid = customAlphabet(
   "1234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ",
@@ -46,4 +47,12 @@ export function createPeer() {
       reject(err);
     });
   });
+}
+
+export async function loadJson(url: string) {
+  const response = await fetch(`${proxyUrl}/${url}`, {
+    mode: "cors"
+  });
+
+  return await response.json();
 }

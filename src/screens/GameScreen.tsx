@@ -17,6 +17,7 @@ import MoreVertIcon from "@material-ui/icons/MoreVert";
 import UndoIcon from "@material-ui/icons/Undo";
 import RedoIcon from "@material-ui/icons/Redo";
 import HostIcon from "@material-ui/icons/Router";
+import EditIcon from "@material-ui/icons/Edit";
 import VideocamIcon from "@material-ui/icons/Videocam";
 import DeleteIcon from "@material-ui/icons/Delete";
 import { autorun } from "mobx";
@@ -46,6 +47,7 @@ import HandArea from "../models/game/HandArea";
 import NestedMenuItem from "../components/NestedMenuItem";
 import EditSetupModal from "../components/modals/EditSetupModal";
 import HelpModal from "../components/modals/HelpModal";
+import GameLibraryModal from "../components/modals/GameLibraryModal";
 
 const useStyles = makeStyles(theme => ({
   root: {
@@ -123,6 +125,8 @@ const PlayersList = observer(() => {
             label={`${player.name} ${
               gameStore.player === player ? " (You)" : ""
             }`}
+            deleteIcon={<EditIcon fontSize="small" />}
+            onDelete={gameStore.player === player ? () => {} : undefined}
           />
         );
       })}
@@ -216,6 +220,7 @@ enum Modals {
   JoinGame,
   Rules,
   EditSetup,
+  GameLibrary,
   Help
 }
 
@@ -233,7 +238,9 @@ export default observer(() => {
     null
   );
 
-  const [openModal, setOpenModal] = useState<Modals | undefined>(undefined);
+  const [openModal, setOpenModal] = useState<Modals | undefined>(
+    Modals.GameLibrary
+  );
 
   const handleTopMenuClick = (e: React.MouseEvent<HTMLElement>) => {
     setTopMenuAnchorEl(e.currentTarget);
@@ -342,6 +349,36 @@ export default observer(() => {
       <ViewList />
       <Box
         position="absolute"
+        top={theme.spacing(1)}
+        left={0}
+        right={0}
+        display="flex"
+        justifyContent="center"
+        style={{ pointerEvents: "none" }}
+      >
+        <Chip
+          style={{ pointerEvents: "auto" }}
+          onClick={() => setOpenModal(Modals.GameSettings)}
+          clickable
+          label={"Setups"}
+        />
+        <Chip
+          style={{ pointerEvents: "auto" }}
+          onClick={() => setOpenModal(Modals.GameSettings)}
+          clickable
+          label={gameState.name}
+          deleteIcon={<EditIcon fontSize="small" />}
+          onDelete={() => setOpenModal(Modals.GameSettings)}
+        />
+        <Chip
+          style={{ pointerEvents: "auto" }}
+          onClick={() => setOpenModal(Modals.GameSettings)}
+          clickable
+          label={"Rules"}
+        />
+      </Box>
+      <Box
+        position="absolute"
         bottom={theme.spacing(1)}
         left={theme.spacing(1)}
         display="flex"
@@ -409,12 +446,19 @@ export default observer(() => {
         </MenuItem>
         <MenuItem
           onClick={() =>
+            handleTopMenuSelect(() => setOpenModal(Modals.GameLibrary))
+          }
+        >
+          Open game
+        </MenuItem>
+        <MenuItem
+          onClick={() =>
             handleTopMenuSelect(() => setOpenModal(Modals.JoinGame))
           }
         >
           Join game
         </MenuItem>
-        <MenuItem
+        {/* <MenuItem
           onClick={() =>
             handleTopMenuSelect(() => setOpenModal(Modals.ImportGame))
           }
@@ -423,7 +467,7 @@ export default observer(() => {
         </MenuItem>
         <MenuItem onClick={() => handleTopMenuSelect(() => handleExportGame())}>
           Export
-        </MenuItem>
+        </MenuItem> */}
         <MenuItem
           onClick={() => handleTopMenuSelect(() => setOpenModal(Modals.Rules))}
         >
@@ -456,13 +500,6 @@ export default observer(() => {
             </MenuItem>
           ))}
         </NestedMenuItem>
-        <MenuItem
-          onClick={() =>
-            handleTopMenuSelect(() => setOpenModal(Modals.GameSettings))
-          }
-        >
-          Game settings
-        </MenuItem>
         <MenuItem
           onClick={() => handleTopMenuSelect(() => setOpenModal(Modals.Help))}
         >
@@ -544,6 +581,12 @@ export default observer(() => {
       {openModal === Modals.Help && (
         <HelpModal
           open={openModal === Modals.Help}
+          handleClose={handleModalClose}
+        />
+      )}
+      {openModal === Modals.GameLibrary && (
+        <GameLibraryModal
+          open={openModal === Modals.GameLibrary}
           handleClose={handleModalClose}
         />
       )}

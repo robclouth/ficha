@@ -9,7 +9,10 @@ import {
   Ref,
   applySnapshot,
   clone,
-  getRootStore
+  getRootStore,
+  SnapshotOutOfModel,
+  rootRef,
+  detach
 } from "mobx-keystone";
 import Entity from "./game/Entity";
 import GameSetup, { gameSetupRef } from "./GameSetup";
@@ -17,6 +20,7 @@ import Player from "./Player";
 import { Vector3 } from "../types";
 import RootStore from "../stores/RootStore";
 import { Vector3 as ThreeVector3 } from "three";
+import { nanoid } from "nanoid";
 
 export type View = {
   name: string;
@@ -26,17 +30,34 @@ export type View = {
   orthographic: boolean;
 };
 
+export const gameStateRef = rootRef<GameState>("gameStateRef", {
+  onResolvedValueChange(ref, newGameState, oldGameState) {
+    if (oldGameState && !newGameState) detach(ref);
+  }
+});
+
 @model("GameState")
 export default class GameState extends Model({
-  name: prop("", { setterAction: true }),
+  gameId: prop(nanoid(), { setterAction: true }),
+  name: prop("Untitled", { setterAction: true }),
+  imageUrl: prop("", { setterAction: true }),
+  recommendedPlayers: prop<[number, number]>(() => [1, 8], {
+    setterAction: true
+  }),
+  dateCreated: prop(Date.now(), { setterAction: true }),
+  dateModified: prop(Date.now(), { setterAction: true }),
   assetsUrl: prop("", { setterAction: true }),
-  hostPeerId: prop("", { setterAction: true }),
   players: prop<Player[]>(() => [], { setterAction: true }),
   chatHistory: prop<string[]>(() => [], { setterAction: true }),
   entities: prop<Entity[]>(() => [], { setterAction: true }),
-  rules: prop<string[]>(() => [], {
-    setterAction: true
-  }),
+  rules: prop<string[]>(
+    () => [
+      "Write the rules of the game here using [Markdown](https://www.markdownguide.org/basic-syntax/)"
+    ],
+    {
+      setterAction: true
+    }
+  ),
   setups: prop<GameSetup[]>(() => [], { setterAction: true }),
   activeSetup: prop<Ref<GameSetup> | undefined>(undefined, {
     setterAction: true
@@ -126,5 +147,10 @@ export default class GameState extends Model({
   @modelAction
   removeView(view: View) {
     this.views.splice(this.views.indexOf(view), 1);
+  }
+
+  @modelAction
+  setFromJson(gameJson: SnapshotOutOfModel<GameState>) {
+    applySnapshot(this, { ...gameJson, $modelId: this.$modelId } as any);
   }
 }

@@ -45,11 +45,6 @@ export default class GameServer extends Model({}) {
   setup = _async(function*(this: GameServer, peer: Peer, gameState: GameState) {
     this.peer = peer;
     this.gameState = gameState;
-    this.gameState.hostPeerId = this.peerId;
-
-    // onPatches(this.gameState, (patches, inversePatches) => {
-    //   this.sendStateToClients(patches);
-    // });
 
     this.peer.on("connection", connection => {
       connection.on("open", () => {

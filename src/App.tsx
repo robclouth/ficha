@@ -2,7 +2,9 @@ import React, { useEffect } from "react";
 import {
   makeStyles,
   ThemeProvider,
-  createMuiTheme
+  createMuiTheme,
+  Theme,
+  withStyles
 } from "@material-ui/core/styles";
 import CssBaseline from "@material-ui/core/CssBaseline";
 import CircularProgress from "@material-ui/core/CircularProgress";
@@ -11,26 +13,31 @@ import { SnackbarProvider } from "notistack";
 import Navigator from "./components/Navigator";
 import { useStore } from "./stores/RootStore";
 import { observer } from "mobx-react";
+import { Box } from "@material-ui/core";
 
-const useStyles = makeStyles(theme => ({
-  root: {
-    height: "100%",
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center"
-  },
+const globalStyles = (theme: Theme) => ({
+  height: "100%",
+  display: "flex",
+  justifyContent: "center",
+  alignItems: "center",
   "@global": {
     "*::-webkit-scrollbar": {
-      // width: 10
+      height: 6,
+      width: 6
     },
     "*::-webkit-scrollbar-track": {
       backgroundColor: "transparent"
     },
     "*::-webkit-scrollbar-thumb": {
-      backgroundColor: "rgba(1,1,1,.1)"
-    }
+      backgroundColor: theme.palette.grey[500],
+      borderRadius: 3
+    },
+    scrollbarWidth: "thin",
+    scrollbarColor: "transparent " + theme.palette.grey[500]
   }
-}));
+});
+
+const StyledBox = withStyles(globalStyles as any)(Box);
 
 const darkTheme = createMuiTheme({
   palette: {
@@ -39,7 +46,6 @@ const darkTheme = createMuiTheme({
 });
 
 export default observer(() => {
-  const classes = useStyles();
   const rootStore = useStore();
   const { uiState } = rootStore;
 
@@ -52,13 +58,13 @@ export default observer(() => {
   }, []);
 
   return (
-    <div className={classes.root}>
+    <StyledBox>
       <SnackbarProvider autoHideDuration={3000} maxSnack={3}>
         <ThemeProvider theme={darkTheme}>
           <CssBaseline />
           {rootStore.isInitialized ? <Navigator /> : <CircularProgress />}
         </ThemeProvider>
       </SnackbarProvider>
-    </div>
+    </StyledBox>
   );
 });
