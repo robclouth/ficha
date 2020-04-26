@@ -113,7 +113,7 @@ export default observer((props: DiceProps) => {
       sideLabels: die.labelIndices.map((i: number) => labels[i]),
       pivot
     };
-  }, [diceType, labels]);
+  }, [diceType, JSON.stringify(labels)]);
 
   const animation = useSpring({
     to: {
@@ -140,27 +140,25 @@ export default observer((props: DiceProps) => {
       rotationOffset={diceData.faceRotations[value]}
       positionOffset={animation.position}
       doubleClickAction={handleRoll}
-      hoverMessage={diceData.sideLabels[value]}
+      // hoverMessage={diceData.sideLabels[value]}
     >
-      {rollPhase === RollPhase.ShowValue && (
-        <Dom
-          position={[0, 0.5, 0]}
-          center
-          style={{ pointerEvents: "none", userSelect: "none" }}
+      <Dom
+        position={[0, 0.5, 0]}
+        center
+        style={{ pointerEvents: "none", userSelect: "none" }}
+        onContextMenu={() => false}
+      >
+        <h1
+          style={{
+            pointerEvents: "none",
+            userSelect: "none",
+            textShadow: "0px 0px 4px black"
+          }}
           onContextMenu={() => false}
         >
-          <h1
-            style={{
-              pointerEvents: "none",
-              userSelect: "none",
-              textShadow: "0px 0px 4px black"
-            }}
-            onContextMenu={() => false}
-          >
-            {diceData.sideLabels[value]}
-          </h1>
-        </Dom>
-      )}
+          {diceData.sideLabels[value]}
+        </h1>
+      </Dom>
     </Entity>
   );
 });
