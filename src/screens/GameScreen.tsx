@@ -207,7 +207,7 @@ const ViewList = observer(() => {
 });
 
 export default observer(() => {
-  const { gameStore, uiState } = useStore();
+  const { gameStore, uiState, gameLibrary } = useStore();
   const {
     contextMenu,
     isContextMenuOpen,
@@ -402,13 +402,16 @@ export default observer(() => {
         onClose={handleTopMenuClose}
       >
         <MenuItem
-        // onClick={() => handleTopMenuSelect(() => gameStore.newGame())}
+          onClick={() => handleTopMenuSelect(() => gameLibrary.newGame())}
         >
           New game
         </MenuItem>
         <MenuItem
           onClick={() =>
-            handleTopMenuSelect(() => uiState.setOpenModal(Modals.GameLibrary))
+            handleTopMenuSelect(() => {
+              uiState.setOpenModal(Modals.GameLibrary);
+              gameStore.updateCurrentGameLibraryEntry();
+            })
           }
         >
           Open game

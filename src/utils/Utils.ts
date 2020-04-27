@@ -22,9 +22,6 @@ export function createPeer() {
       config: {
         iceServers: [
           {
-            urls: "stun:stun.l.google.com:19302"
-          },
-          {
             urls: "stun:llllllll.link:443",
             username: "ficha",
             credential: "R0J3Y88GsjVYvbdI8m6H"

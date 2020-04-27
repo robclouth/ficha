@@ -118,4 +118,10 @@ export default class GameServer extends Model({}) {
       this.ignorePlayerIdInStateUpdate = undefined;
     }
   }
+
+  @action close() {
+    this.gameState.connectedPlayers.forEach(
+      player => player.connection && player.connection.close()
+    );
+  }
 }

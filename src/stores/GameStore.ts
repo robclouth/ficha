@@ -227,16 +227,24 @@ export default class GameStore extends Model({
     this.serverConnection && this.serverConnection.send(stateData);
   }
 
-  @modelAction
-  playGame(game: GameState) {
-    const previousGame = this.currentGame?.maybeCurrent;
-    if (previousGame) {
-      // update the previous game in the game library
-      applySnapshot(previousGame, {
+  updateCurrentGameLibraryEntry() {
+    const game = this.currentGame?.maybeCurrent;
+    if (game) {
+      applySnapshot(game, {
         ...getSnapshot<GameState>(this.gameState),
-        $modelId: previousGame.$modelId
+        $modelId: game.$modelId
       });
     }
+  }
+
+  @modelAction
+  playGame(game: GameState) {
+    // update the previous game in the game library
+    this.updateCurrentGameLibraryEntry();
+
+    // if currently playing a game close it
+    this.serverConnection && this.serverConnection.close();
+    this.gameServer && this.gameServer.close();
 
     this.currentGame = gameStateRef(game);
 
