@@ -61,13 +61,7 @@ export default class GameLibrary extends Model({
       );
     }
     gameJsons.forEach(gameJson => {
-      const existingGame = this.library.find(
-        game => game.gameId === gameJson.gameId
-      );
-      if (existingGame) existingGame.setFromJson(gameJson);
-      else {
-        this.addGameFromJson(gameJson);
-      }
+      this.addGameFromJson(gameJson);
     });
   }
 
@@ -104,7 +98,13 @@ export default class GameLibrary extends Model({
 
   @modelAction
   addGameFromJson(gameJson: SnapshotOutOfModel<GameState>) {
-    this.addGameToLibrary(fromSnapshot<GameState>(gameJson));
+    const existingGame = this.library.find(
+      game => game.gameId === gameJson.gameId
+    );
+    if (existingGame) existingGame.setFromJson(gameJson);
+    else {
+      this.addGameToLibrary(fromSnapshot<GameState>(gameJson));
+    }
   }
 
   @modelAction
@@ -113,7 +113,7 @@ export default class GameLibrary extends Model({
   }
 
   @modelFlow
-  loadGameFromUrl = _async(function*(this: GameStore, url: string) {
+  loadGameFromUrl = _async(function*(this: GameLibrary, url: string) {
     const response = yield* _await(
       fetch(`${serverRoot}:9001/${url}`, {
         mode: "cors"
@@ -121,13 +121,7 @@ export default class GameLibrary extends Model({
     );
     const gameJson = yield* _await(response.json());
 
-    const gameState = fromSnapshot<GameState>(gameJson);
-    this.gameState.name = gameState.name;
-    this.gameState.assetsUrl = gameState.assetsUrl;
-    this.gameState.setups = clone(gameState.setups);
-    if (gameState.activeSetup)
-      this.gameState.activeSetup = clone(gameState.activeSetup);
-    this.gameState.entities = clone(gameState.entities);
+    this.addGameFromJson(gameJson);
   });
 
   async loadGameByName(name: string) {
