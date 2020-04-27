@@ -106,7 +106,11 @@ const GameTile = observer(({ game, onClick, inProgress }: GameTileProps) => {
     >
       <ButtonBase onClick={() => onClick(game)}>
         {imageUrl ? (
-          <img src={imageUrl} alt={name} />
+          <img
+            src={imageUrl}
+            alt={name}
+            style={{ objectFit: "fill", width: tileSize, height: tileSize }}
+          />
         ) : (
           <div dangerouslySetInnerHTML={{ __html: svg }}></div>
         )}
