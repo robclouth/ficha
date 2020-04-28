@@ -1,25 +1,24 @@
-import React, { useEffect } from "react";
-import {
-  makeStyles,
-  ThemeProvider,
-  createMuiTheme,
-  Theme,
-  withStyles
-} from "@material-ui/core/styles";
-import CssBaseline from "@material-ui/core/CssBaseline";
+import { Box } from "@material-ui/core";
 import CircularProgress from "@material-ui/core/CircularProgress";
+import CssBaseline from "@material-ui/core/CssBaseline";
+import {
+  createMuiTheme,
+  makeStyles,
+  ThemeProvider
+} from "@material-ui/core/styles";
+import { observer } from "mobx-react";
 import { SnackbarProvider } from "notistack";
-
+import React, { useEffect } from "react";
 import Navigator from "./components/Navigator";
 import { useStore } from "./stores/RootStore";
-import { observer } from "mobx-react";
-import { Box } from "@material-ui/core";
 
-const globalStyles = (theme: Theme) => ({
-  height: "100%",
-  display: "flex",
-  justifyContent: "center",
-  alignItems: "center",
+const useStyles = makeStyles(theme => ({
+  root: {
+    height: "100%",
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center"
+  },
   "@global": {
     "*::-webkit-scrollbar": {
       height: 6,
@@ -35,9 +34,7 @@ const globalStyles = (theme: Theme) => ({
     scrollbarWidth: "thin",
     scrollbarColor: "transparent " + theme.palette.grey[500]
   }
-});
-
-const StyledBox = withStyles(globalStyles as any)(Box);
+}));
 
 const darkTheme = createMuiTheme({
   palette: {
@@ -57,14 +54,16 @@ export default observer(() => {
     document.addEventListener("keydown", e => uiState.handleKeyPress(e));
   }, []);
 
+  const classes = useStyles();
+
   return (
-    <StyledBox>
+    <div className={classes.root}>
       <SnackbarProvider autoHideDuration={3000} maxSnack={3}>
         <ThemeProvider theme={darkTheme}>
           <CssBaseline />
           {rootStore.isInitialized ? <Navigator /> : <CircularProgress />}
         </ThemeProvider>
       </SnackbarProvider>
-    </StyledBox>
+    </div>
   );
 });
