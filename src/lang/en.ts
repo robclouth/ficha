@@ -79,6 +79,7 @@ export default {
       gameRules: "Game rules",
       setups: "Setups",
       addSetup: "Add setup",
+      language: "Language",
       help: "Help"
     },
     contextMenu: {

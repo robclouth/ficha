@@ -22,6 +22,7 @@ import {
 import GameState, { View } from "../models/GameState";
 import { OptionsObject } from "notistack";
 import CameraControls from "camera-controls";
+import i18n from "../i18n";
 
 export type ContextMenuItem = {
   label?: string;
@@ -84,6 +85,12 @@ export default class UIState extends Model({}) {
 
   @computed get canMoveCamera() {
     return !this.isDraggingEntity && !this.isStartingDrag;
+  }
+
+  @modelAction
+  setLanguage(language: string) {
+    i18n.changeLanguage(language);
+    localStorage.setItem("i18nextLng", language);
   }
 
   @modelAction

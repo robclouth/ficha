@@ -13,10 +13,21 @@ i18n
       en,
       es
     },
-    lng: "en",
+    fallbackLng: "en",
     defaultNS: "common",
     interpolation: {
       escapeValue: false
+    },
+    detection: {
+      order: [
+        "querystring",
+        "cookie",
+        "localStorage",
+        "navigator",
+        "htmlTag",
+        "path",
+        "subdomain"
+      ]
     }
   });
 

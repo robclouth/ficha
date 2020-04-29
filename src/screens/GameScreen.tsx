@@ -17,6 +17,7 @@ import RedoIcon from "@material-ui/icons/Redo";
 import HostIcon from "@material-ui/icons/Router";
 import UndoIcon from "@material-ui/icons/Undo";
 import VideocamIcon from "@material-ui/icons/Videocam";
+import CheckIcon from "@material-ui/icons/Check";
 import { autorun } from "mobx";
 import { observer } from "mobx-react";
 import { useSnackbar } from "notistack";
@@ -222,7 +223,7 @@ export default observer(() => {
 
   const { game } = useParams();
   const history = useHistory();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
 
   const theme = useTheme();
   const [topMenuAnchorEl, setTopMenuAnchorEl] = useState<null | HTMLElement>(
@@ -426,16 +427,6 @@ export default observer(() => {
         >
           {t("mainMenu.joinGame")}
         </MenuItem>
-        {/* <MenuItem
-          onClick={() =>
-            handleTopMenuSelect(() => uiState.setOpenModal(Modals.ImportGame))
-          }
-        >
-          Import
-        </MenuItem>
-        <MenuItem onClick={() => handleTopMenuSelect(() => handleExportGame())}>
-          Export
-        </MenuItem> */}
         <MenuItem
           onClick={() =>
             handleTopMenuSelect(() => uiState.setOpenModal(Modals.Rules))
@@ -467,6 +458,28 @@ export default observer(() => {
               <IconButton onClick={() => gameState.removeSetup(setup)}>
                 <DeleteIcon fontSize="small" />
               </IconButton>
+            </MenuItem>
+          ))}
+        </NestedMenuItem>
+        <NestedMenuItem
+          label={t("mainMenu.language")}
+          rightSide={true}
+          parentMenuOpen={topMenuAnchorEl !== null ? true : false}
+        >
+          {Object.keys(i18n.services.resourceStore.data).map((language, i) => (
+            <MenuItem
+              key={i}
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                minWidth: 100
+              }}
+              onClick={() =>
+                handleTopMenuSelect(() => uiState.setLanguage(language))
+              }
+            >
+              {language.toUpperCase()}
+              {i18n.language === language && <CheckIcon fontSize="small" />}
             </MenuItem>
           ))}
         </NestedMenuItem>
