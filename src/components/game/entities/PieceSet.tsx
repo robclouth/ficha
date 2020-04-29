@@ -12,12 +12,14 @@ import defaultCardBack from "../../../assets/default-back.png";
 import PieceSet from "../../../models/game/PieceSet";
 import { clone } from "mobx-keystone";
 import { take } from "lodash";
+import { useTranslation } from "react-i18next";
 
 export type PieceSetProps = Omit<EntityProps, "geometry"> & {};
 
 const height = 0.2;
 
 export default observer((props: PieceSetProps) => {
+  const { t } = useTranslation();
   const { gameStore, uiState, assetCache } = useStore();
   const { setDraggingEntity } = uiState;
   const { gameState } = gameStore;
@@ -35,7 +37,7 @@ export default observer((props: PieceSetProps) => {
 
   const contextMenuItems: ContextMenuItem[] = [
     {
-      label: "Reset",
+      label: t("contextMenu.reset"),
       type: "action",
       action: () => pieceSet.reset()
     }
@@ -44,12 +46,12 @@ export default observer((props: PieceSetProps) => {
   if (containedEntities.length > 0) {
     const items: ContextMenuItem[] = [
       {
-        label: "Draw one",
+        label: t("contextMenu.drawOne"),
         type: "action",
         action: () => pieceSet.drawOne()
       },
       {
-        label: "Randomise",
+        label: t("contextMenu.randomise"),
         type: "action",
         action: () => pieceSet.shuffle()
       }
@@ -60,7 +62,7 @@ export default observer((props: PieceSetProps) => {
 
   if (externalEntities.length > 0) {
     contextMenuItems.push({
-      label: "Save deal",
+      label: t("contextMenu.saveDeal"),
       type: "action",
       action: () => pieceSet.saveDeal()
     });
@@ -68,7 +70,7 @@ export default observer((props: PieceSetProps) => {
 
   if (savedDeal) {
     contextMenuItems.push({
-      label: "Deal",
+      label: t("contextMenu.restoreDeal"),
       type: "action",
       action: () => pieceSet.deal()
     });

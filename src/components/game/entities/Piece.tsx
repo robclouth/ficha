@@ -1,5 +1,6 @@
 import { observer } from "mobx-react";
 import React from "react";
+import { useTranslation } from "react-i18next";
 import { BufferGeometry, Color } from "three";
 import Piece, { Shape } from "../../../models/game/Piece";
 import { useStore } from "../../../stores/RootStore";
@@ -11,6 +12,7 @@ export type PieceProps = Omit<EntityProps, "geometry"> & {};
 export const size = 0.1;
 
 export default observer((props: PieceProps) => {
+  const { t } = useTranslation();
   const { assetCache } = useStore();
   const { entity } = props;
   const piece = entity as Piece;
@@ -20,12 +22,12 @@ export default observer((props: PieceProps) => {
 
   if (ownerSet) {
     contextMenuItems.push({
-      label: "Return to set",
+      label: t("contextMenu.returnToSet"),
       type: "action",
       action: () => entity.returnToSet()
     });
     contextMenuItems.push({
-      label: "Remove from set",
+      label: t("contextMenu.removeFromSet"),
       type: "action",
       action: () => entity.removeFromSet()
     });

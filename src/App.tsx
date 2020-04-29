@@ -11,6 +11,7 @@ import { SnackbarProvider } from "notistack";
 import React, { useEffect } from "react";
 import Navigator from "./components/Navigator";
 import { useStore } from "./stores/RootStore";
+import "./i18n";
 
 const useStyles = makeStyles(theme => ({
   root: {

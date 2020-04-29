@@ -1,23 +1,20 @@
 import {
+  Box,
   Button,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
+  Checkbox,
   IconButton,
   ListItem,
+  ListItemIcon,
   ListItemSecondaryAction,
   ListItemText,
   makeStyles,
-  List,
-  ListItemIcon,
-  Checkbox,
-  Typography,
-  Box
+  Typography
 } from "@material-ui/core";
 import DeleteIcon from "@material-ui/icons/Delete";
+import { clone } from "mobx-keystone";
 import { observer } from "mobx-react";
 import React, { useState } from "react";
+import { useTranslation } from "react-i18next";
 //@ts-ignore
 import AutoSizer from "react-virtualized-auto-sizer";
 //@ts-ignore
@@ -25,29 +22,7 @@ import { FixedSizeList, ListChildComponentProps } from "react-window";
 import Deck from "../../models/game/Deck";
 import Entity, { EntityType } from "../../models/game/Entity";
 import { useStore } from "../../stores/RootStore";
-import { clone } from "mobx-keystone";
 import Modal from "./Modal";
-
-const colorOptions = [
-  "#f44336",
-  "#e91e63",
-  "#9c27b0",
-  "#673ab7",
-  "#3f51b5",
-  "#2196f3",
-  "#03a9f4",
-  "#00bcd4",
-  "#009688",
-  "#4caf50",
-  "#8bc34a",
-  "#cddc39",
-  "#ffeb3b",
-  "#ffc107",
-  "#ff9800",
-  "#ff5722",
-  "#000000",
-  "#ffffff"
-];
 
 const useStyles = makeStyles(theme => ({
   formControl: {
@@ -65,6 +40,8 @@ export type ModalProps = {
 
 export default observer(
   ({ open, handleClose, positionGroundPlane }: ModalProps) => {
+    const { t } = useTranslation();
+
     const { gameStore, uiState, entityLibrary } = useStore();
     const { entities } = entityLibrary;
     const { gameState } = gameStore;
@@ -90,7 +67,9 @@ export default observer(
       let description = libraryEntity.$modelType;
       if (libraryEntity.type === EntityType.Deck) {
         const deck = libraryEntity as Deck;
-        description += ` - ${deck.totalEntities} cards`;
+        description += ` - ${deck.totalEntities} ${t("card", {
+          count: deck.totalEntities
+        })}`;
       }
       return (
         <ListItem button onClick={() => setSelectedEntity(libraryEntity)}>
@@ -110,7 +89,7 @@ export default observer(
                   variant="body1"
                   style={{ marginRight: 10 }}
                 >
-                  {libraryEntity.name || "Untitled"}
+                  {libraryEntity.name || t("untitled")}
                 </Typography>
                 <Typography
                   component="span"
@@ -141,7 +120,7 @@ export default observer(
       <Modal
         open={open}
         handleClose={handleClose}
-        title="Add from library"
+        title={t("addFromLibrary")}
         content={
           <Box width={500}>
             <AutoSizer disableHeight>
@@ -166,7 +145,7 @@ export default observer(
             color="primary"
             disabled={!selectedEntity}
           >
-            Add
+            {t("add")}
           </Button>
         }
       />

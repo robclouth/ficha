@@ -36,57 +36,9 @@ import { SelectionHelper } from "three/examples/jsm/interactive/SelectionHelper"
 
 extend({
   CameraControls,
-  DragControls,
-  EffectComposer,
-  RenderPass,
-  OutlinePass,
-  ShaderPass,
-  FXAAShader
+  DragControls
 });
 CameraControls.install({ THREE: THREE });
-
-const Outline = observer(() => {
-  const { uiState } = useStore();
-
-  const { gl, scene, camera, size } = useThree();
-  const composer = useRef<EffectComposer>();
-  useEffect(() => void composer.current?.setSize(size.width, size.height), [
-    size
-  ]);
-  useFrame(() => composer.current?.render(), 1);
-
-  const fxaaShaderPass = useRef<ShaderPass>();
-
-  useEffect(() => {
-    const uniforms = fxaaShaderPass.current?.uniforms as any;
-    uniforms["resolution"].value.set(1 / size.width, 1 / size.height);
-  }, [size]);
-
-  const outlinePass = useMemo(
-    () => new OutlinePass(new Vector2(size.width, size.height), scene, camera),
-    []
-  );
-
-  outlinePass.selectedObjects = Object.values(uiState.selectedEntities)
-    .filter(e => e.mesh)
-    .map(e => e.mesh!);
-
-  if (uiState.hoveredEntity?.mesh)
-    outlinePass.selectedObjects.push(uiState.hoveredEntity.mesh);
-
-  return (
-    <effectComposer ref={composer} args={[gl]}>
-      <renderPass attachArray="passes" args={[scene, camera]} />
-      <primitive attachArray="passes" object={outlinePass} />
-      <shaderPass
-        attachArray="passes"
-        ref={fxaaShaderPass}
-        args={[FXAAShader]}
-        renderToScreen
-      />
-    </effectComposer>
-  );
-});
 
 const CameraControl = observer(() => {
   const { gameStore, uiState } = useStore();
@@ -204,46 +156,6 @@ const Scene = observer(() => {
   };
 
   const { gl, scene, camera, size, setDefaultCamera } = useThree();
-
-  // useEffect(() => {
-  //   gl.domElement.addEventListener("mousemove", e => {
-  //     if (
-  //       uiState.views[0]?.camera &&
-  //       e.clientX > size.width / 2 &&
-  //       e.clientY < size.height / 2
-  //     ) {
-  //       setDefaultCamera(uiState.views[0]!.camera! as PerspectiveCamera);
-  //     }
-  //   });
-  // }, []);
-
-  // useFrame(() => {
-  //   gl.setViewport(0, 0, size.width, size.height);
-  //   gl.setScissor(0, 0, size.width, size.height);
-  //   gl.setScissorTest(true);
-  //   gl.setClearColor(new Color(0, 0, 0));
-  //   gl.render(scene, camera);
-
-  //   if (uiState.views[0]) {
-  //     const left = Math.floor(size.width * 0.5);
-  //     const bottom = Math.floor(size.height * 0.5);
-  //     const width = Math.floor(size.width * 0.5);
-  //     const height = Math.floor(size.height * 0.5);
-
-  //     gl.setViewport(left, bottom, width, height);
-  //     gl.setScissor(left, bottom, width, height);
-  //     gl.setScissorTest(true);
-  //     gl.setClearColor(new Color(0, 0, 0));
-
-  //     let viewCamera = uiState.views[0].camera;
-
-  //     if (!viewCamera) {
-  //       viewCamera = uiState.views[0].camera = camera.clone();
-  //     }
-
-  //     gl.render(scene, viewCamera);
-  //   }
-  // }, 1);
 
   return (
     <>

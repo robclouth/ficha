@@ -1,20 +1,18 @@
-import { easeBounceOut, easeQuadOut, easeLinear } from "d3-ease";
 import { observer } from "mobx-react";
-import React, { useMemo, useState } from "react";
-import { useSpring } from "react-spring/three";
-import { Color, Quaternion, Texture, FlatShading } from "three";
-import Dice, { DiceType } from "../../../models/game/Dice";
+import React from "react";
+import { useTranslation } from "react-i18next";
+import { Color } from "three";
+import HandArea from "../../../models/game/HandArea";
 import { useStore } from "../../../stores/RootStore";
 import { ContextMenuItem } from "../../../types";
-
 import Entity, { EntityProps } from "./Entity";
-import HandArea from "../../../models/game/HandArea";
 
 export type HandAreaProps = Omit<EntityProps, "geometry"> & {};
 
 let height = 0.01;
 
 export default observer((props: HandAreaProps) => {
+  const { t } = useTranslation();
   const { gameStore } = useStore();
   const { entity } = props;
   const handArea = entity as HandArea;
@@ -24,13 +22,15 @@ export default observer((props: HandAreaProps) => {
 
   if (!claimed)
     contextMenuItems.push({
-      label: "Claim",
+      label: t("contextMenu.claim"),
       type: "action",
       action: () => handArea.claim(gameStore.thisPlayer)
     });
 
   contextMenuItems.push({
-    label: isHidden ? "Reveal contents" : "Hide contents",
+    label: isHidden
+      ? t("contextMenu.revealContents")
+      : t("contextMenu.hideContents"),
     type: "action",
     action: () => handArea.toggleHidden()
   });

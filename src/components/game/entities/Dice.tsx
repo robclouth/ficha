@@ -1,29 +1,27 @@
-import { easeBounceOut, easeQuadOut, easeLinear } from "d3-ease";
+import { easeBounceOut, easeQuadOut } from "d3-ease";
+import delay from "delay";
 import { observer } from "mobx-react";
 import React, { useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useSpring } from "react-spring/three";
 import { Dom } from "react-three-fiber";
 import {
   Color,
+  CylinderBufferGeometry,
   Quaternion,
   Texture,
-  FlatShading,
-  CylinderBufferGeometry,
   Vector3
 } from "three";
-
 import Dice, { DiceType } from "../../../models/game/Dice";
 import { useStore } from "../../../stores/RootStore";
 import { ContextMenuItem } from "../../../types";
-import delay from "delay";
 import {
   DiceD10,
   DiceD12,
   DiceD20,
   DiceD4,
   DiceD6,
-  DiceD8,
-  DiceObject
+  DiceD8
 } from "./DiceHelper";
 import Entity, { EntityProps } from "./Entity";
 
@@ -38,6 +36,7 @@ enum RollPhase {
 }
 
 export default observer((props: DiceProps) => {
+  const { t } = useTranslation();
   const { assetCache } = useStore();
   const { entity } = props;
   const dice = entity as Dice;
@@ -46,21 +45,8 @@ export default observer((props: DiceProps) => {
 
   const contextMenuItems: ContextMenuItem[] = [];
 
-  if (ownerSet) {
-    contextMenuItems.push({
-      label: "Return to set",
-      type: "action",
-      action: () => entity.returnToSet()
-    });
-    contextMenuItems.push({
-      label: "Remove from set",
-      type: "action",
-      action: () => entity.removeFromSet()
-    });
-  }
-
   contextMenuItems.push({
-    label: "Roll",
+    label: t("contextMenu.roll"),
     type: "action",
     action: () => handleRoll()
   });

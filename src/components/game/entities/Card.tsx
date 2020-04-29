@@ -1,20 +1,19 @@
+import { range } from "lodash";
 import { observer } from "mobx-react";
 import React, { useMemo } from "react";
-import Card, { Shape } from "../../../models/game/Card";
-import Entity, { EntityProps, MaterialParameters } from "./Entity";
-import { ContextMenuItem } from "../../../types";
-import { useStore } from "../../../stores/RootStore";
-import defaultCardBack from "../../../assets/default-back.png";
+import { useTranslation } from "react-i18next";
 import {
-  Color,
-  Group,
-  CanvasTexture,
   BufferGeometry,
-  Quaternion,
-  Object3D
+  CanvasTexture,
+  Color,
+  Object3D,
+  Quaternion
 } from "three";
-import { Dom } from "react-three-fiber";
-import { range } from "lodash";
+import defaultCardBack from "../../../assets/default-back.png";
+import Card, { Shape } from "../../../models/game/Card";
+import { useStore } from "../../../stores/RootStore";
+import { ContextMenuItem } from "../../../types";
+import Entity, { EntityProps, MaterialParameters } from "./Entity";
 
 export type CardProps = Omit<EntityProps, "geometry"> & {};
 
@@ -48,6 +47,8 @@ function wrapText(
 
 export default observer((props: CardProps) => {
   const { assetCache } = useStore();
+  const { t } = useTranslation();
+
   const { entity } = props;
   const card = entity as Card;
   const {
@@ -65,7 +66,7 @@ export default observer((props: CardProps) => {
 
   const contextMenuItems: ContextMenuItem[] = [
     {
-      label: "Flip",
+      label: t("contextMenu.flip"),
       type: "action",
       action: () => entity.flip()
     }
@@ -73,15 +74,15 @@ export default observer((props: CardProps) => {
 
   if (ownerSet) {
     contextMenuItems.push({
-      label: "Return to deck",
+      label: t("contextMenu.returnToDeck"),
       type: "action",
       action: () => card.returnToSet()
     });
-    // contextMenuItems.push({
-    //   label: "Remove from deck",
-    //   type: "action",
-    //   action: () => card.removeFromSet()
-    // });
+    contextMenuItems.push({
+      label: t("contextMenu.removeFromDeck"),
+      type: "action",
+      action: () => card.removeFromSet()
+    });
   }
 
   const backTexture = backImageUrl

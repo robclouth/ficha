@@ -6,7 +6,8 @@ import {
   TextField
 } from "@material-ui/core";
 import { observer } from "mobx-react";
-import React, { useState, useRef } from "react";
+import React, { useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useStore } from "../../stores/RootStore";
 import Modal from "./Modal";
 
@@ -24,6 +25,7 @@ type JoinGameModalProps = {
 };
 
 export default observer(({ open, handleClose }: JoinGameModalProps) => {
+  const { t } = useTranslation();
   const classes = useStyles();
 
   const { gameStore } = useStore();
@@ -36,7 +38,7 @@ export default observer(({ open, handleClose }: JoinGameModalProps) => {
     const gameId = gameIdFieldRef.current!.value;
 
     if (gameId.length === 0) {
-      setError("Enter a game ID");
+      setError(t("enterAGameId"));
       return;
     }
 
@@ -55,7 +57,7 @@ export default observer(({ open, handleClose }: JoinGameModalProps) => {
     <Modal
       open={open}
       handleClose={handleClose}
-      title="Join game"
+      title={t("joinGame")}
       content={
         <>
           <FormControl className={classes.formControl}>
@@ -63,7 +65,7 @@ export default observer(({ open, handleClose }: JoinGameModalProps) => {
               inputRef={gameIdFieldRef}
               autoFocus
               margin="dense"
-              placeholder="Game ID"
+              placeholder={t("gameId")}
               fullWidth
               error={error.length > 0}
               helperText={error}
@@ -74,7 +76,7 @@ export default observer(({ open, handleClose }: JoinGameModalProps) => {
       }
       actions={
         <Button variant="outlined" onClick={handleJoinClick} color="primary">
-          {loading ? "Joining" : "Join"}
+          {loading ? t("joining") : t("join")}
         </Button>
       }
     />

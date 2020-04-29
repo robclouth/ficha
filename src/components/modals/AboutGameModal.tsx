@@ -1,24 +1,11 @@
-import {
-  Button,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  FormControl,
-  makeStyles,
-  TextField,
-  DialogContentText,
-  Input,
-  InputLabel
-} from "@material-ui/core";
-// @ts-ignore
-import isUrl from "is-url";
-import { observer } from "mobx-react";
-import React, { useState, useEffect, useMemo } from "react";
-import { useStore } from "../../stores/RootStore";
-import Modal from "./Modal";
+import { Button, FormControl, makeStyles, TextField } from "@material-ui/core";
 import { draft } from "mobx-keystone";
+import { observer } from "mobx-react";
+import React, { useMemo } from "react";
+import { useTranslation } from "react-i18next";
+import { useStore } from "../../stores/RootStore";
 import { Modals } from "../../stores/UIState";
+import Modal from "./Modal";
 
 const useStyles = makeStyles(theme => ({
   formControl: {
@@ -33,6 +20,8 @@ type ModalProps = {
 };
 
 export default observer(({ open, handleClose }: ModalProps) => {
+  const { t } = useTranslation();
+
   const classes = useStyles();
   const { gameStore, uiState } = useStore();
   const gameState = gameStore.gameState;
@@ -48,7 +37,7 @@ export default observer(({ open, handleClose }: ModalProps) => {
     <Modal
       open={open}
       handleClose={handleClose}
-      title="About"
+      title={t("about")}
       content={
         <>
           {gameDraft.data.imageUrl && (
@@ -62,7 +51,7 @@ export default observer(({ open, handleClose }: ModalProps) => {
               value={gameDraft.data.name}
               onChange={e => (gameDraft.data.name = e.target.value)}
               fullWidth
-              label="Title"
+              label={t("title")}
             />
           </FormControl>
           <FormControl className={classes.formControl}>
@@ -70,7 +59,7 @@ export default observer(({ open, handleClose }: ModalProps) => {
               value={gameDraft.data.author}
               onChange={e => (gameDraft.data.author = e.target.value)}
               fullWidth
-              label="Author"
+              label={t("author")}
             />
           </FormControl>
           <FormControl className={classes.formControl}>
@@ -79,7 +68,7 @@ export default observer(({ open, handleClose }: ModalProps) => {
               onChange={e => (gameDraft.data.description = e.target.value)}
               fullWidth
               multiline
-              label="Description"
+              label={t("description")}
             />
           </FormControl>
           <FormControl className={classes.formControl}>
@@ -87,17 +76,17 @@ export default observer(({ open, handleClose }: ModalProps) => {
               value={gameDraft.data.imageUrl}
               onChange={e => (gameDraft.data.imageUrl = e.target.value)}
               fullWidth
-              label="Image URL"
+              label={t("imageUrl")}
             />
           </FormControl>
           <Button fullWidth onClick={() => uiState.setOpenModal(Modals.Rules)}>
-            Rules
+            {t("rules")}
           </Button>
         </>
       }
       actions={
         <Button onClick={handleSave} color="primary">
-          Save
+          {t("save")}
         </Button>
       }
     />

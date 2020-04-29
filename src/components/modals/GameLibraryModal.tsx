@@ -1,46 +1,40 @@
 import {
   Box,
-  Tabs,
-  Tab,
+  Button,
+  ButtonBase,
+  Chip,
   GridListTile,
   GridListTileBar,
-  ListSubheader,
-  makeStyles,
-  useTheme,
   IconButton,
-  ButtonBase,
+  LinearProgress,
+  makeStyles,
   Menu,
   MenuItem,
-  Typography,
-  Chip,
-  Button,
-  Divider,
   Popover,
-  FormControl,
+  Tab,
+  Tabs,
   TextField,
-  LinearProgress
+  useTheme
 } from "@material-ui/core";
 import MoreVertIcon from "@material-ui/icons/MoreVert";
-import {
-  usePopupState,
-  bindTrigger,
-  bindMenu
-} from "material-ui-popup-state/hooks";
 // @ts-ignore
 import isUrl from "is-url";
+import { chunk } from "lodash";
+import {
+  bindMenu,
+  bindTrigger,
+  usePopupState
+} from "material-ui-popup-state/hooks";
+import { observer } from "mobx-react";
+import React, { useMemo, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 //@ts-ignore
 import AutoSizer from "react-virtualized-auto-sizer";
 //@ts-ignore
 import { FixedSizeList, ListChildComponentProps } from "react-window";
-// @ts-ignore
-import randomColor from "random-material-color";
-import { chunk } from "lodash";
-import { observer } from "mobx-react";
-import React, { useState, useMemo, useRef } from "react";
 import GameState from "../../models/GameState";
 import { useStore } from "../../stores/RootStore";
 import Modal from "./Modal";
-import delay from "delay";
 
 const useStyles = makeStyles(theme => ({
   formControl: {
@@ -67,6 +61,8 @@ export type GameTileProps = {
 };
 
 const GameTile = observer(({ game, onClick, inProgress }: GameTileProps) => {
+  const { t } = useTranslation();
+
   const { gameStore, gameLibrary } = useStore();
   const { name, gameId, imageUrl, recommendedPlayers, dateModified } = game;
   const classes = useStyles();
@@ -92,7 +88,10 @@ const GameTile = observer(({ game, onClick, inProgress }: GameTileProps) => {
     <span>{new Date(dateModified).toDateString()}</span>
   ) : (
     recommendedPlayers && (
-      <span>{`${recommendedPlayers[0]} - ${recommendedPlayers[1]} players`}</span>
+      <span>{`${recommendedPlayers[0]} - ${recommendedPlayers[1]} ${t(
+        "player",
+        { count: 2 }
+      )}`}</span>
     )
   );
 
@@ -116,7 +115,7 @@ const GameTile = observer(({ game, onClick, inProgress }: GameTileProps) => {
         )}
         {gameStore.currentGame?.maybeCurrent === game && (
           <Chip
-            label="Playing"
+            label={t("playing")}
             variant="outlined"
             style={{
               position: "absolute",
@@ -137,9 +136,11 @@ const GameTile = observer(({ game, onClick, inProgress }: GameTileProps) => {
       />
       <Menu {...bindMenu(popupState)}>
         {inProgress && (
-          <MenuItem onClick={handleAddToLibraryClick}>Add to library</MenuItem>
+          <MenuItem onClick={handleAddToLibraryClick}>
+            {t("addToLibrary")}
+          </MenuItem>
         )}
-        <MenuItem onClick={handleRemoveClick}>Remove</MenuItem>
+        <MenuItem onClick={handleRemoveClick}>{t("remove")}</MenuItem>
       </Menu>
     </GridListTile>
   );
@@ -169,6 +170,7 @@ const Row = observer(({ games, onClick, inProgress }: RowProps) => {
 });
 
 const AddFromUrl = observer(() => {
+  const { t } = useTranslation();
   const { gameLibrary } = useStore();
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -183,7 +185,7 @@ const AddFromUrl = observer(() => {
     const url = urlFieldRef.current!.value;
 
     if (!isUrl(url)) {
-      setError("Invalid URL");
+      setError(t("invalidUrl"));
       return;
     }
 
@@ -219,7 +221,7 @@ const AddFromUrl = observer(() => {
             autoFocus
             margin="dense"
             id="url"
-            placeholder="URL"
+            placeholder={t("url")}
             type="url"
             error={error.length > 0}
             helperText={error}
@@ -230,7 +232,7 @@ const AddFromUrl = observer(() => {
             color="primary"
             style={{ marginLeft: 10 }}
           >
-            {loading ? "Loading" : "Load"}
+            {loading ? t("loading") : t("load")}
           </Button>
         </Box>
         {loading && <LinearProgress />}
@@ -247,6 +249,7 @@ export type ModalProps = {
 
 export default observer(
   ({ open, handleClose, positionGroundPlane }: ModalProps) => {
+    const { t } = useTranslation();
     const { gameStore, gameLibrary } = useStore();
     const { inProgressGamesOrderedByDate, library } = gameLibrary;
     const { gameState } = gameStore;
@@ -305,8 +308,8 @@ export default observer(
               scrollButtons="auto"
               style={{ marginBottom: theme.spacing(1) }}
             >
-              <Tab label="In Progress" />
-              <Tab label="Library" />
+              <Tab label={t("inProgress")} />
+              <Tab label={t("library")} />
             </Tabs>
             {tabIndex === 1 && (
               <Box margin={1} display="flex" justifyContent="space-around">

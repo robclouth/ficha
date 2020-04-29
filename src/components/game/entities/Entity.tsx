@@ -1,25 +1,13 @@
 import { observer } from "mobx-react";
-import React, {
-  useRef,
-  useState,
-  useEffect,
-  useMemo,
-  useCallback
-} from "react";
-import { PointerEvent, Dom } from "react-three-fiber";
+import React, { useCallback, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { a, SpringValue } from "react-spring/three";
-
+import { Dom, PointerEvent } from "react-three-fiber";
 import {
-  Box3,
   BufferGeometry,
-  Color,
-  Mesh,
+  MeshStandardMaterial,
   MeshStandardMaterialParameters,
-  Plane,
-  Vector3,
-  Quaternion,
-  BackSide,
-  MeshStandardMaterial
+  Quaternion
 } from "three";
 import Entity from "../../../models/game/Entity";
 import HandArea from "../../../models/game/HandArea";
@@ -52,6 +40,7 @@ let clickCount = 0;
 let singleClickTimer: any;
 
 export default observer((props: EntityProps) => {
+  const { t } = useTranslation();
   const { gameStore, uiState, entityLibrary } = useStore();
   const { gameState } = gameStore;
 
@@ -90,17 +79,17 @@ export default observer((props: EntityProps) => {
 
   const standardItems: Array<ContextMenuItem | false> = [
     {
-      label: "Rotate clockwise",
+      label: t("contextMenu.rotateClockwise"),
       type: "action",
       action: () => entity.rotate(Math.PI / 2)
     },
     {
-      label: "Rotate counter-clockwise",
+      label: t("contextMenu.rotateCounterClockwise"),
       type: "action",
       action: () => entity.rotate(-Math.PI / 2)
     },
     editable && {
-      label: "Edit",
+      label: t("contextMenu.edit"),
       type: "edit",
       target: entity,
       action: () => {}
@@ -113,22 +102,22 @@ export default observer((props: EntityProps) => {
     //     action: () => {}
     //   },
     {
-      label: "Duplicate",
+      label: t("contextMenu.duplicate"),
       type: "action",
       action: () => entity.duplicate()
     },
     editable && {
-      label: "Add to library",
+      label: t("contextMenu.addToLibrary"),
       type: "action",
       action: () => entityLibrary.addEntity(entity)
     },
     {
-      label: locked ? "Unlock" : "Lock",
+      label: locked ? t("contextMenu.unlock") : t("contextMenu.lock"),
       type: "action",
       action: () => entity.toggleLocked()
     },
     deletable && {
-      label: "Delete",
+      label: t("contextMenu.delete"),
       type: "action",
       action: () => gameState.removeEntity(entity)
     }

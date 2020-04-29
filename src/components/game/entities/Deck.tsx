@@ -1,22 +1,18 @@
 import { observer } from "mobx-react";
-import React, { useEffect } from "react";
-import Entity, { EntityProps, MaterialParameters } from "./Entity";
-import Deck from "../../../models/game/Deck";
-import { cardHeight } from "./Card";
-import { ContextMenuItem } from "../../../types";
-import { useStore } from "../../../stores/RootStore";
-import Card from "../../../models/game/Card";
-import CardComponent from "./Card";
+import React from "react";
+import { useTranslation } from "react-i18next";
 import { PointerEvent } from "react-three-fiber";
-import { Color } from "three";
-import defaultCardBack from "../../../assets/default-back.png";
+import Deck from "../../../models/game/Deck";
+import { useStore } from "../../../stores/RootStore";
+import { ContextMenuItem } from "../../../types";
+import CardComponent, { cardHeight } from "./Card";
+import Entity, { EntityProps } from "./Entity";
 
 export type DeckProps = Omit<EntityProps, "geometry"> & {};
 
 export default observer((props: DeckProps) => {
-  const { gameStore, uiState, assetCache } = useStore();
-  const { setDraggingEntity } = uiState;
-  const { gameState } = gameStore;
+  const { t } = useTranslation();
+  const { gameStore, uiState } = useStore();
 
   const { entity } = props;
   const deck = entity as Deck;
@@ -24,7 +20,7 @@ export default observer((props: DeckProps) => {
 
   const contextMenuItems: ContextMenuItem[] = [
     {
-      label: "Reset",
+      label: t("contextMenu.reset"),
       type: "action",
       action: () => deck.reset()
     }
@@ -33,17 +29,17 @@ export default observer((props: DeckProps) => {
   if (containedEntities.length > 0) {
     const items: ContextMenuItem[] = [
       {
-        label: "Draw one",
+        label: t("contextMenu.drawOne"),
         type: "action",
         action: () => deck.drawOne()
       },
       {
-        label: "Flip",
+        label: t("contextMenu.flip"),
         type: "action",
         action: () => deck.flip()
       },
       {
-        label: "Shuffle",
+        label: t("contextMenu.shuffle"),
         type: "action",
         action: () => deck.shuffle()
       }
@@ -54,7 +50,7 @@ export default observer((props: DeckProps) => {
 
   if (externalEntities.length > 0) {
     contextMenuItems.push({
-      label: "Save deal",
+      label: t("contextMenu.saveDeal"),
       type: "action",
       action: () => deck.saveDeal()
     });
@@ -62,7 +58,7 @@ export default observer((props: DeckProps) => {
 
   if (savedDeal) {
     contextMenuItems.push({
-      label: "Restore deal",
+      label: t("contextMenu.restoreDeal"),
       type: "action",
       action: () => deck.deal()
     });

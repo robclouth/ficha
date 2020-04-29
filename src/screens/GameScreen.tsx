@@ -20,6 +20,7 @@ import VideocamIcon from "@material-ui/icons/Videocam";
 import { autorun } from "mobx";
 import { observer } from "mobx-react";
 import { useSnackbar } from "notistack";
+import { useTranslation } from "react-i18next";
 import React, { useCallback, useEffect, useState } from "react";
 //@ts-ignore
 import { CopyToClipboard } from "react-copy-to-clipboard";
@@ -33,7 +34,6 @@ import EditSetupModal from "../components/modals/EditSetupModal";
 import EntityLibraryModal from "../components/modals/EntityLibraryModal";
 import GameLibraryModal from "../components/modals/GameLibraryModal";
 import HelpModal from "../components/modals/HelpModal";
-import ImportGameModal from "../components/modals/ImportGameModal";
 import JoinGameModal from "../components/modals/JoinGameModal";
 import RulesModal from "../components/modals/RulesModal";
 import NestedMenuItem from "../components/NestedMenuItem";
@@ -68,6 +68,7 @@ const PlayersList = observer(() => {
   const { gameStore } = useStore();
   const { gameState } = gameStore;
   const theme = useTheme();
+  const { t } = useTranslation();
 
   const classes = useStyles();
   const { enqueueSnackbar, closeSnackbar } = useSnackbar();
@@ -86,7 +87,7 @@ const PlayersList = observer(() => {
         <CopyToClipboard
           text={gameStore.gameServer?.peerId}
           onCopy={() => {
-            const key = enqueueSnackbar("Game ID copied to clipboard", {
+            const key = enqueueSnackbar(t("gameIdCopiedToClipboard"), {
               onClick: () => closeSnackbar(key)
             });
           }}
@@ -95,7 +96,7 @@ const PlayersList = observer(() => {
             className={classes.chip}
             clickable
             icon={<HostIcon />}
-            label={"You are hosting"}
+            label={t("youAreHosting")}
           />
         </CopyToClipboard>
       )}
@@ -116,9 +117,9 @@ const PlayersList = observer(() => {
                 {player.name.charAt(0).toUpperCase()}
               </Avatar>
             }
-            label={`${player.name} ${
-              gameStore.thisPlayer === player ? " (You)" : ""
-            }`}
+            label={`${player.name} (${
+              gameStore.thisPlayer === player ? t("you") : ""
+            })`}
             deleteIcon={<EditIcon fontSize="small" />}
             onDelete={gameStore.thisPlayer === player ? () => {} : undefined}
           />
@@ -132,6 +133,7 @@ const ViewList = observer(() => {
   const { gameStore, uiState } = useStore();
   const { gameState } = gameStore;
   const theme = useTheme();
+  const { t } = useTranslation();
 
   const classes = useStyles();
 
@@ -156,7 +158,7 @@ const ViewList = observer(() => {
             <VideocamIcon fontSize="small" />
           </Avatar>
         }
-        label={"Add view"}
+        label={t("addView")}
       />
       {handArea && (
         <Chip
@@ -175,7 +177,7 @@ const ViewList = observer(() => {
               {"1"}
             </Avatar>
           }
-          label={"Hand"}
+          label={t("hand")}
         />
       )}
       {gameState.views.map((view, i) => {
@@ -220,6 +222,7 @@ export default observer(() => {
 
   const { game } = useParams();
   const history = useHistory();
+  const { t } = useTranslation();
 
   const theme = useTheme();
   const [topMenuAnchorEl, setTopMenuAnchorEl] = useState<null | HTMLElement>(
@@ -260,7 +263,7 @@ export default observer(() => {
   if (contextMenu && !contextMenu.items) {
     contextMenu.items = [
       {
-        label: "New object",
+        label: t("contextMenu.newObject"),
         type: "action",
         action: () => {
           uiState.setOpenModal(Modals.EditEntity);
@@ -269,7 +272,7 @@ export default observer(() => {
         }
       },
       {
-        label: "Add object from library",
+        label: t("contextMenu.addObjectFromLibrary"),
         type: "action",
         action: () => {
           uiState.setOpenModal(Modals.EntityLibrary);
@@ -277,7 +280,7 @@ export default observer(() => {
         }
       },
       {
-        label: "Add hand area",
+        label: t("contextMenu.addHandArea"),
         type: "action",
         action: () => {
           gameState.addEntity(
@@ -404,7 +407,7 @@ export default observer(() => {
         <MenuItem
           onClick={() => handleTopMenuSelect(() => gameLibrary.newGame())}
         >
-          New game
+          {t("mainMenu.newGame")}
         </MenuItem>
         <MenuItem
           onClick={() =>
@@ -414,14 +417,14 @@ export default observer(() => {
             })
           }
         >
-          Open game
+          {t("mainMenu.openGame")}
         </MenuItem>
         <MenuItem
           onClick={() =>
             handleTopMenuSelect(() => uiState.setOpenModal(Modals.JoinGame))
           }
         >
-          Join game
+          {t("mainMenu.joinGame")}
         </MenuItem>
         {/* <MenuItem
           onClick={() =>
@@ -438,10 +441,10 @@ export default observer(() => {
             handleTopMenuSelect(() => uiState.setOpenModal(Modals.Rules))
           }
         >
-          Game rules
+          {t("mainMenu.gameRules")}
         </MenuItem>
         <NestedMenuItem
-          label="Setups"
+          label={t("mainMenu.setups")}
           rightSide={true}
           parentMenuOpen={topMenuAnchorEl !== null ? true : false}
         >
@@ -450,7 +453,7 @@ export default observer(() => {
               handleTopMenuSelect(() => uiState.setOpenModal(Modals.EditSetup))
             }
           >
-            Add setup
+            {t("mainMenu.addSetup")}
           </MenuItem>
           {gameState.setups.map((setup, i) => (
             <MenuItem
@@ -472,7 +475,7 @@ export default observer(() => {
             handleTopMenuSelect(() => uiState.setOpenModal(Modals.Help))
           }
         >
-          Help
+          {t("mainMenu.help")}
         </MenuItem>
       </Menu>
       <Menu
@@ -502,12 +505,6 @@ export default observer(() => {
           ))}
         <EventListener target="window" onResize={handleContextMenuClose} />
       </Menu>
-      {openModal === Modals.ImportGame && (
-        <ImportGameModal
-          open={openModal === Modals.ImportGame}
-          handleClose={() => uiState.setOpenModal(undefined)}
-        />
-      )}
       {openModal === Modals.EditEntity && (
         <EditEntityModal
           open={openModal === Modals.EditEntity}

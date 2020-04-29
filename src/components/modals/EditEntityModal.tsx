@@ -20,6 +20,8 @@ import {
   FormControlLabel,
   Switch
 } from "@material-ui/core";
+import { useTranslation } from "react-i18next";
+
 import InsertEmoticonIcon from "@material-ui/icons/InsertEmoticon";
 import AddIcon from "@material-ui/icons/Add";
 import RemoveIcon from "@material-ui/icons/Remove";
@@ -177,6 +179,8 @@ type EmojiInputProps = InputProps & {
 };
 
 const EmojiInput = observer((props: EmojiInputProps) => {
+  const { t } = useTranslation();
+
   const { onTextChange, ...inputProps } = props;
   const classes = useStyles();
   const theme = useTheme();
@@ -219,7 +223,7 @@ const EmojiInput = observer((props: EmojiInputProps) => {
         }}
       >
         <Picker
-          title="Pick an emoji"
+          title={t("pickAnEmoji")}
           native={true}
           autoFocus
           color={theme.palette.primary.main}
@@ -241,6 +245,8 @@ const CardEditor = observer(
     entity: Entity;
     showBackInput?: boolean;
   }) => {
+    const { t } = useTranslation();
+
     const classes = useStyles();
     const card = entity as Card;
     const {
@@ -277,7 +283,7 @@ const CardEditor = observer(
           </Select>
         </FormControl>
         <FormControl>
-          <FormLabel>Thickness</FormLabel>
+          <FormLabel>{t("thickness")}</FormLabel>
           <Slider
             value={card.scale.y}
             onChange={(e, value) => card.setScaleY(value as number)}
@@ -293,7 +299,7 @@ const CardEditor = observer(
             value={frontImageUrl}
             onChange={e => (card.frontImageUrl = e.target.value)}
             fullWidth
-            placeholder="Front image URL"
+            placeholder={t("frontImageUrl")}
           />
         </FormControl>
         {showBackInput && (
@@ -304,11 +310,11 @@ const CardEditor = observer(
               disabled={!!card.ownerSet}
               onChange={e => (card.backImageUrl = e.target.value)}
               fullWidth
-              placeholder={"Back image URL"}
+              placeholder={t("backImageUrl")}
             />
             {card.ownerSet && (
               <FormHelperText>
-                The back image must be edited in the deck
+                {t("theBackImageMustBeEditedInTheDeck")}
               </FormHelperText>
             )}
           </FormControl>
@@ -318,7 +324,7 @@ const CardEditor = observer(
             value={title}
             onTextChange={text => (card.title = text)}
             fullWidth
-            placeholder="Title"
+            placeholder={t("title")}
           />
         </FormControl>
         <FormControl className={classes.formControl}>
@@ -326,7 +332,7 @@ const CardEditor = observer(
             value={subtitle}
             onTextChange={text => (card.subtitle = text)}
             fullWidth
-            placeholder="Subtitle"
+            placeholder={t("subtitle")}
           />
         </FormControl>
         <FormControl className={classes.formControl}>
@@ -334,15 +340,7 @@ const CardEditor = observer(
             value={body}
             onTextChange={text => (card.body = text)}
             fullWidth
-            placeholder="Body"
-          />
-        </FormControl>
-        <FormControl className={classes.formControl}>
-          <EmojiInput
-            value={cornerValue}
-            onTextChange={text => (card.cornerValue = text)}
-            fullWidth
-            placeholder="Corner text"
+            placeholder={t("body")}
           />
         </FormControl>
         <FormControl className={classes.formControl}>
@@ -350,7 +348,7 @@ const CardEditor = observer(
             value={centerValue}
             onTextChange={text => (card.centerValue = text)}
             fullWidth
-            placeholder="Center text"
+            placeholder={t("centerText")}
           />
         </FormControl>
         <ColorPicker entity={card} />
@@ -360,6 +358,8 @@ const CardEditor = observer(
 );
 
 const PieceEditor = observer(({ entity }: { entity: Entity }) => {
+  const { t } = useTranslation();
+
   const classes = useStyles();
 
   const piece = entity as Piece;
@@ -381,7 +381,7 @@ const PieceEditor = observer(({ entity }: { entity: Entity }) => {
   else if (shape === Shape.Cylinder) {
     shapeControls = (
       <FormControl>
-        <FormLabel>Sides</FormLabel>
+        <FormLabel>{t("sides")}</FormLabel>
         <Slider
           value={piece.shapeParam1}
           onChange={(e, value) => (piece.shapeParam1 = value as number)}
@@ -394,7 +394,7 @@ const PieceEditor = observer(({ entity }: { entity: Entity }) => {
   } else if (shape === Shape.Cone) {
     shapeControls = (
       <FormControl>
-        <FormLabel>Sides</FormLabel>
+        <FormLabel>{t("sides")}</FormLabel>
         <Slider
           value={piece.shapeParam1}
           onChange={(e, value) => (piece.shapeParam1 = value as number)}
@@ -408,7 +408,7 @@ const PieceEditor = observer(({ entity }: { entity: Entity }) => {
     shapeControls = (
       <>
         <FormControl>
-          <FormLabel>Radial segments</FormLabel>
+          <FormLabel>{t("radialSegments")}</FormLabel>
           <Slider
             value={piece.shapeParam1}
             onChange={(e, value) => (piece.shapeParam1 = value as number)}
@@ -418,7 +418,7 @@ const PieceEditor = observer(({ entity }: { entity: Entity }) => {
           />
         </FormControl>
         <FormControl>
-          <FormLabel>Tubular segments</FormLabel>
+          <FormLabel>{t("tubularSegments")}</FormLabel>
           <Slider
             value={piece.shapeParam2}
             onChange={(e, value) => (piece.shapeParam2 = value as number)}
@@ -450,7 +450,7 @@ const PieceEditor = observer(({ entity }: { entity: Entity }) => {
       </FormControl>
       {shapeControls}
       <FormControl>
-        <FormLabel>Scale X</FormLabel>
+        <FormLabel>{t("scaleX")}</FormLabel>
         <Slider
           value={piece.scale.x}
           onChange={(e, value) => piece.setScaleX(value as number)}
@@ -461,7 +461,7 @@ const PieceEditor = observer(({ entity }: { entity: Entity }) => {
         />
       </FormControl>
       <FormControl>
-        <FormLabel>Scale Y</FormLabel>
+        <FormLabel>{t("scaleY")}</FormLabel>
         <Slider
           value={piece.scale.y}
           onChange={(e, value) => piece.setScaleY(value as number)}
@@ -472,7 +472,7 @@ const PieceEditor = observer(({ entity }: { entity: Entity }) => {
         />
       </FormControl>
       <FormControl>
-        <FormLabel>Scale Z</FormLabel>
+        <FormLabel>{t("scaleZ")}</FormLabel>
         <Slider
           value={piece.scale.z}
           onChange={(e, value) => piece.setScaleZ(value as number)}
@@ -488,6 +488,8 @@ const PieceEditor = observer(({ entity }: { entity: Entity }) => {
 });
 
 const DiceEditor = observer(({ entity }: { entity: Entity }) => {
+  const { t } = useTranslation();
+
   const classes = useStyles();
   const theme = useTheme();
   const dice = entity as Dice;
@@ -517,11 +519,11 @@ const DiceEditor = observer(({ entity }: { entity: Entity }) => {
           value={labels.join(" ")}
           onTextChange={text => (dice.labels = text.trimStart().split(" "))}
           fullWidth
-          placeholder="Sides"
+          placeholder={t("sides")}
         />
       </FormControl>
       <FormControl>
-        <FormLabel>Scale</FormLabel>
+        <FormLabel>{t("scale")}</FormLabel>
         <Slider
           value={dice.scale.x}
           onChange={(e, value) => dice.setScale(value as number)}
@@ -537,6 +539,8 @@ const DiceEditor = observer(({ entity }: { entity: Entity }) => {
 });
 
 const BoardEditor = observer(({ entity }: { entity: Entity }) => {
+  const { t } = useTranslation();
+
   const classes = useStyles();
   const theme = useTheme();
   const board = entity as Board;
@@ -550,11 +554,11 @@ const BoardEditor = observer(({ entity }: { entity: Entity }) => {
           value={frontImageUrl}
           onChange={e => (board.frontImageUrl = e.target.value)}
           fullWidth
-          placeholder={"Image URL"}
+          placeholder={t("imageUrl")}
         />
       </FormControl>
       <FormControl>
-        <FormLabel>Scale</FormLabel>
+        <FormLabel>{t("scale")}</FormLabel>
         <Slider
           value={scale.x}
           onChange={(e, value) => {
@@ -587,6 +591,8 @@ const EntityList = observer(
     childEntityName,
     onPreviewEntityChange
   }: EntityListProps) => {
+    const { t } = useTranslation();
+
     const [index, setIndex] = useState(0);
     const entity =
       entitySet.prototypes.length > 0 ? entitySet.prototypes[index] : undefined;
@@ -623,7 +629,7 @@ const EntityList = observer(
           {entitySet.prototypes.length > 0 && (
             <>
               <FormControl style={{ width: "100%" }}>
-                <FormLabel>Count</FormLabel>
+                <FormLabel>{t("count")}</FormLabel>
                 <Slider
                   value={count}
                   onChange={(e, value) =>
@@ -648,10 +654,11 @@ const EntityList = observer(
             )}
           </Grid>
           <Grid item xs style={{ display: "flex", justifyContent: "center" }}>
-            <Typography
-              variant="body1"
-              gutterBottom
-            >{`${entitySet.prototypesWithDuplicates.length} ${childEntityName}`}</Typography>
+            <Typography variant="body1" gutterBottom>{`${
+              entitySet.prototypesWithDuplicates.length
+            } ${t(childEntityName, {
+              count: entitySet.prototypesWithDuplicates.length
+            }).toLowerCase()}`}</Typography>
           </Grid>
           <Grid item xs style={{ display: "flex", justifyContent: "center" }}>
             <IconButton onClick={() => handleAddEntity()}>
@@ -681,6 +688,8 @@ type SetEditorProps = {
 
 const DeckEditor = observer(
   ({ entitySet, onPreviewEntityChange }: SetEditorProps) => {
+    const { t } = useTranslation();
+
     const classes = useStyles();
     const [backImageUrl, setBackImageUrl] = useState("");
 
@@ -716,7 +725,7 @@ const DeckEditor = observer(
             value={backImageUrl}
             onChange={e => handleBackImageUrlChange(e.target.value)}
             fullWidth
-            placeholder="Back image URL"
+            placeholder={t("backImageUrl")}
           />
         </FormControl>
         <FormControl className={classes.formControl}>
@@ -724,14 +733,14 @@ const DeckEditor = observer(
             margin="dense"
             value=""
             fullWidth
-            placeholder="Bulk add"
+            placeholder={t("bulkAdd")}
             onChange={e => handleBulkAdd(e.target.value)}
           />
         </FormControl>
         <EntityList
           entitySet={entitySet}
           editor={CardEditor}
-          childEntityName="cards"
+          childEntityName="card"
           onPreviewEntityChange={onPreviewEntityChange}
           getNewEntity={() =>
             new Card({
@@ -754,7 +763,7 @@ const PieceSetEditor = observer(
           entitySet={entitySet}
           onPreviewEntityChange={onPreviewEntityChange}
           editor={PieceEditor}
-          childEntityName="pieces"
+          childEntityName="piece"
           getNewEntity={() =>
             new Piece({
               ownerSet: entitySetRef(entitySet)
@@ -785,6 +794,8 @@ export type ModalProps = {
 
 export default observer(
   ({ open, handleClose, positionGroundPlane, entity }: ModalProps) => {
+    const { t } = useTranslation();
+
     const classes = useStyles();
 
     const { gameStore } = useStore();
@@ -801,23 +812,23 @@ export default observer(
       if (isEditing) targetEntity = entity!;
       else {
         if (type === EntityType.Deck)
-          targetEntity = new Deck({ name: "New Deck" });
+          targetEntity = new Deck({ name: t("newDeck") });
         else if (type === EntityType.Card)
           targetEntity = new Card({
-            name: "New Card",
+            name: t("newDeck"),
             color: { r: 1, g: 1, b: 1 }
           });
         else if (type === EntityType.PieceSet)
-          targetEntity = new PieceSet({ name: "New Piece Set" });
+          targetEntity = new PieceSet({ name: t("newDeck") });
         else if (type === EntityType.Piece)
-          targetEntity = new Piece({ name: "New Piece" });
+          targetEntity = new Piece({ name: t("newDeck") });
         else if (type === EntityType.Dice)
           targetEntity = new Dice({
-            name: "New Die",
+            name: t("newDeck"),
             diceType: DiceType.D6,
             scale: { x: 2, y: 2, z: 2 }
           });
-        else targetEntity = new Board({});
+        else targetEntity = new Board({ name: t("newBoard") });
       }
 
       const newDraft = draft(targetEntity);
@@ -894,7 +905,9 @@ export default observer(
       <Modal
         open={open}
         handleClose={handleClose}
-        title={`${isEditing ? "Edit" : "Add"} object`}
+        title={`${isEditing ? t("edit") : t("add")} ${t(
+          "object"
+        ).toLocaleLowerCase()}`}
         content={
           <Box display="flex" height={670}>
             <Box
@@ -912,12 +925,14 @@ export default observer(
                     value={type}
                     onChange={e => setType(e.target.value as EntityType)}
                   >
-                    <MenuItem value={EntityType.Deck}>Deck</MenuItem>
-                    <MenuItem value={EntityType.Card}>Card</MenuItem>
-                    <MenuItem value={EntityType.PieceSet}>Piece set</MenuItem>
-                    <MenuItem value={EntityType.Piece}>Piece</MenuItem>
-                    <MenuItem value={EntityType.Dice}>Die</MenuItem>
-                    <MenuItem value={EntityType.Board}>Board</MenuItem>
+                    <MenuItem value={EntityType.Deck}>{t("deck")}</MenuItem>
+                    <MenuItem value={EntityType.Card}>{t("card")}</MenuItem>
+                    <MenuItem value={EntityType.PieceSet}>
+                      {t("pieceSet")}
+                    </MenuItem>
+                    <MenuItem value={EntityType.Piece}>{t("piece")}</MenuItem>
+                    <MenuItem value={EntityType.Dice}>{t("die")}</MenuItem>
+                    <MenuItem value={EntityType.Board}>{t("board")}</MenuItem>
                   </Select>
                 </FormControl>
               )}
@@ -927,7 +942,7 @@ export default observer(
                   value={entityDraft.data.name}
                   onChange={e => (entityDraft.data.name = e.target.value)}
                   fullWidth
-                  placeholder="Name"
+                  placeholder={t("name")}
                 />
               </FormControl>
               <FormControl className={classes.formControl}>
@@ -941,7 +956,7 @@ export default observer(
                       color="primary"
                     />
                   }
-                  label="Stackable"
+                  label={t("stackable")}
                 />
               </FormControl>
               <Preview entity={previewEntity} active={open} />
@@ -959,7 +974,7 @@ export default observer(
         actions={
           <>
             <Button onClick={handleSaveClick} color="primary">
-              {isEditing ? "Save" : "Add"}
+              {isEditing ? t("save") : t("add")}
             </Button>
           </>
         }

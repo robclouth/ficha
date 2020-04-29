@@ -16,6 +16,7 @@ import Modal from "./Modal";
 import Markdown from "../Markdown";
 import EditIcon from "@material-ui/icons/Edit";
 import VisibilityIcon from "@material-ui/icons/Visibility";
+import { useTranslation } from "react-i18next";
 
 const useStyles = makeStyles(theme => ({
   fab: {
@@ -31,6 +32,7 @@ type ModalProps = {
 };
 
 export default observer(({ open, handleClose }: ModalProps) => {
+  const { t } = useTranslation();
   const classes = useStyles();
 
   const [edit, setEdit] = useState(false);
@@ -63,7 +65,7 @@ export default observer(({ open, handleClose }: ModalProps) => {
               value={markdown}
               onChange={handleChange}
               autoFocus
-              placeholder="Game ID"
+              placeholder={t("gameId")}
               fullWidth
               multiline
             />

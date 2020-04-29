@@ -1,27 +1,15 @@
 import {
-  Box,
   Button,
   Dialog,
   DialogActions,
   DialogContent,
   DialogTitle,
-  FormControl,
-  MenuItem,
-  Select,
-  useTheme,
   makeStyles
 } from "@material-ui/core";
 import "emoji-mart/css/emoji-mart.css";
-import { draft } from "mobx-keystone";
 import { observer } from "mobx-react";
-import React, { useEffect, useCallback } from "react";
-import Card from "../../models/game/Card";
-import Deck from "../../models/game/Deck";
-import Entity, { EntityType } from "../../models/game/Entity";
-import EntitySet from "../../models/game/EntitySet";
-import Piece from "../../models/game/Piece";
-import PieceSet from "../../models/game/PieceSet";
-import { useStore } from "../../stores/RootStore";
+import React, { useCallback, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 
 const useStyles = makeStyles({
   content: (noPadding: boolean) => {
@@ -60,6 +48,7 @@ export default observer(
     noActions = false,
     noPadding = false
   }: ModalProps) => {
+    const { t } = useTranslation();
     const [modalOpen, setModalOpen] = React.useState(open);
 
     const classes = useStyles(noPadding);
@@ -77,7 +66,7 @@ export default observer(
         {!noActions && (
           <DialogActions>
             <Button onClick={onClose} color="primary">
-              Cancel
+              {t("cancel")}
             </Button>
             {actions}
           </DialogActions>
