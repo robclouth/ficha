@@ -133,6 +133,8 @@ export default class GameStore extends Model({
 
   @modelFlow
   joinGame = _async(function*(this: GameStore, hostPeerId: string) {
+    if (!this.peer) this.peer = yield* _await(createPeer());
+
     this.hostPeerId = hostPeerId;
     this.isLoading = true;
     this.gameServer = null;
