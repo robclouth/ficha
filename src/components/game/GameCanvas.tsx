@@ -159,10 +159,10 @@ const Scene = observer(() => {
 
   return (
     <>
-      <ambientLight args={["white", 0.2]} />
+      <ambientLight args={["white", 0.7]} />
       <directionalLight
         position={[10, 10, 5]}
-        intensity={1}
+        intensity={0.5}
         castShadow
         shadowMapWidth={2048}
         shadowMapHeight={2048}
