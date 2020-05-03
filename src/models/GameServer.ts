@@ -87,7 +87,7 @@ export default class GameServer extends Model({}) {
     //   }
     // });
 
-    // connection.on("data", data =>
+    connection.on("data", data =>
       this.handleStateDataFromClient(data, player!)
     );
     connection.on("error", err => this.handleConnectionError(err));
