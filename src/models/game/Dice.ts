@@ -4,6 +4,7 @@ import DiceComponent, { DiceProps } from "../../components/game/entities/Dice";
 import Entity, { EntityType } from "./Entity";
 import { Box3 } from "three";
 import { $enum } from "ts-enum-util";
+import delay from "delay";
 
 export enum DiceType {
   Coin,
@@ -18,6 +19,7 @@ export enum DiceType {
 @model("Dice")
 export default class Dice extends ExtendedModel(Entity, {
   diceType: prop<DiceType>({ setterAction: true }),
+  rolling: prop(false, { setterAction: true }),
   value: prop(0, { setterAction: true }),
   labels: prop<string[]>(
     () => [
@@ -51,8 +53,7 @@ export default class Dice extends ExtendedModel(Entity, {
     this.stackable = true;
   }
 
-  @modelAction
-  roll() {
+  async roll() {
     const numSides = $enum.mapValue(this.diceType).with<number>({
       [DiceType.Coin]: 2,
       [DiceType.D4]: 4,
@@ -63,7 +64,10 @@ export default class Dice extends ExtendedModel(Entity, {
       [DiceType.D20]: 20
     });
 
+    this.rolling = true;
+    await delay(1000);
     this.value = Math.floor(Math.random() * numSides);
+    this.rolling = false;
   }
 
   render(props: DiceProps): JSX.Element {

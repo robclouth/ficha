@@ -1,7 +1,7 @@
 import { easeBounceOut, easeQuadOut } from "d3-ease";
 import delay from "delay";
 import { observer } from "mobx-react";
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { useSpring } from "react-spring/three";
 import { Dom } from "react-three-fiber";
@@ -40,7 +40,7 @@ export default observer((props: DiceProps) => {
   const { assetCache } = useStore();
   const { entity } = props;
   const dice = entity as Dice;
-  const { ownerSet, color, diceType, value, labels } = dice;
+  const { ownerSet, color, diceType, value, labels, rolling } = dice;
   const [rollPhase, setRollPhase] = useState(RollPhase.None);
 
   const contextMenuItems: ContextMenuItem[] = [];
@@ -48,19 +48,22 @@ export default observer((props: DiceProps) => {
   contextMenuItems.push({
     label: t("contextMenu.roll"),
     type: "action",
-    action: () => handleRoll()
+    action: () => !rolling && dice.roll()
   });
 
   const handleRoll = async () => {
-    setRollPhase(RollPhase.Rising);
-    await delay(250);
-    setRollPhase(RollPhase.Falling);
-    await delay(750);
-    dice.roll();
-    setRollPhase(RollPhase.ShowValue);
-    await delay(3000);
-    setRollPhase(RollPhase.None);
+    if (rolling) {
+      setRollPhase(RollPhase.Rising);
+      await delay(250);
+      setRollPhase(RollPhase.Falling);
+      await delay(750);
+      setRollPhase(RollPhase.None);
+    }
   };
+
+  useEffect(() => {
+    handleRoll();
+  }, [rolling]);
 
   const diceData = useMemo(() => {
     let die: any;
@@ -125,7 +128,7 @@ export default observer((props: DiceProps) => {
       contextMenuItems={contextMenuItems}
       rotationOffset={diceData.faceRotations[value]}
       positionOffset={animation.position}
-      doubleClickAction={handleRoll}
+      doubleClickAction={() => !rolling && dice.roll()}
       // hoverMessage={diceData.sideLabels[value]}
     >
       <Dom
