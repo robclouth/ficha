@@ -76,6 +76,7 @@ const PlayersList = observer(() => {
   const { enqueueSnackbar, closeSnackbar } = useSnackbar();
 
   const handleHostClick = () => {
+    if (!gameStore.isHost) history.replace("");
     gameStore.toggleHosting();
   };
 
@@ -332,7 +333,7 @@ export default observer(() => {
     if (game) {
       if (game != gameStore.hostPeerId) gameStore.joinGame(game);
     } else {
-      gameStore.leaveGame();
+      if (!gameStore.isHost) gameStore.leaveGame();
     }
   }, [game]);
 
