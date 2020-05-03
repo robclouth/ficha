@@ -167,9 +167,9 @@ const Scene = observer(() => {
         shadowMapWidth={2048}
         shadowMapHeight={2048}
       />
-      {gameState?.entities.map((entity, i) =>
-        entity.render({ entity, key: i })
-      )}
+      {gameState?.entities.map(entity => {
+        return entity.render({ entity, key: entity.$modelId });
+      })}
       <mesh
         rotation={[-Math.PI / 2, 0, 0]}
         receiveShadow

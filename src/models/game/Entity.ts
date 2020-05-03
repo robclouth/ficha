@@ -1,5 +1,5 @@
 import { omit } from "lodash";
-import { computed, observable, reaction, when } from "mobx";
+import { computed, when } from "mobx";
 import {
   applySnapshot,
   clone,
@@ -15,11 +15,11 @@ import {
   Ref,
   rootRef
 } from "mobx-keystone";
-import { Box3, Mesh } from "three";
+import { Box3, Matrix4 } from "three";
 import RootStore from "../../stores/RootStore";
+import { Vector3 } from "../../types";
 import GameState from "../GameState";
 import EntitySet from "./EntitySet";
-import { Vector3 } from "../../types";
 
 export enum EntityType {
   Deck,
@@ -63,11 +63,15 @@ export default class Entity extends Model({
   controllingUserId: prop<string | undefined>(undefined, { setterAction: true })
 }) {
   onSnapshotDisposer?: OnSnapshotDisposer;
-  @observable mesh?: Mesh;
-  @observable boundingBox?: Box3;
 
-  onInit() {
-    when(
+  boundingBox?: Box3;
+  handArea?: Entity;
+  prevMeshMatrix?: Matrix4;
+
+  onInit() {}
+
+  onAttachedToRootStore() {
+    const preloadDisposer = when(
       () => this.assetCache !== undefined,
       () => {
         this.frontImageUrl && this.assetCache!.addTexture(this.frontImageUrl);
@@ -75,11 +79,9 @@ export default class Entity extends Model({
       }
     );
 
-    reaction(
-      () => [this.mesh, this.position, this.scale, this.angle],
-      data => this.updateBoundingBox(),
-      { fireImmediately: true }
-    );
+    return () => {
+      preloadDisposer();
+    };
   }
 
   @computed get gameState() {
@@ -125,23 +127,31 @@ export default class Entity extends Model({
     return this.uiState?.selectedEntities[this.$modelId] !== undefined;
   }
 
-  @computed get handArea() {
-    let area: Entity | undefined;
-    if (this.gameState && this.boundingBox) {
+  updateBoundingBox(boundingBox: Box3) {
+    this.boundingBox = boundingBox;
+
+    this.updateHandArea();
+  }
+
+  updateHandArea() {
+    this.handArea = undefined;
+    if (this.$modelType !== "HandArea" && this.gameState && this.boundingBox) {
       for (const otherEntity of this.gameState.entities) {
-        if (otherEntity !== this && otherEntity.boundingBox) {
+        if (
+          otherEntity !== this &&
+          otherEntity.$modelType === "HandArea" &&
+          otherEntity.boundingBox
+        ) {
           const collision = this.boundingBox.intersectsBox(
             otherEntity.boundingBox
           );
-          if (collision && otherEntity.$modelType === "HandArea") {
-            area = otherEntity;
+          if (collision) {
+            this.handArea = otherEntity;
             break;
           }
         }
       }
     }
-
-    return area;
   }
 
   @modelAction
@@ -151,28 +161,18 @@ export default class Entity extends Model({
       for (const otherEntity of this.gameState.entities) {
         if (ignoreEntities.includes(otherEntity)) continue;
         if (otherEntity !== this && otherEntity.boundingBox) {
-          const collision = this.boundingBox.intersectsBox(
-            otherEntity.boundingBox
-          );
-          if (collision) {
-            if (this.stackable && otherEntity.boundingBox.max.y > y) {
-              y = otherEntity.boundingBox.max.y;
-            }
+          const collision =
+            this.stackable &&
+            this.boundingBox.intersectsBox(otherEntity.boundingBox);
+
+          if (collision && otherEntity.boundingBox.max.y > y) {
+            y = otherEntity.boundingBox.max.y;
           }
         }
       }
     }
 
     this.position = { x, y, z };
-  }
-
-  @modelAction
-  updateBoundingBox() {
-    if (this.mesh && this.mesh.geometry) {
-      this.boundingBox = new Box3();
-      this.boundingBox.setFromObject(this.mesh);
-      this.boundingBox.min.y = 0;
-    }
   }
 
   @modelAction

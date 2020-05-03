@@ -1,5 +1,11 @@
 import { observer } from "mobx-react";
-import React, { useCallback, useMemo, useState } from "react";
+import React, {
+  useCallback,
+  useMemo,
+  useState,
+  useEffect,
+  useRef
+} from "react";
 import { useTranslation } from "react-i18next";
 import { a, SpringValue } from "react-spring/three";
 import { Dom, PointerEvent } from "react-three-fiber";
@@ -7,7 +13,9 @@ import {
   BufferGeometry,
   MeshStandardMaterial,
   MeshStandardMaterialParameters,
-  Quaternion
+  Quaternion,
+  Mesh,
+  Box3
 } from "three";
 import Entity from "../../../models/game/Entity";
 import HandArea from "../../../models/game/HandArea";
@@ -74,6 +82,7 @@ export default observer((props: EntityProps) => {
   } = entity;
   const [hovered, setHovered] = useState(false);
   const [pressed, setPressed] = useState(false);
+  const [boundingBox, setBoundingBox] = useState<Box3 | undefined>(undefined);
 
   const [pointerDownPos, setPointerDownPos] = React.useState({ x: 0, y: 0 });
 
@@ -234,13 +243,18 @@ export default observer((props: EntityProps) => {
     setHovered(false);
   };
 
-  const mesh = useCallback(mesh => {
-    if (mesh !== null) {
-      entity.mesh = mesh;
-      setTimeout(() => entity.updateBoundingBox(), 1);
-      entity.updateBoundingBox();
-    }
-  }, []);
+  const mesh = useRef<Mesh>();
+
+  useEffect(() => {
+    const boundingBox = new Box3();
+    boundingBox.setFromObject(mesh.current!);
+    boundingBox.min.y = 0;
+    entity.updateBoundingBox(boundingBox);
+    setBoundingBox(boundingBox);
+  }, [
+    JSON.stringify(mesh.current?.matrixWorld) +
+      (!entity.boundingBox ? Math.random() : "")
+  ]);
 
   const faded = isSelected;
 
@@ -288,7 +302,7 @@ export default observer((props: EntityProps) => {
 
   return (
     <>
-      {/* {entity.boundingBox && <box3Helper box={entity.boundingBox} />} */}
+      {/* {boundingBox && <box3Helper box={boundingBox} />} */}
       <a.group position={positionOffset} visible={visible}>
         <group
           position={[position.x, position.y, position.z]}
@@ -321,8 +335,8 @@ export default observer((props: EntityProps) => {
             </group>
           </group>
 
-          {children}
-          {hoverMessage && hovered && (
+          {visible && children}
+          {hoverMessage && hovered && visible && (
             <Dom
               position={[0, 1 / scale.y, 0]}
               center

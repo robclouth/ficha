@@ -13,7 +13,7 @@ let height = 0.01;
 
 export default observer((props: HandAreaProps) => {
   const { t } = useTranslation();
-  const { gameStore } = useStore();
+  const { gameStore, assetCache } = useStore();
   const { entity } = props;
   const handArea = entity as HandArea;
   const { player, isHidden, claimed } = handArea;
@@ -42,14 +42,15 @@ export default observer((props: HandAreaProps) => {
       geometry={<boxBufferGeometry args={[6, height, 4]} attach="geometry" />}
       materialParams={{
         roughness: 1,
-        opacity: 0.3,
+        opacity: 1,
+        map: assetCache.getTexture(require("../../../assets/hand-area.png")),
         color: player
           ? new Color(player.color.r, player.color.g, player.color.b)
           : new Color(0.4, 0.4, 0.4)
       }}
       contextMenuItems={contextMenuItems}
       hoverMessage={player?.name || undefined}
-      blockInteraction={claimed && player !== gameStore.thisPlayer}
+      // blockInteraction={claimed && player !== gameStore.thisPlayer}
       castShadows={false}
     />
   );
