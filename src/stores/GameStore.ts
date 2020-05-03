@@ -1,11 +1,12 @@
 import localforage from "localforage";
 import { omit } from "lodash";
-import { computed, observable, reaction, autorun } from "mobx";
+import { action, computed, observable } from "mobx";
 import {
   applyPatches,
   applySnapshot,
   clone,
   fromSnapshot,
+  getRootStore,
   getSnapshot,
   model,
   Model,
@@ -15,39 +16,41 @@ import {
   OnPatchesDisposer,
   Patch,
   prop,
-  SnapshotInOf,
-  SnapshotOutOf,
-  _async,
-  _await,
-  getRootStore,
-  SnapshotOutOfModel,
   Ref,
-  onSnapshot
+  SnapshotInOf,
+  _async,
+  _await
 } from "mobx-keystone";
 import { nanoid } from "nanoid";
-import gameListUrls from "../constants/gameList";
-import Peer, { DataConnection, util } from "peerjs";
+import Peer, { DataConnection } from "peerjs";
 import GameServer, { StateData, StateDataType } from "../models/GameServer";
 import GameState, { gameStateRef } from "../models/GameState";
 import Player from "../models/Player";
 import { generateName } from "../utils/NameGenerator";
-import { createPeer, loadJson } from "../utils/Utils";
-import {
-  undoMiddleware,
-  UndoManager,
-  withoutUndo
-} from "../utils/undoMiddleware";
-import { gameRepoUrl, serverRoot } from "../constants/constants";
-import RootStore from "./RootStore";
 import persist from "../utils/persistent";
+import { withoutUndo } from "../utils/undoMiddleware";
+import { generateId } from "../utils/Utils";
+import RootStore from "./RootStore";
+import delay from "delay";
+import { appUrl } from "../constants/constants";
+
+const FATAL_ERRORS = [
+  "invalid-id",
+  "invalid-key",
+  "network",
+  "ssl-unavailable",
+  "server-error",
+  "socket-error",
+  "socket-closed",
+  "unavailable-id",
+  "webrtc"
+];
 
 @model("GameStore")
 export default class GameStore extends Model({
-  gameServer: prop<GameServer | null>(null, { setterAction: true }),
   gameState: prop<GameState>(() => new GameState({}), {
     setterAction: true
   }),
-
   currentGame: prop<Ref<GameState> | undefined>(undefined, {
     setterAction: true
   })
@@ -59,6 +62,11 @@ export default class GameStore extends Model({
   @observable peer?: Peer;
   @observable hostPeerId?: string;
   @observable serverConnection?: DataConnection;
+  @observable isConnectedToPeerServer = false;
+  @observable isConnectedToHost = false;
+  @observable gameServer: GameServer | null = null;
+  peerServerReconnectTimer?: NodeJS.Timeout;
+  hostReconnectTimer?: NodeJS.Timeout;
 
   localStatePatchDisposer: OnPatchesDisposer = () => {};
 
@@ -82,6 +90,18 @@ export default class GameStore extends Model({
     if (!hasHydrated) {
       this.gameLibrary.newGame();
     }
+
+    // add a player for this user
+    if (!this.thisPlayer) {
+      this.gameState.addPlayer(
+        new Player({
+          userId: this.userId!,
+          name: this.userName!
+        })
+      );
+    }
+
+    this.thisPlayer.isConnected = true;
 
     // disconnect all saved players
     this.gameState.players.forEach(player => {
@@ -113,11 +133,22 @@ export default class GameStore extends Model({
     return this.peer?.id;
   }
 
+  @computed get gameUrl(): string | undefined {
+    return `${appUrl}/#/${this.hostPeerId}`;
+  }
+
+  @computed get isConnected() {
+    return (
+      this.isConnectedToPeerServer && (this.isHost || this.isConnectedToHost)
+    );
+  }
+
   @modelFlow
-  createGame = _async(function*(this: GameStore) {
+  startHosting = _async(function*(this: GameStore) {
     this.isLoading = true;
 
-    this.peer = yield* _await(createPeer());
+    this.destroyPeer();
+    yield* _await(this.createPeer());
     this.hostPeerId = this.peer!.id;
 
     this.thisPlayer.peerId = this.peer!.id;
@@ -131,14 +162,41 @@ export default class GameStore extends Model({
     this.isLoading = false;
   });
 
+  stopHosting() {
+    this.gameServer && this.gameServer.close();
+    this.gameServer = null;
+    this.destroyPeer();
+  }
+
+  @modelAction
+  toggleHosting() {
+    if (!this.isHost) {
+      this.startHosting();
+    } else {
+      this.stopHosting();
+    }
+  }
+
   @modelFlow
   joinGame = _async(function*(this: GameStore, hostPeerId: string) {
-    if (!this.peer) this.peer = yield* _await(createPeer());
+    this.destroyPeer();
+    yield* _await(this.createPeer());
 
-    this.hostPeerId = hostPeerId;
+    this.hostPeerId = hostPeerId.toUpperCase();
     this.isLoading = true;
+    this.gameServer?.close();
     this.gameServer = null;
+    this.isConnectedToHost = false;
     this.serverConnection = yield* _await(this.connectToGame());
+    this.isConnectedToHost = true;
+
+    this.uiState.showMessage({
+      text: "Connected",
+      options: {
+        variant: "success",
+        preventDuplicate: true
+      }
+    });
 
     this.trackLocalState(true);
 
@@ -152,6 +210,36 @@ export default class GameStore extends Model({
     });
   });
 
+  @modelAction
+  leaveGame() {
+    const serverConnection = this.serverConnection as any;
+    if (serverConnection) {
+      serverConnection.removeAllListeners("data");
+      serverConnection.removeAllListeners("close");
+      serverConnection?.close();
+    }
+
+    this.hostReconnectTimer && clearInterval(this.hostReconnectTimer);
+    this.isConnectedToHost = false;
+    this.serverConnection = undefined;
+    this.isConnectedToHost = false;
+
+    this.destroyPeer();
+  }
+
+  @modelAction
+  destroyPeer() {
+    this.peerServerReconnectTimer &&
+      clearInterval(this.peerServerReconnectTimer);
+    this.isConnectedToPeerServer = false;
+    this.peer?.destroy();
+    this.hostPeerId = undefined;
+
+    this.gameState.connectedPlayers.forEach(player => {
+      if (player !== this.thisPlayer) player.isConnected = false;
+    });
+  }
+
   @modelFlow
   handleHostDisconnect = _async(function*(this: GameStore) {
     // set all other players to disconnected
@@ -159,18 +247,10 @@ export default class GameStore extends Model({
       if (p !== this.thisPlayer) p.isConnected = false;
     });
 
-    // remove entity control of all players
-    this.gameState.entities.forEach(entity => {
-      if (entity.controllingPeerId !== this.peerId)
-        entity.controllingPeerId = undefined;
-    });
-
-    // create a new server and pass in the old local state
-    this.gameServer = new GameServer({});
-    yield* _await(this.gameServer.setup(this.peer!, this.gameState));
+    this.reconnectToHost();
 
     this.uiState.showMessage({
-      text: "The host disconnected",
+      text: "Connection to host lost. Retrying...",
       options: {
         variant: "error",
         preventDuplicate: true
@@ -178,19 +258,113 @@ export default class GameStore extends Model({
     });
   });
 
-  connectToGame() {
-    return new Promise<DataConnection>((resolve, reject) => {
+  @action async createPeer() {
+    this.peer = await new Promise<Peer>((resolve, reject) => {
+      const peer = new Peer(generateId(), {
+        host: "llllllll.link",
+        port: 9000,
+        secure: true,
+        path: "/peer",
+        config: {
+          iceServers: [
+            {
+              urls: "stun:llllllll.link:443",
+              username: "ficha",
+              credential: "R0J3Y88GsjVYvbdI8m6H"
+            },
+            {
+              urls: "turn:llllllll.link:443",
+              username: "ficha",
+              credential: "R0J3Y88GsjVYvbdI8m6H"
+            }
+          ],
+          iceTransportPolicy: "all"
+        }
+        // debug: 3
+      });
+
+      peer.on("open", id => {
+        resolve(peer);
+      });
+
+      peer.on("error", err => {
+        reject(err);
+      });
+    });
+
+    this.isConnectedToPeerServer = true;
+
+    this.peer.on("error", err => {
+      if (FATAL_ERRORS.includes(err.type)) {
+        this.reconnectToHost();
+        this.uiState.showMessage({
+          text: "Connection lost. Retrying...",
+          options: {
+            variant: "error",
+            preventDuplicate: true
+          }
+        });
+      } else {
+        this.uiState.showMessage({
+          text: err.message.replace(/peer/g, "game"),
+          options: {
+            variant: "error",
+            preventDuplicate: true
+          }
+        });
+        if (err.type === "peer-unavailable") {
+          this.leaveGame();
+        }
+        console.log("Non fatal error: ", err.type);
+      }
+    });
+
+    this.peer.on("disconnected", () => {
+      if (this.isConnectedToPeerServer) {
+        this.reconnectToPeerServer();
+
+        this.uiState.showMessage({
+          text: "Connection lost. Retrying...",
+          options: {
+            variant: "error",
+            preventDuplicate: true
+          }
+        });
+      }
+    });
+  }
+
+  async reconnectToPeerServer() {
+    this.isConnectedToPeerServer = false;
+    this.peerServerReconnectTimer = setInterval(
+      () => this.peer?.reconnect(),
+      5000
+    );
+  }
+
+  async reconnectToHost() {
+    this.isConnectedToHost = false;
+    this.hostReconnectTimer = setInterval(() => this.connectToGame(), 5000);
+  }
+
+  async connectToGame() {
+    const connection = await new Promise<DataConnection>((resolve, reject) => {
       const connection = this.peer!.connect(this.hostPeerId!, {
         metadata: { userId: this.userId, userName: this.userName }
       });
 
+      if (!connection) reject("Connection failed");
+
       connection.on("open", () => {
         resolve(connection);
       });
+
       connection.on("error", err => {
         reject(err);
       });
     });
+
+    return connection;
   }
 
   trackLocalState(shouldTrack: boolean) {
@@ -247,6 +421,7 @@ export default class GameStore extends Model({
     // if currently playing a game close it
     this.serverConnection && this.serverConnection.close();
     this.gameServer && this.gameServer.close();
+    this.hostPeerId = undefined;
 
     this.currentGame = gameStateRef(game);
 

@@ -1,27 +1,17 @@
-import { action, observable, reaction } from "mobx";
+import { action, observable } from "mobx";
 import {
-  getSnapshot,
-  onPatches,
-  Patch,
-  SnapshotOutOf,
   applyPatches,
-  clone,
-  SnapshotInOf,
-  fromSnapshot,
+  getSnapshot,
   model,
   Model,
   modelFlow,
-  _async,
-  _await,
-  prop
+  Patch,
+  SnapshotOutOf,
+  _async
 } from "mobx-keystone";
-import localforage from "localforage";
 import Peer, { DataConnection } from "peerjs";
-import { createPeer } from "../utils/Utils";
 import GameState from "./GameState";
 import Player from "./Player";
-import Deck from "./game/Deck";
-import Card from "./game/Card";
 
 export enum StateDataType {
   Full,
@@ -47,13 +37,15 @@ export default class GameServer extends Model({}) {
     this.gameState = gameState;
 
     this.peer.on("connection", connection => {
-      connection.on("open", () => {
-        this.handleConnectionOpened(connection);
-      });
+      this.handlePlayerConnected(connection);
     });
-
-    this.peer.on("disconnected", () => this.peer.reconnect());
   });
+
+  @action handlePlayerConnected(connection: DataConnection) {
+    connection.on("open", () => {
+      this.handleConnectionOpened(connection);
+    });
+  }
 
   @action handleConnectionOpened(connection: DataConnection) {
     // if the user was previously in game, they take control of that player
@@ -62,6 +54,13 @@ export default class GameServer extends Model({}) {
     let player = this.gameState.players.find(p => p.userId === userId);
 
     if (player) {
+      // close existing connection
+      if (player.connection) {
+        const connection = player.connection as any;
+        connection.removeAllListeners("data");
+        connection.removeAllListeners("error");
+        connection.removeAllListeners("close");
+      }
       player.isConnected = true;
     } else {
       player = new Player({
@@ -80,7 +79,18 @@ export default class GameServer extends Model({}) {
       data: getSnapshot(this.gameState)
     });
 
-    connection.on("data", data => this.onStateDataFromClient(data, player!));
+    this. .showMessage({
+      text: "Connected",
+      options: {
+        variant: "success",
+        preventDuplicate: true
+      }
+    });
+
+    connection.on("data", data =>
+      this.handleStateDataFromClient(data, player!)
+    );
+    connection.on("error", err => this.handleConnectionError(err));
     connection.on("close", () => this.handlePlayerDisconnect(player!));
   }
 
@@ -88,11 +98,15 @@ export default class GameServer extends Model({}) {
     return this.peer?.id;
   }
 
+  @action handleConnectionError(err: string) {
+    console.log(err);
+  }
+
   @action handlePlayerDisconnect(player: Player) {
     // remove control of all entities they were controlling
     this.gameState.entities.forEach(entity => {
-      if (entity.controllingPeerId === player.peerId)
-        entity.controllingPeerId = undefined;
+      if (entity.controllingUserId === player.peerId)
+        entity.controllingUserId = undefined;
     });
     player.isConnected = false;
   }
@@ -102,8 +116,9 @@ export default class GameServer extends Model({}) {
       if (
         player.peerId === this.peerId ||
         player.userId === this.ignorePlayerIdInStateUpdate
-      )
+      ) {
         continue;
+      }
       player.sendState({
         type: StateDataType.Partial,
         data: patches
@@ -111,7 +126,7 @@ export default class GameServer extends Model({}) {
     }
   }
 
-  @action onStateDataFromClient(stateData: StateData, fromPlayer: Player) {
+  @action handleStateDataFromClient(stateData: StateData, fromPlayer: Player) {
     if (stateData.type === StateDataType.Partial) {
       this.ignorePlayerIdInStateUpdate = fromPlayer.userId;
       applyPatches(this.gameState, stateData.data as Patch[]);
@@ -123,5 +138,7 @@ export default class GameServer extends Model({}) {
     this.gameState.connectedPlayers.forEach(
       player => player.connection && player.connection.close()
     );
+
+    this.peer.off("connection", this.handlePlayerConnected);
   }
 }

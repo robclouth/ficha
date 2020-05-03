@@ -20,7 +20,9 @@ export default class HandArea extends ExtendedModel(Entity, {
   }
 
   @computed get player() {
-    return this.gameState?.players.find(p => p.userId === this.playerId);
+    return this.gameState?.players.find(
+      p => p.userId === this.playerId && p.isConnected
+    );
   }
 
   @computed get claimed(): boolean {

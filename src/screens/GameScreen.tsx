@@ -70,9 +70,18 @@ const PlayersList = observer(() => {
   const { gameState } = gameStore;
   const theme = useTheme();
   const { t } = useTranslation();
+  const history = useHistory();
 
   const classes = useStyles();
   const { enqueueSnackbar, closeSnackbar } = useSnackbar();
+
+  const handleHostClick = () => {
+    gameStore.toggleHosting();
+  };
+
+  const handleLeaveGameClick = () => {
+    history.replace("");
+  };
 
   return (
     <Box
@@ -84,11 +93,29 @@ const PlayersList = observer(() => {
       flexDirection="column"
       alignItems="flex-end"
     >
-      {gameStore.isHost && (
+      {(gameStore.isHost || !gameStore.isConnectedToHost) && (
+        <Chip
+          onClick={handleHostClick}
+          clickable
+          className={classes.chip}
+          icon={<HostIcon />}
+          label={gameStore.isHost ? t("stopHosting") : t("startHosting")}
+        />
+      )}
+      {!gameStore.isHost && gameStore.isConnectedToHost && (
+        <Chip
+          onClick={handleLeaveGameClick}
+          clickable
+          className={classes.chip}
+          icon={<HostIcon />}
+          label={t("leaveGame")}
+        />
+      )}
+      {gameStore.hostPeerId && gameStore.isConnected && (
         <CopyToClipboard
-          text={gameStore.gameServer?.peerId}
+          text={gameStore.gameUrl}
           onCopy={() => {
-            const key = enqueueSnackbar(t("gameIdCopiedToClipboard"), {
+            const key = enqueueSnackbar(t("gameUrlCopiedToClipboard"), {
               onClick: () => closeSnackbar(key)
             });
           }}
@@ -96,8 +123,7 @@ const PlayersList = observer(() => {
           <Chip
             className={classes.chip}
             clickable
-            icon={<HostIcon />}
-            label={t("youAreHosting")}
+            label={`${t("gameId")}: ${gameStore.hostPeerId}`}
           />
         </CopyToClipboard>
       )}
@@ -118,9 +144,9 @@ const PlayersList = observer(() => {
                 {player.name.charAt(0).toUpperCase()}
               </Avatar>
             }
-            label={`${player.name} (${
-              gameStore.thisPlayer === player ? t("you") : ""
-            })`}
+            label={`${player.name} ${
+              gameStore.thisPlayer === player ? `(${t("you")})` : ""
+            }`}
             deleteIcon={<EditIcon fontSize="small" />}
             onDelete={gameStore.thisPlayer === player ? () => {} : undefined}
           />
@@ -303,8 +329,14 @@ export default observer(() => {
   const snackbar = useSnackbar();
 
   useEffect(() => {
-    if (!game) gameStore.createGame();
-    else gameStore.joinGame(game);
+    if (game) {
+      if (game != gameStore.hostPeerId) gameStore.joinGame(game);
+    } else {
+      gameStore.leaveGame();
+    }
+  }, [game]);
+
+  useEffect(() => {
     autorun(() => {
       uiState.snackbarMessage &&
         snackbar.enqueueSnackbar(

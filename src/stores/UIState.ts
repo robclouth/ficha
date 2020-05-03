@@ -119,7 +119,7 @@ export default class UIState extends Model({}) {
     if (entity) {
       this.undoManager?.startGroup();
       this.isDraggingEntity = true;
-      entity.controllingPeerId = this.gameStore?.peerId;
+      entity.controllingUserId = this.gameStore?.thisPlayer.userId;
       this.draggingEntity = entity;
       this.dragGroupOffsets = {};
 
@@ -134,7 +134,7 @@ export default class UIState extends Model({}) {
     } else {
       this.isDraggingEntity = false;
       if (this.draggingEntity) {
-        this.draggingEntity.controllingPeerId = undefined;
+        this.draggingEntity.controllingUserId = undefined;
       }
 
       this.undoManager?.endGroup();

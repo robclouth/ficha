@@ -3,3 +3,4 @@ export const gameRepoUrl =
 
 export const serverRoot = "https://llllllll.link";
 export const proxyUrl = `${serverRoot}:9001`;
+export const appUrl = "https://ficha.now.sh";

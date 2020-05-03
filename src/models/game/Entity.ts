@@ -60,7 +60,7 @@ export default class Entity extends Model({
   faceUp: prop(true, { setterAction: true }),
   stackable: prop(false, { setterAction: true }),
   editable: prop(true, { setterAction: true }),
-  controllingPeerId: prop<string | undefined>(undefined, { setterAction: true })
+  controllingUserId: prop<string | undefined>(undefined, { setterAction: true })
 }) {
   onSnapshotDisposer?: OnSnapshotDisposer;
   @observable mesh?: Mesh;
@@ -101,9 +101,18 @@ export default class Entity extends Model({
     return getRootStore<RootStore>(this)?.gameStore;
   }
 
+  @computed get controllingPlayer() {
+    return this.gameState?.players.find(
+      p => p.userId == this.controllingUserId
+    );
+  }
+
   @computed get isOtherPlayerControlling() {
-    if (!this.controllingPeerId) return false;
-    return this.controllingPeerId !== this.gameStore?.peer?.id;
+    return (
+      this.controllingPlayer &&
+      this.controllingPlayer!.isConnected &&
+      this.controllingPlayer !== this.gameStore?.thisPlayer
+    );
   }
 
   @computed get isDragging() {
