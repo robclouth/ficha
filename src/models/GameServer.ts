@@ -79,15 +79,15 @@ export default class GameServer extends Model({}) {
       data: getSnapshot(this.gameState)
     });
 
-    this.uiState.showMessage({
-      text: "Connected",
-      options: {
-        variant: "success",
-        preventDuplicate: true
-      }
-    });
+    // this.uiState.showMessage({
+    //   text: "Connected",
+    //   options: {
+    //     variant: "success",
+    //     preventDuplicate: true
+    //   }
+    // });
 
-    connection.on("data", data =>
+    // connection.on("data", data =>
       this.handleStateDataFromClient(data, player!)
     );
     connection.on("error", err => this.handleConnectionError(err));
