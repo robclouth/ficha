@@ -1,6 +1,6 @@
 import CameraControls from "camera-controls";
 import { observer } from "mobx-react";
-import React, { useMemo, useRef, useEffect } from "react";
+import React, { useEffect, useMemo, useRef } from "react";
 import {
   Canvas,
   extend,
@@ -9,30 +9,11 @@ import {
   useThree
 } from "react-three-fiber";
 import * as THREE from "three";
-import {
-  Clock,
-  Vector3,
-  Plane,
-  Color,
-  WebGLRenderer,
-  Vector2,
-  MeshStandardMaterial,
-  PerspectiveCamera
-} from "three";
+import { Clock, Color, Plane, Vector3 } from "three";
 import { DragControls } from "three/examples/jsm/controls/DragControls";
-import Entity, { EntityType } from "../../models/game/Entity";
-import { useStore } from "../../stores/RootStore";
-import Card from "./entities/Card";
-import Deck from "./entities/Deck";
-import { EntityProps } from "./entities/Entity";
-import { withoutUndo } from "mobx-keystone";
-import { EffectComposer } from "three/examples/jsm/postprocessing/EffectComposer";
-import { RenderPass } from "three/examples/jsm/postprocessing/RenderPass";
-import { OutlinePass } from "three/examples/jsm/postprocessing/OutlinePass";
-import { ShaderPass } from "three/examples/jsm/postprocessing/ShaderPass";
-import { FXAAShader } from "three/examples/jsm/shaders/FXAAShader";
 import { SelectionBox } from "three/examples/jsm/interactive/SelectionBox";
-import { SelectionHelper } from "three/examples/jsm/interactive/SelectionHelper";
+import Entity from "../../models/game/Entity";
+import { useStore } from "../../stores/RootStore";
 
 extend({
   CameraControls,
@@ -214,7 +195,10 @@ export default observer<React.FC<GameCanvasProps>>(() => {
       )}
       <Canvas
         style={{ background: "#333333", position: "absolute" }}
-        camera={{ position: [0, 5, 5] }}
+        camera={{
+          position: [0, 5, 5]
+        }}
+        // orthographic
         onCreated={({ gl }) => {
           gl.shadowMap.enabled = true;
           gl.shadowMap.type = THREE.PCFSoftShadowMap;
