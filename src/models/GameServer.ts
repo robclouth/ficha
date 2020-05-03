@@ -79,7 +79,7 @@ export default class GameServer extends Model({}) {
       data: getSnapshot(this.gameState)
     });
 
-    this. .showMessage({
+    this.uiState.showMessage({
       text: "Connected",
       options: {
         variant: "success",

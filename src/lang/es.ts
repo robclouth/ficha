@@ -7,6 +7,7 @@ export default {
     youAreHosting: "Eres el anfitrión",
     startHosting: "Start hosting",
     stopHosting: "Stop hosting",
+    leaveGame: "Salir juego",
     about: "Acerca de",
     title: "Título",
     subtitle: "Subtítulo",
