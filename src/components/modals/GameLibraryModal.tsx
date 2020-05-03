@@ -32,7 +32,7 @@ import { useTranslation } from "react-i18next";
 import AutoSizer from "react-virtualized-auto-sizer";
 //@ts-ignore
 import { FixedSizeList, ListChildComponentProps } from "react-window";
-import GameState from "../../models/GameState";
+import { Game } from "../../stores/GameLibrary";
 import { useStore } from "../../stores/RootStore";
 import Modal from "./Modal";
 
@@ -55,8 +55,8 @@ const useStyles = makeStyles(theme => ({
 const tileSize = 175;
 
 export type GameTileProps = {
-  game: GameState;
-  onClick: (game: GameState) => void;
+  game: Game;
+  onClick: (game: Game) => void;
   inProgress: boolean;
 };
 
@@ -113,7 +113,7 @@ const GameTile = observer(({ game, onClick, inProgress }: GameTileProps) => {
         ) : (
           <div dangerouslySetInnerHTML={{ __html: svg }}></div>
         )}
-        {gameStore.currentGame?.maybeCurrent === game && (
+        {gameStore.currentGameId === game.$modelId && (
           <Chip
             label={t("playing")}
             variant="outlined"
@@ -147,8 +147,8 @@ const GameTile = observer(({ game, onClick, inProgress }: GameTileProps) => {
 });
 
 export type RowProps = {
-  games: GameState[];
-  onClick: (game: GameState) => void;
+  games: Game[];
+  onClick: (game: Game) => void;
   inProgress: boolean;
 };
 
@@ -263,12 +263,12 @@ export default observer(
       3
     );
 
-    const handleGameClick = (game: GameState) => {
+    const handleGameClick = (game: Game) => {
       gameLibrary.newGame(game);
       handleClose();
     };
 
-    const handleInProgressClick = (game: GameState) => {
+    const handleInProgressClick = (game: Game) => {
       gameLibrary.resumeGame(game);
       handleClose();
     };

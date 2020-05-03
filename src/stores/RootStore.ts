@@ -35,19 +35,17 @@ export default class RootStore extends Model({
   }),
   isInitialized: prop(false, { setterAction: true })
 }) {
-  @modelFlow
-  init = _async(function*(this: RootStore) {
-    // yield* _await(localforage.clear());
+  async init() {
+    // await localforage.clear();
 
-    yield* _await(
-      Promise.all([
-        this.entityLibrary.init(),
-        this.gameLibrary.init(),
-        this.gameStore.init()
-      ])
-    );
+    await Promise.all([
+      this.entityLibrary.init(),
+      this.gameLibrary.init(),
+      this.gameStore.init()
+    ]);
+
     this.isInitialized = true;
-  });
+  }
 }
 
 export const rootStore = new RootStore({});

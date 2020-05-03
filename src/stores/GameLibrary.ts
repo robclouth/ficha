@@ -12,8 +12,11 @@ import {
   _async,
   _await,
   detach,
-  getSnapshot
+  getSnapshot,
+  SnapshotOutOf
 } from "mobx-keystone";
+import localforage from "localforage";
+import { pick } from "lodash";
 import { gameRepoUrl, serverRoot } from "../constants/constants";
 import gameList from "../constants/gameList";
 import GameState from "../models/GameState";
@@ -22,11 +25,26 @@ import { loadJson } from "../utils/Utils";
 import GameStore from "./GameStore";
 import RootStore from "./RootStore";
 import { omit } from "lodash";
+import { nanoid } from "nanoid";
+
+@model("Game")
+export class Game extends Model({
+  gameId: prop(nanoid(), { setterAction: true }),
+  name: prop("Untitled", { setterAction: true }),
+  imageUrl: prop("", { setterAction: true }),
+  dateCreated: prop(Date.now(), { setterAction: true }),
+  dateModified: prop(Date.now(), { setterAction: true }),
+  recommendedPlayers: prop<[number, number]>(() => [1, 8], {
+    setterAction: true
+  })
+}) {}
 
 @model("GameLibrary")
 export default class GameLibrary extends Model({
-  library: prop<GameState[]>(() => [], { setterAction: true }),
-  inProgressGames: prop<GameState[]>(() => [], { setterAction: true })
+  library: prop<Game[]>(() => [], { setterAction: true }),
+  inProgressGames: prop<Game[]>(() => [], {
+    setterAction: true
+  })
 }) {
   @observable isInitialised = false;
 
@@ -66,50 +84,97 @@ export default class GameLibrary extends Model({
   }
 
   @modelAction
-  newGame(game?: GameState) {
+  addInProgressGame(game: Game) {
+    this.inProgressGames.push(game);
+  }
+
+  async saveInProgressGame(
+    gameId: string,
+    gameState: SnapshotOutOf<GameState>
+  ) {
+    await localforage.setItem(`inprogress-${gameId}`, gameState);
+  }
+
+  async newGame(game?: Game) {
+    let gameStateSnapshot;
     if (game) {
       game = clone(game);
+      gameStateSnapshot = await localforage.getItem<SnapshotOutOf<GameState>>(
+        `library-${game.gameId}`
+      );
     } else {
-      game = new GameState({});
+      game = new Game({});
+      gameStateSnapshot = getSnapshot(new GameState({}));
     }
-    this.inProgressGames.push(game);
 
-    this.gameStore.playGame(game);
+    gameStateSnapshot = {
+      ...gameStateSnapshot,
+      players: [],
+      views: [],
+      setups: gameStateSnapshot.setups ? gameStateSnapshot.setups : []
+    };
+
+    this.addInProgressGame(game);
+    this.gameStore.playGame(game, gameStateSnapshot);
+  }
+
+  async resumeGame(game: Game) {
+    if (this.gameStore.currentGameId !== game.$modelId) {
+      const gameStateSnapshot = await localforage.getItem<
+        SnapshotOutOf<GameState>
+      >(`inprogress-${game.$modelId}`);
+      this.gameStore.playGame(game, gameStateSnapshot);
+    }
   }
 
   @modelAction
-  resumeGame(game: GameState) {
-    if (this.gameStore.currentGame?.maybeCurrent !== game)
-      this.gameStore.playGame(game);
-  }
-
-  @modelAction
-  stopGame(game: GameState) {
+  stopGame(game: Game) {
     this.inProgressGames.splice(this.inProgressGames.indexOf(game), 1);
+    localforage.removeItem(`inprogress-${game.$modelId}`);
   }
 
   @modelAction
-  addGameToLibrary(game: GameState) {
-    const cloned = clone(game);
-    cloned.players = [];
-    cloned.chatHistory = [];
-    this.library.push(cloned);
+  addGameToLibrary(game: Game) {
+    this.library.push(game);
   }
 
   @modelAction
-  addGameFromJson(gameJson: SnapshotOutOfModel<GameState>) {
-    const existingGame = this.library.find(
-      game => game.gameId === gameJson.gameId
+  addGameFromJson(gameState: SnapshotOutOfModel<GameState>) {
+    localforage.setItem(`library-${gameState.gameId}`, gameState);
+
+    const existingGame = this.library.find(game => game.gameId === game.gameId);
+    if (existingGame) this.removeGameFromLibrary(existingGame);
+
+    const game = new Game(
+      pick(gameState, [
+        "gameId",
+        "name",
+        "imageUrl",
+        "dateCreated",
+        "dateModified",
+        "recommendedPlayers"
+      ])
     );
-    if (existingGame) existingGame.setFromJson(gameJson);
-    else {
-      this.addGameToLibrary(fromSnapshot<GameState>(gameJson));
-    }
+
+    this.addGameToLibrary(game);
   }
 
   @modelAction
-  removeGameFromLibrary(game: GameState) {
+  removeGameFromLibrary(game: Game) {
     this.library.splice(this.library.indexOf(game), 1);
+    localforage.removeItem(`library-${game.gameId}`);
+  }
+
+  @modelAction
+  updateGameFromState(
+    gameId: string,
+    gameState: SnapshotOutOfModel<GameState>
+  ) {
+    const game = this.inProgressGames.find(game => game.$modelId === gameId)!;
+    game.name = gameState.name;
+    game.imageUrl = gameState.imageUrl;
+    game.dateModified = gameState.dateModified;
+    game.recommendedPlayers = gameState.recommendedPlayers;
   }
 
   @modelFlow

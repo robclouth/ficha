@@ -1,6 +1,6 @@
 import localforage from "localforage";
 import { omit } from "lodash";
-import { action, computed, observable } from "mobx";
+import { action, computed, observable, reaction } from "mobx";
 import {
   applyPatches,
   applySnapshot,
@@ -19,7 +19,8 @@ import {
   Ref,
   SnapshotInOf,
   _async,
-  _await
+  _await,
+  SnapshotOutOf
 } from "mobx-keystone";
 import { nanoid } from "nanoid";
 import Peer, { DataConnection } from "peerjs";
@@ -33,6 +34,7 @@ import { generateId } from "../utils/Utils";
 import RootStore from "./RootStore";
 import delay from "delay";
 import { appUrl } from "../constants/constants";
+import { Game } from "./GameLibrary";
 
 const FATAL_ERRORS = [
   "invalid-id",
@@ -51,7 +53,7 @@ export default class GameStore extends Model({
   gameState: prop<GameState>(() => new GameState({}), {
     setterAction: true
   }),
-  currentGame: prop<Ref<GameState> | undefined>(undefined, {
+  currentGameId: prop<string | undefined>(undefined, {
     setterAction: true
   })
 }) {
@@ -90,6 +92,14 @@ export default class GameStore extends Model({
     if (!hasHydrated) {
       this.gameLibrary.newGame();
     }
+
+    reaction(
+      () => getSnapshot(this.gameState),
+      snapshot =>
+        this.currentGameId &&
+        this.gameLibrary.saveInProgressGame(this.currentGameId, snapshot),
+      { delay: 1000 }
+    );
 
     // add a player for this user
     if (!this.thisPlayer) {
@@ -240,8 +250,8 @@ export default class GameStore extends Model({
     });
   }
 
-  @modelFlow
-  handleHostDisconnect = _async(function*(this: GameStore) {
+  @modelAction
+  handleHostDisconnect() {
     // set all other players to disconnected
     this.gameState.players.forEach(p => {
       if (p !== this.thisPlayer) p.isConnected = false;
@@ -256,7 +266,7 @@ export default class GameStore extends Model({
         preventDuplicate: true
       }
     });
-  });
+  }
 
   @action async createPeer() {
     this.peer = await new Promise<Peer>((resolve, reject) => {
@@ -404,17 +414,15 @@ export default class GameStore extends Model({
   }
 
   updateCurrentGameLibraryEntry() {
-    const game = this.currentGame?.maybeCurrent;
-    if (game) {
-      applySnapshot(game, {
-        ...getSnapshot<GameState>(this.gameState),
-        $modelId: game.$modelId
-      });
-    }
+    if (this.currentGameId)
+      this.gameLibrary.updateGameFromState(
+        this.currentGameId,
+        getSnapshot(this.gameState)
+      );
   }
 
   @modelAction
-  playGame(game: GameState) {
+  playGame(game: Game, gameStateSnapshot: SnapshotOutOf<GameState>) {
     // update the previous game in the game library
     this.updateCurrentGameLibraryEntry();
 
@@ -423,10 +431,10 @@ export default class GameStore extends Model({
     this.gameServer && this.gameServer.close();
     this.hostPeerId = undefined;
 
-    this.currentGame = gameStateRef(game);
+    this.currentGameId = game.$modelId;
 
     applySnapshot(this.gameState, {
-      ...getSnapshot(game),
+      ...gameStateSnapshot,
       $modelId: this.gameState.$modelId
     });
 
