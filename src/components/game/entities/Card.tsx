@@ -14,6 +14,7 @@ import Card, { Shape } from "../../../models/game/Card";
 import { useStore } from "../../../stores/RootStore";
 import { ContextMenuItem } from "../../../types";
 import Entity, { EntityProps, MaterialParameters } from "./Entity";
+import { Dom } from "react-three-fiber";
 
 export type CardProps = Omit<EntityProps, "geometry"> & {};
 
@@ -62,7 +63,8 @@ export default observer((props: CardProps) => {
     centerValue,
     cornerValue,
     shape,
-    gameState
+    gameState,
+    faceUp
   } = card;
 
   const contextMenuItems: Array<ContextMenuItem | false> = [
@@ -249,6 +251,26 @@ export default observer((props: CardProps) => {
       castShadows={false}
     >
       {canvasTexture && <primitive object={canvasTexture} />}
+      {/* {faceUp && (
+        <Dom
+          position={[0, 1, 0]}
+          center
+          style={{ pointerEvents: "none", userSelect: "none" }}
+          onContextMenu={() => false}
+        >
+          <img
+            style={{
+              width: 200 * (shape === Shape.Card ? 0.7 : 1),
+              height: 200
+            }}
+            src={
+              frontImageUrl
+                ? frontImageUrl
+                : (canvasTexture!.image as HTMLCanvasElement).toDataURL()
+            }
+          />
+        </Dom>
+      )} */}
     </Entity>
   );
 });

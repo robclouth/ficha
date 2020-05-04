@@ -8,7 +8,6 @@ import { useStore } from "../../../stores/RootStore";
 import Card from "../../../models/game/Card";
 import { PointerEvent } from "react-three-fiber";
 import { Color } from "three";
-import defaultCardBack from "../../../assets/default-back.png";
 import PieceSet from "../../../models/game/PieceSet";
 import { clone } from "mobx-keystone";
 import { take } from "lodash";
