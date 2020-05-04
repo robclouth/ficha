@@ -12,11 +12,8 @@ export enum Shape {
 
 @model("Card")
 export default class Card extends ExtendedModel(Entity, {
-  title: prop("", { setterAction: true }),
-  subtitle: prop("", { setterAction: true }),
-  body: prop("", { setterAction: true }),
-  cornerValue: prop("", { setterAction: true }),
-  centerValue: prop("", { setterAction: true }),
+  cornerTexts: prop("", { setterAction: true }),
+  centerText: prop("", { setterAction: true }),
   shape: prop<Shape>(Shape.Card, { setterAction: true })
 }) {
   onInit() {

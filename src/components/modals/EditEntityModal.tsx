@@ -18,7 +18,9 @@ import {
   Typography,
   useTheme,
   FormControlLabel,
-  Switch
+  Switch,
+  InputLabel,
+  SliderProps
 } from "@material-ui/core";
 import { useTranslation } from "react-i18next";
 
@@ -73,8 +75,8 @@ const colorOptions = [
 
 const useStyles = makeStyles(theme => ({
   formControl: {
-    marginTop: theme.spacing(1),
-    marginBottom: theme.spacing(1)
+    marginTop: theme.spacing(0.5),
+    marginBottom: theme.spacing(0.5)
   },
   emojiInput: {
     "& .emoji-mart": {
@@ -144,9 +146,10 @@ const ColorPicker = observer(({ entity }: { entity: Entity }) => {
   const classes = useStyles();
   return (
     <FormControl className={classes.formControl} style={{ marginBottom: 0 }}>
-      <FormLabel>Color</FormLabel>
+      <InputLabel shrink>Color</InputLabel>
       <Box
         padding={1}
+        marginTop={2}
         display="flex"
         alignItems="center"
         justifyContent="center"
@@ -252,39 +255,40 @@ const CardEditor = observer(
     const {
       frontImageUrl,
       backImageUrl,
-      title,
-      subtitle,
-      body,
-      centerValue,
-      cornerValue,
-      color,
+      cornerTexts,
+      centerText,
+      ownerSet,
       shape
     } = card;
 
     return (
       <Box display="flex" flexDirection="column">
-        <FormControl
-          className={classes.formControl}
-          style={{ marginBottom: 12 }}
-        >
-          <Select
-            margin="dense"
-            fullWidth
-            value={shape}
-            onChange={e => (card.shape = e.target.value as CardShape)}
+        {!ownerSet?.maybeCurrent && (
+          <FormControl
+            className={classes.formControl}
+            style={{ marginBottom: 12 }}
           >
-            {$enum(CardShape)
-              .getEntries()
-              .map(entry => (
-                <MenuItem key={entry[1]} value={entry[1]}>
-                  {entry[0]}
-                </MenuItem>
-              ))}
-          </Select>
-        </FormControl>
+            <InputLabel shrink>{t("shape")}</InputLabel>
+            <Select
+              margin="dense"
+              fullWidth
+              value={shape}
+              onChange={e => (card.shape = e.target.value as CardShape)}
+            >
+              {$enum(CardShape)
+                .getEntries()
+                .map(entry => (
+                  <MenuItem key={entry[1]} value={entry[1]}>
+                    {entry[0]}
+                  </MenuItem>
+                ))}
+            </Select>
+          </FormControl>
+        )}
         <FormControl>
-          <FormLabel>{t("thickness")}</FormLabel>
+          <InputLabel shrink>{t("thickness")}</InputLabel>
           <Slider
+            style={{ marginTop: 15 }}
             value={card.scale.y}
             onChange={(e, value) => card.setScaleY(value as number)}
             valueLabelDisplay="auto"
@@ -294,61 +298,39 @@ const CardEditor = observer(
           />
         </FormControl>
         <FormControl className={classes.formControl}>
+          <InputLabel>{t("frontImageUrl")}</InputLabel>
           <Input
             margin="dense"
             value={frontImageUrl}
             onChange={e => (card.frontImageUrl = e.target.value)}
             fullWidth
-            placeholder={t("frontImageUrl")}
           />
         </FormControl>
-        {showBackInput && (
+        {!ownerSet?.maybeCurrent && (
           <FormControl className={classes.formControl}>
+            <InputLabel>{t("frontImageUrl")}</InputLabel>
             <Input
               margin="dense"
               value={backImageUrl}
-              disabled={!!card.ownerSet}
               onChange={e => (card.backImageUrl = e.target.value)}
               fullWidth
-              placeholder={t("backImageUrl")}
             />
-            {card.ownerSet && (
-              <FormHelperText>
-                {t("theBackImageMustBeEditedInTheDeck")}
-              </FormHelperText>
-            )}
           </FormControl>
         )}
         <FormControl className={classes.formControl}>
+          <InputLabel>{t("cornerTexts")}</InputLabel>
           <EmojiInput
-            value={title}
-            onTextChange={text => (card.title = text)}
+            value={cornerTexts}
+            onTextChange={text => (card.cornerTexts = text)}
             fullWidth
-            placeholder={t("title")}
           />
         </FormControl>
         <FormControl className={classes.formControl}>
+          <InputLabel>{t("centerText")}</InputLabel>
           <EmojiInput
-            value={subtitle}
-            onTextChange={text => (card.subtitle = text)}
+            value={centerText}
+            onTextChange={text => (card.centerText = text)}
             fullWidth
-            placeholder={t("subtitle")}
-          />
-        </FormControl>
-        <FormControl className={classes.formControl}>
-          <EmojiInput
-            value={body}
-            onTextChange={text => (card.body = text)}
-            fullWidth
-            placeholder={t("body")}
-          />
-        </FormControl>
-        <FormControl className={classes.formControl}>
-          <EmojiInput
-            value={centerValue}
-            onTextChange={text => (card.centerValue = text)}
-            fullWidth
-            placeholder={t("centerText")}
           />
         </FormControl>
         <ColorPicker entity={card} />
@@ -381,8 +363,9 @@ const PieceEditor = observer(({ entity }: { entity: Entity }) => {
   else if (shape === Shape.Cylinder) {
     shapeControls = (
       <FormControl>
-        <FormLabel>{t("sides")}</FormLabel>
+        <InputLabel shrink>{t("sides")}</InputLabel>
         <Slider
+          style={{ marginTop: 15 }}
           value={piece.shapeParam1}
           onChange={(e, value) => (piece.shapeParam1 = value as number)}
           valueLabelDisplay="auto"
@@ -394,8 +377,9 @@ const PieceEditor = observer(({ entity }: { entity: Entity }) => {
   } else if (shape === Shape.Cone) {
     shapeControls = (
       <FormControl>
-        <FormLabel>{t("sides")}</FormLabel>
+        <InputLabel shrink>{t("sides")}</InputLabel>
         <Slider
+          style={{ marginTop: 15 }}
           value={piece.shapeParam1}
           onChange={(e, value) => (piece.shapeParam1 = value as number)}
           valueLabelDisplay="auto"
@@ -408,8 +392,9 @@ const PieceEditor = observer(({ entity }: { entity: Entity }) => {
     shapeControls = (
       <>
         <FormControl>
-          <FormLabel>{t("radialSegments")}</FormLabel>
+          <InputLabel shrink>{t("radialSegments")}</InputLabel>
           <Slider
+            style={{ marginTop: 15 }}
             value={piece.shapeParam1}
             onChange={(e, value) => (piece.shapeParam1 = value as number)}
             valueLabelDisplay="auto"
@@ -418,8 +403,9 @@ const PieceEditor = observer(({ entity }: { entity: Entity }) => {
           />
         </FormControl>
         <FormControl>
-          <FormLabel>{t("tubularSegments")}</FormLabel>
+          <InputLabel shrink>{t("tubularSegments")}</InputLabel>
           <Slider
+            style={{ marginTop: 15 }}
             value={piece.shapeParam2}
             onChange={(e, value) => (piece.shapeParam2 = value as number)}
             valueLabelDisplay="auto"
@@ -434,6 +420,7 @@ const PieceEditor = observer(({ entity }: { entity: Entity }) => {
   return (
     <Box display="flex" flexDirection="column">
       <FormControl className={classes.formControl} style={{ marginBottom: 20 }}>
+        <InputLabel shrink>{t("shape")}</InputLabel>
         <Select
           fullWidth
           value={shape}
@@ -450,8 +437,9 @@ const PieceEditor = observer(({ entity }: { entity: Entity }) => {
       </FormControl>
       {shapeControls}
       <FormControl>
-        <FormLabel>{t("scaleX")}</FormLabel>
+        <InputLabel shrink>{t("scaleX")}</InputLabel>
         <Slider
+          style={{ marginTop: 15 }}
           value={piece.scale.x}
           onChange={(e, value) => piece.setScaleX(value as number)}
           valueLabelDisplay="auto"
@@ -461,8 +449,9 @@ const PieceEditor = observer(({ entity }: { entity: Entity }) => {
         />
       </FormControl>
       <FormControl>
-        <FormLabel>{t("scaleY")}</FormLabel>
+        <InputLabel shrink>{t("scaleY")}</InputLabel>
         <Slider
+          style={{ marginTop: 15 }}
           value={piece.scale.y}
           onChange={(e, value) => piece.setScaleY(value as number)}
           valueLabelDisplay="auto"
@@ -472,8 +461,9 @@ const PieceEditor = observer(({ entity }: { entity: Entity }) => {
         />
       </FormControl>
       <FormControl>
-        <FormLabel>{t("scaleZ")}</FormLabel>
+        <InputLabel shrink>{t("scaleZ")}</InputLabel>
         <Slider
+          style={{ marginTop: 15 }}
           value={piece.scale.z}
           onChange={(e, value) => piece.setScaleZ(value as number)}
           valueLabelDisplay="auto"
@@ -497,7 +487,8 @@ const DiceEditor = observer(({ entity }: { entity: Entity }) => {
 
   return (
     <Box display="flex" flexDirection="column">
-      <FormControl className={classes.formControl} style={{ marginBottom: 20 }}>
+      <FormControl className={classes.formControl}>
+        <InputLabel shrink>{t("type")}</InputLabel>
         <Select
           margin="dense"
           fullWidth
@@ -514,17 +505,18 @@ const DiceEditor = observer(({ entity }: { entity: Entity }) => {
         </Select>
       </FormControl>
       <FormControl className={classes.formControl}>
+        <InputLabel>{t("sides")}</InputLabel>
         <EmojiInput
           multiline
-          value={labels.join(" ")}
-          onTextChange={text => (dice.labels = text.trimStart().split(" "))}
+          value={labels.join(",")}
+          onTextChange={text => (dice.labels = text.trimStart().split(","))}
           fullWidth
-          placeholder={t("sides")}
         />
       </FormControl>
-      <FormControl>
-        <FormLabel>{t("scale")}</FormLabel>
+      <FormControl className={classes.formControl}>
+        <InputLabel shrink>{t("scale")}</InputLabel>
         <Slider
+          style={{ marginTop: 15 }}
           value={dice.scale.x}
           onChange={(e, value) => dice.setScale(value as number)}
           valueLabelDisplay="auto"
@@ -549,17 +541,18 @@ const BoardEditor = observer(({ entity }: { entity: Entity }) => {
   return (
     <Box display="flex" flexDirection="column">
       <FormControl className={classes.formControl}>
+        <InputLabel>{t("imageUrl")}</InputLabel>
         <Input
           margin="dense"
           value={frontImageUrl}
           onChange={e => (board.frontImageUrl = e.target.value)}
           fullWidth
-          placeholder={t("imageUrl")}
         />
       </FormControl>
-      <FormControl>
-        <FormLabel>{t("scale")}</FormLabel>
+      <FormControl className={classes.formControl}>
+        <InputLabel shrink>{t("scale")}</InputLabel>
         <Slider
+          style={{ marginTop: 15 }}
           value={scale.x}
           onChange={(e, value) => {
             board.setScaleX(value as number);
@@ -574,6 +567,67 @@ const BoardEditor = observer(({ entity }: { entity: Entity }) => {
     </Box>
   );
 });
+
+type InputSliderProps = SliderProps & {
+  step?: number;
+  min: number;
+  max: number;
+  onValueChange: (value: number) => void;
+};
+
+function InputSlider(props: InputSliderProps) {
+  const classes = useStyles();
+  const [value, setValue] = React.useState<
+    number | string | Array<number | string>
+  >(30);
+
+  const handleSliderChange = (event: any, newValue: number | number[]) => {
+    setValue(newValue);
+    props.onValueChange(newValue as number);
+  };
+
+  const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setValue(event.target.value === "" ? "" : Number(event.target.value));
+    props.onValueChange(Number(event.target.value));
+  };
+
+  const handleBlur = () => {
+    if (value < props.min) {
+      setValue(props.min);
+    } else if (value > props.max) {
+      setValue(props.max);
+    }
+  };
+
+  return (
+    <Grid container spacing={2} alignItems="center">
+      <Grid item xs>
+        <Slider
+          {...props}
+          value={typeof value === "number" ? value : 0}
+          onChange={handleSliderChange}
+          aria-labelledby="input-slider"
+        />
+      </Grid>
+      <Grid item>
+        <Input
+          style={{ width: 42 }}
+          value={value}
+          margin="dense"
+          onChange={handleInputChange}
+          onBlur={handleBlur}
+          inputProps={{
+            step: props.step,
+            min: props.min,
+            max: props.max,
+            type: "number",
+            "aria-labelledby": "input-slider"
+          }}
+        />
+      </Grid>
+    </Grid>
+  );
+}
 
 type EntityListProps = {
   entitySet: EntitySet;
@@ -619,32 +673,7 @@ const EntityList = observer(
     };
 
     return (
-      <Box display="flex" flexDirection="column" alignItems="center" flex={1}>
-        <Box
-          flexDirection="column"
-          alignItems="stretch"
-          flex={1}
-          marginBottom={1}
-        >
-          {entitySet.prototypes.length > 0 && (
-            <>
-              <FormControl style={{ width: "100%" }}>
-                <FormLabel>{t("count")}</FormLabel>
-                <Slider
-                  value={count}
-                  onChange={(e, value) =>
-                    entity &&
-                    entitySet.setPrototypeCount(entity, value as number)
-                  }
-                  valueLabelDisplay="auto"
-                  min={0}
-                  max={100}
-                />
-              </FormControl>
-              {React.createElement(editor, { entity, showBackInput: false })}
-            </>
-          )}
-        </Box>
+      <Box display="flex" flexDirection="column" alignItems="stretch" flex={1}>
         <Grid container alignItems="center" justify="space-evenly">
           <Grid item xs style={{ display: "flex", justifyContent: "center" }}>
             {entitySet.prototypes.length > 0 && (
@@ -667,15 +696,37 @@ const EntityList = observer(
           </Grid>
         </Grid>
         {entitySet.prototypes.length > 0 && (
-          <Pagination
-            size="small"
-            count={entitySet.prototypes.length}
-            siblingCount={1}
-            boundaryCount={1}
-            page={index + 1}
-            onChange={(e, value) => handleSelectedEntityChange(value - 1)}
-          />
+          <Box display="flex" justifyContent="center" marginBottom={1}>
+            <Pagination
+              size="small"
+              count={entitySet.prototypes.length}
+              siblingCount={1}
+              boundaryCount={1}
+              page={index + 1}
+              onChange={(e, value) => handleSelectedEntityChange(value - 1)}
+            />
+          </Box>
         )}
+        <Box flexDirection="column" alignItems="stretch" flex={1}>
+          {entitySet.prototypes.length > 0 && (
+            <>
+              <FormControl style={{ width: "100%" }}>
+                <InputLabel shrink>{t("count")}</InputLabel>
+                <InputSlider
+                  style={{ marginTop: 15 }}
+                  value={count}
+                  valueLabelDisplay="off"
+                  onValueChange={value =>
+                    entity && entitySet.setPrototypeCount(entity, value)
+                  }
+                  min={0}
+                  max={100}
+                />
+              </FormControl>
+              {React.createElement(editor, { entity })}
+            </>
+          )}
+        </Box>
       </Box>
     );
   }
@@ -692,6 +743,8 @@ const DeckEditor = observer(
 
     const classes = useStyles();
     const [backImageUrl, setBackImageUrl] = useState("");
+    const deck = entitySet as Deck;
+    const { shape } = deck;
 
     const handleBackImageUrlChange = (url: string) => {
       entitySet.containedEntities.forEach(
@@ -720,12 +773,29 @@ const DeckEditor = observer(
     return (
       <Box display="flex" flexDirection="column" flex={1}>
         <FormControl className={classes.formControl}>
+          <InputLabel shrink>{t("shape")}</InputLabel>
+          <Select
+            margin="dense"
+            fullWidth
+            value={shape}
+            onChange={e => (deck.shape = e.target.value as CardShape)}
+          >
+            {$enum(CardShape)
+              .getEntries()
+              .map(entry => (
+                <MenuItem key={entry[1]} value={entry[1]}>
+                  {entry[0]}
+                </MenuItem>
+              ))}
+          </Select>
+        </FormControl>
+        <FormControl className={classes.formControl}>
+          <InputLabel>{t("backImageUrl")}</InputLabel>
           <Input
             margin="dense"
             value={backImageUrl}
             onChange={e => handleBackImageUrlChange(e.target.value)}
             fullWidth
-            placeholder={t("backImageUrl")}
           />
         </FormControl>
         <FormControl className={classes.formControl}>
@@ -919,6 +989,7 @@ export default observer(
             >
               {!isEditing && (
                 <FormControl className={classes.formControl}>
+                  <InputLabel shrink>{t("type")}</InputLabel>
                   <Select
                     margin="dense"
                     fullWidth
@@ -937,12 +1008,12 @@ export default observer(
                 </FormControl>
               )}
               <FormControl className={classes.formControl}>
+                <InputLabel shrink>{t("name")}</InputLabel>
                 <Input
                   margin="dense"
                   value={entityDraft.data.name}
                   onChange={e => (entityDraft.data.name = e.target.value)}
                   fullWidth
-                  placeholder={t("name")}
                 />
               </FormControl>
               <FormControl className={classes.formControl}>

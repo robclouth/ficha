@@ -57,11 +57,8 @@ export default observer((props: CardProps) => {
     backImageUrl,
     ownerSet,
     color,
-    title,
-    subtitle,
-    body,
-    centerValue,
-    cornerValue,
+    cornerTexts,
+    centerText,
     shape,
     gameState,
     faceUp
@@ -105,73 +102,44 @@ export default observer((props: CardProps) => {
 
     context.fillStyle = "black";
 
-    if (title) {
+    if (cornerTexts) {
+      const texts = cornerTexts.split(",");
       context.font = `${fontSize}px Roboto`;
-      context.textAlign = "left";
-      context.textBaseline = "top";
-      context.fillText(title, padding, padding, canvas.width - padding * 2);
+      const positions = [
+        [0, 0],
+        [1, 0],
+        [1, 1],
+        [0, 1]
+      ];
+      for (let i = 0; i < texts.length; i++) {
+        const text = texts[i].trim();
+        const position = positions[i];
+        context.textAlign = position[0] === 0 ? "left" : "right";
+        context.textBaseline = position[1] === 0 ? "top" : "bottom";
+
+        context.fillText(
+          text,
+          position[0] === 0 ? padding : canvas.width - padding,
+          position[1] === 0 ? padding : canvas.height - padding,
+          canvas.width - padding * 2
+        );
+      }
     }
 
-    if (subtitle) {
-      context.font = `${fontSize * 0.7}px Roboto`;
-      context.textBaseline = "top";
-      context.fillText(
-        subtitle,
-        padding,
-        padding + fontSize,
-        canvas.width - padding * 2
-      );
-    }
-
-    if (cornerValue) {
-      context.font = `${fontSize * 2}px Roboto`;
-      context.textAlign = "right";
-      context.textBaseline = "top";
-      context.fillText(
-        cornerValue,
-        canvas.width - padding,
-        padding,
-        canvas.width - padding * 2
-      );
-    }
-
-    if (centerValue) {
+    if (centerText) {
       context.font = `${fontSize * 4}px Roboto`;
       context.textAlign = "center";
       context.textBaseline = "middle";
       context.fillText(
-        centerValue,
+        centerText,
         canvas.width / 2,
         canvas.height / 2,
         canvas.width - padding * 2
       );
     }
 
-    if (body) {
-      context.font = `${fontSize * 0.5}px Roboto`;
-      context.textAlign = "left";
-      context.textBaseline = "top";
-      wrapText(
-        context,
-        body,
-        padding,
-        canvas.height / 2,
-        canvas.width - padding * 2,
-        fontSize * 0.5
-      );
-    }
-
     return new CanvasTexture(canvas);
-  }, [
-    frontImageUrl,
-    shape,
-    title,
-    subtitle,
-    body,
-    cornerValue,
-    centerValue,
-    JSON.stringify(color)
-  ]);
+  }, [frontImageUrl, shape, cornerTexts, centerText, JSON.stringify(color)]);
 
   const edgeMaterial: MaterialParameters = {
     roughness: 1,
