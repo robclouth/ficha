@@ -55,6 +55,7 @@ export default {
     count: "Count",
     shape: "Shape",
     add: "Add",
+    edit: "Edit",
     editObject: "Edit object",
     object: "Object",
     newSetup: "New setup",

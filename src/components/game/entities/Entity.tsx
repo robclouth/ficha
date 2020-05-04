@@ -101,16 +101,12 @@ export default observer((props: EntityProps) => {
       !gameState.locked && {
         label: t("contextMenu.edit"),
         type: "edit",
-        target: entity,
-        action: () => {}
+        target:
+          entity.ownerSet?.maybeCurrent !== undefined
+            ? entity.ownerSet?.maybeCurrent
+            : entity,
+        params: entity.ownerSet?.maybeCurrent?.prototypes.indexOf(entity)
       },
-    // editable &&
-    //   entity.prototype?.maybeCurrent !== undefined && {
-    //     label: "Edit prototype",
-    //     type: "edit",
-    //     target: entity.prototype?.maybeCurrent,
-    //     action: () => {}
-    //   },
     !gameState.locked && {
       label: t("contextMenu.duplicate"),
       type: "action",
@@ -143,7 +139,9 @@ export default observer((props: EntityProps) => {
     item => item !== false
   ) as ContextMenuItem[];
 
-  allContextMenuItems.forEach(item => (item.target = entity));
+  allContextMenuItems.forEach(item => {
+    if (!item.target) item.target = entity;
+  });
 
   uiState.registerContextMenuItems(entity, allContextMenuItems);
 

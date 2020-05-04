@@ -282,6 +282,7 @@ export default observer(() => {
     if (item.type === "action") {
       uiState.doContextMenuAction(item);
     } else if (item.type === "edit") {
+      uiState.contextMenu!.target = item.target;
       uiState.setOpenModal(Modals.EditEntity);
     }
   };

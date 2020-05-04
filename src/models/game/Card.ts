@@ -2,6 +2,8 @@ import { ExtendedModel, model, prop } from "mobx-keystone";
 import React from "react";
 import CardComponent, { CardProps } from "../../components/game/entities/Card";
 import Entity, { EntityType } from "./Entity";
+import { computed } from "mobx";
+import Deck from "./Deck";
 
 export enum Shape {
   Card,
@@ -14,12 +16,19 @@ export enum Shape {
 export default class Card extends ExtendedModel(Entity, {
   cornerTexts: prop("", { setterAction: true }),
   centerText: prop("", { setterAction: true }),
-  shape: prop<Shape>(Shape.Card, { setterAction: true })
+  cardShape: prop<Shape>(Shape.Card, { setterAction: true })
 }) {
   onInit() {
     super.onInit();
     this.type = EntityType.Card;
-    this.stackable = true;
+  }
+
+  @computed get deck() {
+    return this.ownerSet?.maybeCurrent as Deck;
+  }
+
+  @computed get shape() {
+    return this.deck ? this.deck.shape : this.cardShape;
   }
 
   render(props: CardProps): JSX.Element {

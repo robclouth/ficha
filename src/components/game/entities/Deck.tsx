@@ -5,7 +5,7 @@ import { PointerEvent } from "react-three-fiber";
 import Deck from "../../../models/game/Deck";
 import { useStore } from "../../../stores/RootStore";
 import { ContextMenuItem } from "../../../types";
-import CardComponent, { cardHeight } from "./Card";
+import CardComponent, { cardHeight, makeShape } from "./Card";
 import Entity, { EntityProps } from "./Entity";
 
 export type DeckProps = Omit<EntityProps, "geometry"> & {};
@@ -21,7 +21,8 @@ export default observer((props: DeckProps) => {
     name,
     externalEntities,
     savedDeal,
-    gameState
+    gameState,
+    shape
   } = deck;
 
   const contextMenuItems: ContextMenuItem[] = [
@@ -77,18 +78,28 @@ export default observer((props: DeckProps) => {
     if (card.length > 0) uiState.setDraggingEntity(card[0]);
   };
 
+  const edgeMaterial = {
+    roughness: 1,
+    color: "white"
+  };
+
+  const { geometry, materialParams, rotationOffset } = makeShape(
+    shape,
+    edgeMaterial,
+    edgeMaterial,
+    edgeMaterial
+  );
+
   return (
     <Entity
       {...props}
       pivot={[0, -height / 2, 0]}
-      geometry={<boxBufferGeometry args={[0.7, height, 1]} attach="geometry" />}
-      materialParams={{
-        roughness: 1,
-        color: "white"
-      }}
+      geometry={geometry}
+      materialParams={materialParams}
       contextMenuItems={contextMenuItems}
       dragAction={containedEntities.length > 0 ? handleDrag : undefined}
       hoverMessage={`${name} (${containedEntities.length})`}
+      rotationOffset={rotationOffset}
     >
       {containedEntities.length > 0 && (
         <CardComponent

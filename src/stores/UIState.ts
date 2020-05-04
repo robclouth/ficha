@@ -23,13 +23,7 @@ import GameState, { View } from "../models/GameState";
 import { OptionsObject } from "notistack";
 import CameraControls from "camera-controls";
 import i18n from "../i18n";
-
-export type ContextMenuItem = {
-  label?: string;
-  type: "action" | "divider" | "edit";
-  target?: Entity;
-  action?: () => void;
-};
+import { ContextMenuItem } from "../types";
 
 export enum Modals {
   EditEntity,

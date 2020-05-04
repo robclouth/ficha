@@ -31,7 +31,7 @@ import Pagination from "@material-ui/lab/Pagination";
 //@ts-ignore
 import { Picker } from "emoji-mart";
 import "emoji-mart/css/emoji-mart.css";
-import { draft } from "mobx-keystone";
+import { draft, clone } from "mobx-keystone";
 import { observer } from "mobx-react";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { CirclePicker } from "react-color";
@@ -240,104 +240,121 @@ const EmojiInput = observer((props: EmojiInputProps) => {
   );
 });
 
-const CardEditor = observer(
-  ({
-    entity,
-    showBackInput = true
-  }: {
-    entity: Entity;
-    showBackInput?: boolean;
-  }) => {
-    const { t } = useTranslation();
+const CardEditor = observer(({ entity }: { entity: Entity }) => {
+  const { t } = useTranslation();
 
-    const classes = useStyles();
-    const card = entity as Card;
-    const {
-      frontImageUrl,
-      backImageUrl,
-      cornerTexts,
-      centerText,
-      ownerSet,
-      shape
-    } = card;
+  const classes = useStyles();
+  const card = entity as Card;
+  const {
+    frontImageUrl,
+    backImageUrl,
+    cornerTexts,
+    centerText,
+    ownerSet,
+    cardShape
+  } = card;
 
-    return (
-      <Box display="flex" flexDirection="column">
-        {!ownerSet?.maybeCurrent && (
-          <FormControl
-            className={classes.formControl}
-            style={{ marginBottom: 12 }}
-          >
-            <InputLabel shrink>{t("shape")}</InputLabel>
-            <Select
+  return (
+    <Box display="flex" flexDirection="column">
+      {ownerSet?.maybeCurrent && (
+        <>
+          <FormControl className={classes.formControl}>
+            <InputLabel>{t("name")}</InputLabel>
+            <Input
               margin="dense"
+              value={card.name}
+              onChange={e => (card.name = e.target.value)}
               fullWidth
-              value={shape}
-              onChange={e => (card.shape = e.target.value as CardShape)}
-            >
-              {$enum(CardShape)
-                .getEntries()
-                .map(entry => (
-                  <MenuItem key={entry[1]} value={entry[1]}>
-                    {entry[0]}
-                  </MenuItem>
-                ))}
-            </Select>
+            />
           </FormControl>
-        )}
-        <FormControl>
-          <InputLabel shrink>{t("thickness")}</InputLabel>
-          <Slider
-            style={{ marginTop: 15 }}
-            value={card.scale.y}
-            onChange={(e, value) => card.setScaleY(value as number)}
-            valueLabelDisplay="auto"
-            min={1}
-            max={10}
-            step={0.1}
-          />
+          <FormControl className={classes.formControl}>
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={card.stackable}
+                  onChange={e => (card.stackable = e.target.checked)}
+                  color="primary"
+                />
+              }
+              label={t("stackable")}
+            />
+          </FormControl>
+        </>
+      )}
+      {!ownerSet?.maybeCurrent && (
+        <FormControl
+          className={classes.formControl}
+          style={{ marginBottom: 12 }}
+        >
+          <InputLabel shrink>{t("shape")}</InputLabel>
+          <Select
+            margin="dense"
+            fullWidth
+            value={cardShape}
+            onChange={e => (card.cardShape = e.target.value as CardShape)}
+          >
+            {$enum(CardShape)
+              .getEntries()
+              .map(entry => (
+                <MenuItem key={entry[1]} value={entry[1]}>
+                  {entry[0]}
+                </MenuItem>
+              ))}
+          </Select>
         </FormControl>
+      )}
+      <FormControl>
+        <InputLabel shrink>{t("thickness")}</InputLabel>
+        <Slider
+          style={{ marginTop: 15 }}
+          value={card.scale.y}
+          onChange={(e, value) => card.setScaleY(value as number)}
+          valueLabelDisplay="auto"
+          min={1}
+          max={10}
+          step={0.1}
+        />
+      </FormControl>
+      <FormControl className={classes.formControl}>
+        <InputLabel>{t("frontImageUrl")}</InputLabel>
+        <Input
+          margin="dense"
+          value={frontImageUrl}
+          onChange={e => (card.frontImageUrl = e.target.value)}
+          fullWidth
+        />
+      </FormControl>
+      {!ownerSet?.maybeCurrent && (
         <FormControl className={classes.formControl}>
           <InputLabel>{t("frontImageUrl")}</InputLabel>
           <Input
             margin="dense"
-            value={frontImageUrl}
-            onChange={e => (card.frontImageUrl = e.target.value)}
+            value={backImageUrl}
+            onChange={e => (card.backImageUrl = e.target.value)}
             fullWidth
           />
         </FormControl>
-        {!ownerSet?.maybeCurrent && (
-          <FormControl className={classes.formControl}>
-            <InputLabel>{t("frontImageUrl")}</InputLabel>
-            <Input
-              margin="dense"
-              value={backImageUrl}
-              onChange={e => (card.backImageUrl = e.target.value)}
-              fullWidth
-            />
-          </FormControl>
-        )}
-        <FormControl className={classes.formControl}>
-          <InputLabel>{t("cornerTexts")}</InputLabel>
-          <EmojiInput
-            value={cornerTexts}
-            onTextChange={text => (card.cornerTexts = text)}
-            fullWidth
-          />
-        </FormControl>
-        <FormControl className={classes.formControl}>
-          <InputLabel>{t("centerText")}</InputLabel>
-          <EmojiInput
-            value={centerText}
-            onTextChange={text => (card.centerText = text)}
-            fullWidth
-          />
-        </FormControl>
-        <ColorPicker entity={card} />
-      </Box>
-    );
-  }
-);
+      )}
+      <FormControl className={classes.formControl}>
+        <InputLabel>{t("cornerTexts")}</InputLabel>
+        <EmojiInput
+          value={cornerTexts}
+          onTextChange={text => (card.cornerTexts = text)}
+          fullWidth
+        />
+      </FormControl>
+      <FormControl className={classes.formControl}>
+        <InputLabel>{t("centerText")}</InputLabel>
+        <EmojiInput
+          value={centerText}
+          onTextChange={text => (card.centerText = text)}
+          fullWidth
+        />
+      </FormControl>
+      <ColorPicker entity={card} />
+    </Box>
+  );
+});
 
 const PieceEditor = observer(({ entity }: { entity: Entity }) => {
   const { t } = useTranslation();
@@ -653,7 +670,10 @@ const EntityList = observer(
     const count = entity && entitySet.prototypeCounts[entity.$modelId];
 
     const handleAddEntity = () => {
-      const prototype = getNewEntity();
+      const prototype =
+        entitySet.prototypes.length === 0
+          ? getNewEntity()
+          : clone(entitySet.prototypes[entitySet.prototypes.length - 1]);
       entitySet.addPrototype(prototype);
       if (entitySet.prototypes.length === 1) onPreviewEntityChange(prototype);
 
@@ -859,11 +879,12 @@ export type ModalProps = {
   open: boolean;
   positionGroundPlane?: [number, number];
   entity?: Entity;
+  prototypeIndex?: number;
   handleClose: () => void;
 };
 
 export default observer(
-  ({ open, handleClose, positionGroundPlane, entity }: ModalProps) => {
+  ({ open, handleClose, positionGroundPlane, entity, prototypeIndex }: ModalProps) => {
     const { t } = useTranslation();
 
     const classes = useStyles();
@@ -882,23 +903,26 @@ export default observer(
       if (isEditing) targetEntity = entity!;
       else {
         if (type === EntityType.Deck)
-          targetEntity = new Deck({ name: t("newDeck") });
+          targetEntity = new Deck({ name: t("newDeck"), stackable: false });
         else if (type === EntityType.Card)
           targetEntity = new Card({
             name: t("newDeck"),
-            color: { r: 1, g: 1, b: 1 }
+            color: { r: 1, g: 1, b: 1 },
+            stackable: true
           });
         else if (type === EntityType.PieceSet)
-          targetEntity = new PieceSet({ name: t("newDeck") });
+          targetEntity = new PieceSet({ name: t("newDeck"), stackable: false });
         else if (type === EntityType.Piece)
-          targetEntity = new Piece({ name: t("newDeck") });
+          targetEntity = new Piece({ name: t("newDeck"), stackable: true });
         else if (type === EntityType.Dice)
           targetEntity = new Dice({
             name: t("newDeck"),
             diceType: DiceType.D6,
-            scale: { x: 2, y: 2, z: 2 }
+            scale: { x: 2, y: 2, z: 2 },
+            stackable: true
           });
-        else targetEntity = new Board({ name: t("newBoard") });
+        else
+          targetEntity = new Board({ name: t("newBoard"), stackable: false });
       }
 
       const newDraft = draft(targetEntity);
@@ -1008,7 +1032,7 @@ export default observer(
                 </FormControl>
               )}
               <FormControl className={classes.formControl}>
-                <InputLabel shrink>{t("name")}</InputLabel>
+                <InputLabel>{t("name")}</InputLabel>
                 <Input
                   margin="dense"
                   value={entityDraft.data.name}

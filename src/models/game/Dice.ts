@@ -50,7 +50,6 @@ export default class Dice extends ExtendedModel(Entity, {
   onInit() {
     super.onInit();
     this.type = EntityType.Dice;
-    this.stackable = true;
   }
 
   async roll() {

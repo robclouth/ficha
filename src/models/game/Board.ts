@@ -10,7 +10,6 @@ export default class Board extends ExtendedModel(Entity, {}) {
   onInit() {
     super.onInit();
     this.type = EntityType.Board;
-    this.stackable = false;
   }
 
   render(props: BoardProps): JSX.Element {

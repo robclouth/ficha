@@ -243,6 +243,7 @@ export default class Entity extends Model({
       const set = this.ownerSet.current;
       this.gameState.removeEntity(this);
       set.addEntity(this);
+      this.position = { x: 0, y: 0, z: 0 };
       this.faceUp = set.faceUp;
     }
   }

@@ -20,30 +20,63 @@ export type CardProps = Omit<EntityProps, "geometry"> & {};
 
 export const cardHeight = 0.005;
 
-function wrapText(
-  context: CanvasRenderingContext2D,
-  text: string,
-  x: number,
-  y: number,
-  maxWidth: number,
-  lineHeight: number
+export function makeShape(
+  shape: Shape,
+  frontMaterial: MaterialParameters,
+  backMaterial: MaterialParameters,
+  edgeMaterial: MaterialParameters
 ) {
-  let words = text.split(" ");
-  let line = "";
+  let materialParams: MaterialParameters[];
+  let rotationOffset = new Quaternion();
+  let geometry: React.ReactElement<BufferGeometry>;
 
-  for (let n = 0; n < words.length; n++) {
-    let testLine = line + words[n] + " ";
-    let metrics = context.measureText(testLine);
-    let testWidth = metrics.width;
-    if (testWidth > maxWidth && n > 0) {
-      context.fillText(line, x, y);
-      line = words[n] + " ";
-      y += lineHeight;
-    } else {
-      line = testLine;
-    }
+  if (shape === Shape.Card) {
+    geometry = (
+      <boxBufferGeometry args={[0.7, cardHeight, 1]} attach="geometry" />
+    );
+
+    materialParams = range(6).map(i => edgeMaterial);
+    materialParams[2] = backMaterial;
+    materialParams[3] = frontMaterial;
+  } else if (shape === Shape.Hex) {
+    geometry = (
+      <cylinderBufferGeometry
+        args={[0.5, 0.5, cardHeight, 6]}
+        attach="geometry"
+      />
+    );
+    materialParams = range(3).map(i => edgeMaterial);
+    materialParams[1] = backMaterial;
+    materialParams[2] = frontMaterial;
+    materialParams.forEach(material => (material.flatShading = true));
+    rotationOffset.setFromAxisAngle(Object3D.DefaultUp, Math.PI / 2);
+  } else if (shape === Shape.Square) {
+    geometry = (
+      <boxBufferGeometry args={[1, cardHeight, 1]} attach="geometry" />
+    );
+
+    materialParams = range(6).map(i => edgeMaterial);
+    materialParams[2] = backMaterial;
+    materialParams[3] = frontMaterial;
+  } else {
+    geometry = (
+      <cylinderBufferGeometry
+        args={[0.5, 0.5, cardHeight, 30]}
+        attach="geometry"
+      />
+    );
+
+    materialParams = range(3).map(i => edgeMaterial);
+    materialParams[1] = backMaterial;
+    materialParams[2] = frontMaterial;
+    rotationOffset.setFromAxisAngle(Object3D.DefaultUp, Math.PI / 2);
   }
-  context.fillText(line, x, y);
+
+  return {
+    geometry,
+    materialParams,
+    rotationOffset
+  };
 }
 
 export default observer((props: CardProps) => {
@@ -70,12 +103,12 @@ export default observer((props: CardProps) => {
       type: "action",
       action: () => entity.flip()
     },
-    ownerSet !== undefined && {
+    ownerSet?.maybeCurrent !== undefined && {
       label: t("contextMenu.returnToDeck"),
       type: "action",
       action: () => card.returnToSet()
     },
-    ownerSet !== undefined &&
+    ownerSet?.maybeCurrent !== undefined &&
       !gameState?.locked && {
         label: t("contextMenu.removeFromDeck"),
         type: "action",
@@ -161,51 +194,12 @@ export default observer((props: CardProps) => {
       : new Color(1, 1, 1)
   };
 
-  let materialParams: MaterialParameters[];
-  let rotationOffset = new Quaternion();
-
-  let geometry: React.ReactElement<BufferGeometry>;
-  if (shape === Shape.Card) {
-    geometry = (
-      <boxBufferGeometry args={[0.7, cardHeight, 1]} attach="geometry" />
-    );
-
-    materialParams = range(6).map(i => edgeMaterial);
-    materialParams[2] = backMaterial;
-    materialParams[3] = frontMaterial;
-  } else if (shape === Shape.Hex) {
-    geometry = (
-      <cylinderBufferGeometry
-        args={[0.5, 0.5, cardHeight, 6]}
-        attach="geometry"
-      />
-    );
-    materialParams = range(3).map(i => edgeMaterial);
-    materialParams[1] = backMaterial;
-    materialParams[2] = frontMaterial;
-    materialParams.forEach(material => (material.flatShading = true));
-    rotationOffset.setFromAxisAngle(Object3D.DefaultUp, Math.PI / 2);
-  } else if (shape === Shape.Square) {
-    geometry = (
-      <boxBufferGeometry args={[1, cardHeight, 1]} attach="geometry" />
-    );
-
-    materialParams = range(6).map(i => edgeMaterial);
-    materialParams[2] = backMaterial;
-    materialParams[3] = frontMaterial;
-  } else {
-    geometry = (
-      <cylinderBufferGeometry
-        args={[0.5, 0.5, cardHeight, 30]}
-        attach="geometry"
-      />
-    );
-
-    materialParams = range(3).map(i => edgeMaterial);
-    materialParams[1] = backMaterial;
-    materialParams[2] = frontMaterial;
-    rotationOffset.setFromAxisAngle(Object3D.DefaultUp, Math.PI / 2);
-  }
+  const { geometry, materialParams, rotationOffset } = makeShape(
+    shape,
+    frontMaterial,
+    backMaterial,
+    edgeMaterial
+  );
 
   return (
     <Entity

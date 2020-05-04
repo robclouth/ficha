@@ -13,7 +13,6 @@ export default class Deck extends ExtendedModel(EntitySet, {
     super.onInit();
     this.type = EntityType.Deck;
     this.childType = EntityType.Card;
-    this.stackable = false;
   }
 
   render(props: DeckProps): JSX.Element {

@@ -15,7 +15,6 @@ export default class HandArea extends ExtendedModel(Entity, {
   onInit() {
     super.onInit();
     this.type = EntityType.HandArea;
-    this.stackable = false;
     this.editable = false;
   }
 

@@ -25,7 +25,6 @@ export default class Piece extends ExtendedModel(Entity, {
   onInit() {
     super.onInit();
     this.type = EntityType.Piece;
-    this.stackable = true;
   }
 
   render(props: PieceProps): JSX.Element {

@@ -14,7 +14,6 @@ export default class PieceSet extends ExtendedModel(EntitySet, {}) {
     super.onInit();
     this.type = EntityType.PieceSet;
     this.childType = EntityType.Piece;
-    this.stackable = false;
   }
 
   render(props: PieceSetProps): JSX.Element {
