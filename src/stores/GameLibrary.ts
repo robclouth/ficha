@@ -135,7 +135,16 @@ export default class GameLibrary extends Model({
 
   @modelAction
   addGameToLibrary(game: Game) {
-    this.library.push(game);
+    this.library.push(clone(game));
+  }
+
+  async addGameToLibraryFromInProgress(game: Game) {
+    const gameState = await localforage.getItem<SnapshotOutOf<GameState>>(
+      `inprogress-${game.$modelId}`
+    );
+    await localforage.setItem(`library-${game.gameId}`, gameState);
+
+    this.addGameToLibrary(game);
   }
 
   @modelAction
@@ -191,5 +200,22 @@ export default class GameLibrary extends Model({
 
   async loadGameByName(name: string) {
     await this.loadGameFromUrl(gameRepoUrl + "/" + name);
+  }
+
+  async exportGame(game: Game) {
+    const gameSnapshot = await localforage.getItem<SnapshotOutOf<GameState>>(
+      `library-${game.gameId}`
+    );
+
+    const cleanedJson = omit(gameSnapshot, ["players", "chatHistory"]);
+
+    const blob = new Blob([JSON.stringify(cleanedJson)], {
+      type: "application/json"
+    });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `game.json`;
+    a.click();
   }
 }

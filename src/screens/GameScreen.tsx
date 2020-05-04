@@ -286,10 +286,6 @@ export default observer(() => {
     }
   };
 
-  const handleExportGame = () => {
-    gameStore.exportGame();
-  };
-
   if (contextMenu && !contextMenu.items) {
     contextMenu.items = [
       {

@@ -80,7 +80,12 @@ const GameTile = observer(({ game, onClick, inProgress }: GameTileProps) => {
   };
 
   const handleAddToLibraryClick = () => {
-    gameLibrary.addGameToLibrary(game);
+    gameLibrary.addGameToLibraryFromInProgress(game);
+    popupState.close();
+  };
+
+  const handleExportClick = () => {
+    gameLibrary.exportGame(game);
     popupState.close();
   };
 
@@ -141,6 +146,9 @@ const GameTile = observer(({ game, onClick, inProgress }: GameTileProps) => {
           </MenuItem>
         )}
         <MenuItem onClick={handleRemoveClick}>{t("remove")}</MenuItem>
+        {!inProgress && (
+          <MenuItem onClick={handleExportClick}>{t("export")}</MenuItem>
+        )}
       </Menu>
     </GridListTile>
   );

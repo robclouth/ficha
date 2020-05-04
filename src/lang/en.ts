@@ -8,6 +8,7 @@ export default {
     startHosting: "Start hosting",
     stopHosting: "Stop hosting",
     leaveGame: "Leave game",
+    export: "Export",
     about: "About",
     title: "Title",
     subtitle: "Subtitle",

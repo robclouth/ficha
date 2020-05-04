@@ -450,21 +450,4 @@ export default class GameStore extends Model({
 
     this.uiState.setupUndoManager(this.gameState);
   }
-
-  @modelAction
-  exportGame() {
-    const gameState = clone(this.gameState);
-    const gameStateJson = getSnapshot(gameState);
-
-    const cleanedJson = omit(gameStateJson, ["players", "chatHistory"]);
-
-    const blob = new Blob([JSON.stringify(cleanedJson)], {
-      type: "application/json"
-    });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `game.json`;
-    a.click();
-  }
 }
