@@ -16,7 +16,7 @@ export default observer((props: PieceProps) => {
   const { assetCache } = useStore();
   const { entity } = props;
   const piece = entity as Piece;
-  const { ownerSet, color, shape, shapeParam1, shapeParam2 } = piece;
+  const { ownerSet, color, shape, shapeParam1, shapeParam2, gameState } = piece;
 
   const contextMenuItems: ContextMenuItem[] = [];
 
@@ -26,11 +26,14 @@ export default observer((props: PieceProps) => {
       type: "action",
       action: () => entity.returnToSet()
     });
-    contextMenuItems.push({
-      label: t("contextMenu.removeFromSet"),
-      type: "action",
-      action: () => entity.removeFromSet()
-    });
+
+    if (!gameState?.locked) {
+      contextMenuItems.push({
+        label: t("contextMenu.removeFromSet"),
+        type: "action",
+        action: () => entity.removeFromSet()
+      });
+    }
   }
 
   const materialParams = {

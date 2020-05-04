@@ -97,12 +97,13 @@ export default observer((props: EntityProps) => {
       type: "action",
       action: () => entity.rotate(-Math.PI / 2)
     },
-    editable && {
-      label: t("contextMenu.edit"),
-      type: "edit",
-      target: entity,
-      action: () => {}
-    },
+    editable &&
+      !gameState.locked && {
+        label: t("contextMenu.edit"),
+        type: "edit",
+        target: entity,
+        action: () => {}
+      },
     // editable &&
     //   entity.prototype?.maybeCurrent !== undefined && {
     //     label: "Edit prototype",
@@ -110,26 +111,28 @@ export default observer((props: EntityProps) => {
     //     target: entity.prototype?.maybeCurrent,
     //     action: () => {}
     //   },
-    {
+    !gameState.locked && {
       label: t("contextMenu.duplicate"),
       type: "action",
       action: () => entity.duplicate()
     },
-    editable && {
-      label: t("contextMenu.addToLibrary"),
-      type: "action",
-      action: () => entityLibrary.addEntity(entity)
-    },
-    {
+    editable &&
+      !gameState.locked && {
+        label: t("contextMenu.addToLibrary"),
+        type: "action",
+        action: () => entityLibrary.addEntity(entity)
+      },
+    !gameState.locked && {
       label: locked ? t("contextMenu.unlock") : t("contextMenu.lock"),
       type: "action",
       action: () => entity.toggleLocked()
     },
-    deletable && {
-      label: t("contextMenu.delete"),
-      type: "action",
-      action: () => gameState.removeEntity(entity)
-    }
+    deletable &&
+      !gameState.locked && {
+        label: t("contextMenu.delete"),
+        type: "action",
+        action: () => gameState.removeEntity(entity)
+      }
   ];
 
   let contextMenuItems = props.contextMenuItems

@@ -60,7 +60,7 @@ export default observer((props: PieceSetProps) => {
     contextMenuItems.push(...items);
   }
 
-  if (externalEntities.length > 0) {
+  if (externalEntities.length > 0 && !gameState?.locked) {
     contextMenuItems.push({
       label: t("contextMenu.saveDeal"),
       type: "action",

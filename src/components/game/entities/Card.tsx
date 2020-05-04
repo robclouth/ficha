@@ -61,29 +61,28 @@ export default observer((props: CardProps) => {
     body,
     centerValue,
     cornerValue,
-    shape
+    shape,
+    gameState
   } = card;
 
-  const contextMenuItems: ContextMenuItem[] = [
+  const contextMenuItems: Array<ContextMenuItem | false> = [
     {
       label: t("contextMenu.flip"),
       type: "action",
       action: () => entity.flip()
-    }
-  ];
-
-  if (ownerSet) {
-    contextMenuItems.push({
+    },
+    ownerSet !== undefined && {
       label: t("contextMenu.returnToDeck"),
       type: "action",
       action: () => card.returnToSet()
-    });
-    contextMenuItems.push({
-      label: t("contextMenu.removeFromDeck"),
-      type: "action",
-      action: () => card.removeFromSet()
-    });
-  }
+    },
+    ownerSet !== undefined &&
+      !gameState?.locked && {
+        label: t("contextMenu.removeFromDeck"),
+        type: "action",
+        action: () => card.removeFromSet()
+      }
+  ];
 
   const backTexture = backImageUrl
     ? assetCache.getTexture(backImageUrl)

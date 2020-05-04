@@ -48,6 +48,7 @@ export default class GameState extends Model({
   }),
   dateCreated: prop(Date.now(), { setterAction: true }),
   dateModified: prop(Date.now(), { setterAction: true }),
+  locked: prop(false, { setterAction: true }),
   assetsUrl: prop("", { setterAction: true }),
   players: prop<Player[]>(() => [], { setterAction: true }),
   chatHistory: prop<string[]>(() => [], { setterAction: true }),
@@ -154,5 +155,10 @@ export default class GameState extends Model({
   @modelAction
   setFromJson(gameJson: SnapshotOutOfModel<GameState>) {
     applySnapshot(this, { ...gameJson, $modelId: this.$modelId } as any);
+  }
+
+  @modelAction
+  toggleLock() {
+    this.locked = !this.locked;
   }
 }

@@ -16,6 +16,8 @@ import MoreVertIcon from "@material-ui/icons/MoreVert";
 import RedoIcon from "@material-ui/icons/Redo";
 import HostIcon from "@material-ui/icons/Router";
 import UndoIcon from "@material-ui/icons/Undo";
+import LockIcon from "@material-ui/icons/Lock";
+import LockOpenIcon from "@material-ui/icons/LockOpen";
 import VideocamIcon from "@material-ui/icons/Videocam";
 import CheckIcon from "@material-ui/icons/Check";
 import { autorun } from "mobx";
@@ -246,7 +248,7 @@ export default observer(() => {
     openModal
   } = uiState;
 
-  const { gameState } = gameStore;
+  const { gameState, isHost } = gameStore;
 
   const { game } = useParams();
   const history = useHistory();
@@ -383,6 +385,15 @@ export default observer(() => {
         display="flex"
         zIndex={2}
       >
+        {(isHost || !gameStore.isConnectedToHost) && (
+          <IconButton
+            aria-label="lock"
+            onClick={() => gameState.toggleLock()}
+            style={{ marginRight: theme.spacing(1) }}
+          >
+            {gameState.locked ? <LockIcon /> : <LockOpenIcon />}
+          </IconButton>
+        )}
         <IconButton
           aria-label="undo"
           onClick={() => uiState.undo()}

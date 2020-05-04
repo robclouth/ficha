@@ -16,7 +16,13 @@ export default observer((props: DeckProps) => {
 
   const { entity } = props;
   const deck = entity as Deck;
-  const { containedEntities, name, externalEntities, savedDeal } = deck;
+  const {
+    containedEntities,
+    name,
+    externalEntities,
+    savedDeal,
+    gameState
+  } = deck;
 
   const contextMenuItems: ContextMenuItem[] = [
     {
@@ -48,7 +54,7 @@ export default observer((props: DeckProps) => {
     contextMenuItems.push(...items);
   }
 
-  if (externalEntities.length > 0) {
+  if (externalEntities.length > 0 && !gameState?.locked) {
     contextMenuItems.push({
       label: t("contextMenu.saveDeal"),
       type: "action",
