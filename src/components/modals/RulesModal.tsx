@@ -73,14 +73,16 @@ export default observer(({ open, handleClose }: ModalProps) => {
             <Markdown markdown={markdown} />
           )}
 
-          <Fab
-            onClick={() => setEdit(!edit)}
-            size="medium"
-            aria-label="edit"
-            className={classes.fab}
-          >
-            {edit ? <VisibilityIcon /> : <EditIcon />}
-          </Fab>
+          {!gameState.locked && (
+            <Fab
+              onClick={() => setEdit(!edit)}
+              size="medium"
+              aria-label="edit"
+              className={classes.fab}
+            >
+              {edit ? <VisibilityIcon /> : <EditIcon />}
+            </Fab>
+          )}
         </Box>
       }
     />

@@ -478,33 +478,37 @@ export default observer(() => {
         >
           {t("mainMenu.gameRules")}
         </MenuItem>
-        <NestedMenuItem
-          label={t("mainMenu.setups")}
-          rightSide={true}
-          parentMenuOpen={topMenuAnchorEl !== null ? true : false}
-        >
-          <MenuItem
-            onClick={() =>
-              handleTopMenuSelect(() => uiState.setOpenModal(Modals.EditSetup))
-            }
+        {!gameState.locked && (
+          <NestedMenuItem
+            label={t("mainMenu.setups")}
+            rightSide={true}
+            parentMenuOpen={topMenuAnchorEl !== null ? true : false}
           >
-            {t("mainMenu.addSetup")}
-          </MenuItem>
-          {gameState.setups.map((setup, i) => (
             <MenuItem
-              key={i}
-              style={{ display: "flex", justifyContent: "space-between" }}
               onClick={() =>
-                handleTopMenuSelect(() => gameState.activateSetup(setup))
+                handleTopMenuSelect(() =>
+                  uiState.setOpenModal(Modals.EditSetup)
+                )
               }
             >
-              {`${setup.name} (${setup.numPlayers} players)`}
-              <IconButton onClick={() => gameState.removeSetup(setup)}>
-                <DeleteIcon fontSize="small" />
-              </IconButton>
+              {t("mainMenu.addSetup")}
             </MenuItem>
-          ))}
-        </NestedMenuItem>
+            {gameState.setups.map((setup, i) => (
+              <MenuItem
+                key={i}
+                style={{ display: "flex", justifyContent: "space-between" }}
+                onClick={() =>
+                  handleTopMenuSelect(() => gameState.activateSetup(setup))
+                }
+              >
+                {`${setup.name} (${setup.numPlayers} players)`}
+                <IconButton onClick={() => gameState.removeSetup(setup)}>
+                  <DeleteIcon fontSize="small" />
+                </IconButton>
+              </MenuItem>
+            ))}
+          </NestedMenuItem>
+        )}
         <NestedMenuItem
           label={t("mainMenu.language")}
           rightSide={true}

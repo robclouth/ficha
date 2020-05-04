@@ -122,7 +122,7 @@ const Scene = observer(() => {
     if (e.button === 0) {
       uiState.handleSelectionBoxEnd(e);
       if (distance < 5) uiState.deselectAll();
-    } else if (e.button === 2 && distance < 5) {
+    } else if (e.button === 2 && distance < 5 && !gameState.locked) {
       uiState.openContextMenu(e);
     }
   };

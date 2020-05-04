@@ -52,6 +52,9 @@ export default observer(({ open, handleClose }: ModalProps) => {
               onChange={e => (gameDraft.data.name = e.target.value)}
               fullWidth
               label={t("title")}
+              InputProps={{
+                readOnly: gameState.locked
+              }}
             />
           </FormControl>
           <FormControl className={classes.formControl}>
@@ -60,6 +63,9 @@ export default observer(({ open, handleClose }: ModalProps) => {
               onChange={e => (gameDraft.data.author = e.target.value)}
               fullWidth
               label={t("author")}
+              InputProps={{
+                readOnly: gameState.locked
+              }}
             />
           </FormControl>
           <FormControl className={classes.formControl}>
@@ -69,25 +75,32 @@ export default observer(({ open, handleClose }: ModalProps) => {
               fullWidth
               multiline
               label={t("description")}
+              InputProps={{
+                readOnly: gameState.locked
+              }}
             />
           </FormControl>
-          <FormControl className={classes.formControl}>
-            <TextField
-              value={gameDraft.data.imageUrl}
-              onChange={e => (gameDraft.data.imageUrl = e.target.value)}
-              fullWidth
-              label={t("imageUrl")}
-            />
-          </FormControl>
+          {!gameState.locked && (
+            <FormControl className={classes.formControl}>
+              <TextField
+                value={gameDraft.data.imageUrl}
+                onChange={e => (gameDraft.data.imageUrl = e.target.value)}
+                fullWidth
+                label={t("imageUrl")}
+              />
+            </FormControl>
+          )}
           <Button fullWidth onClick={() => uiState.setOpenModal(Modals.Rules)}>
             {t("rules")}
           </Button>
         </>
       }
       actions={
-        <Button onClick={handleSave} color="primary">
-          {t("save")}
-        </Button>
+        !gameState.locked && (
+          <Button onClick={handleSave} color="primary">
+            {t("save")}
+          </Button>
+        )
       }
     />
   );
