@@ -19,12 +19,17 @@ export enum Shape {
 @model("Piece")
 export default class Piece extends ExtendedModel(Entity, {
   shape: prop<Shape>(Shape.Cube, { setterAction: true }),
+  imageUrl: prop<string>("", { setterAction: true }),
   shapeParam1: prop(3, { setterAction: true }),
   shapeParam2: prop(3, { setterAction: true })
 }) {
   onInit() {
     super.onInit();
     this.type = EntityType.Piece;
+  }
+
+  onAttachedToRootStore() {
+    this.imageUrl && this.assetCache!.addTexture(this.imageUrl);
   }
 
   render(props: PieceProps): JSX.Element {

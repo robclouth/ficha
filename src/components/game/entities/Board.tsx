@@ -4,6 +4,7 @@ import React from "react";
 import { Color } from "three";
 import { useStore } from "../../../stores/RootStore";
 import Entity, { EntityProps, MaterialParameters } from "./Entity";
+import Board from "../../../models/game/Board";
 
 export type BoardProps = Omit<EntityProps, "geometry"> & {};
 
@@ -12,7 +13,7 @@ export const height = 0.01;
 export default observer((props: BoardProps) => {
   const { assetCache } = useStore();
   const { entity } = props;
-  const { frontImageUrl } = entity;
+  const { imageUrl } = entity as Board;
 
   const edgeMaterial: MaterialParameters = {
     roughness: 1,
@@ -21,7 +22,7 @@ export default observer((props: BoardProps) => {
 
   const frontMaterial: MaterialParameters = {
     roughness: 0.2,
-    map: assetCache.getTexture(frontImageUrl)
+    map: assetCache.getTexture(imageUrl)
   };
 
   const materialParams = range(6).map(i => edgeMaterial);

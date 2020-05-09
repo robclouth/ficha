@@ -165,7 +165,7 @@ export default observer((props: CardProps) => {
   const { t } = useTranslation();
 
   const { entity } = props;
-  const card = entity as Card;
+  const card = (entity as unknown) as Card;
   const { ownerSet, shape, gameState } = card;
 
   const contextMenuItems: Array<ContextMenuItem | false> = [

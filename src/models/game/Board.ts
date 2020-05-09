@@ -6,7 +6,9 @@ import BoardComponent, {
 import Entity, { EntityType } from "./Entity";
 
 @model("Board")
-export default class Board extends ExtendedModel(Entity, {}) {
+export default class Board extends ExtendedModel(Entity, {
+  imageUrl: prop<string>("", { setterAction: true })
+}) {
   onInit() {
     super.onInit();
     this.type = EntityType.Board;

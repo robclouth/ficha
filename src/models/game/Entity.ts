@@ -55,8 +55,6 @@ export default class Entity extends Model({
       setterAction: true
     }
   ),
-  frontImageUrl: prop<string>("", { setterAction: true }),
-  backImageUrl: prop<string>("", { setterAction: true }),
   locked: prop(false, { setterAction: true }),
   faceUp: prop(true, { setterAction: true }),
   stackable: prop(false, { setterAction: true }),
@@ -70,20 +68,6 @@ export default class Entity extends Model({
   prevMeshMatrix?: Matrix4;
 
   onInit() {}
-
-  onAttachedToRootStore() {
-    const preloadDisposer = when(
-      () => this.assetCache !== undefined,
-      () => {
-        this.frontImageUrl && this.assetCache!.addTexture(this.frontImageUrl);
-        this.backImageUrl && this.assetCache!.addTexture(this.backImageUrl);
-      }
-    );
-
-    return () => {
-      preloadDisposer();
-    };
-  }
 
   @computed get gameState() {
     return findParent<GameState>(

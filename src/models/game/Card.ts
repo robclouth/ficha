@@ -14,6 +14,8 @@ export enum Shape {
 
 @model("Card")
 export default class Card extends ExtendedModel(Entity, {
+  frontImageUrl: prop<string>("", { setterAction: true }),
+  backImageUrl: prop<string>("", { setterAction: true }),
   cornerTexts: prop("", { setterAction: true }),
   centerText: prop("", { setterAction: true }),
   cardShape: prop<Shape>(Shape.Card, { setterAction: true })
@@ -21,6 +23,11 @@ export default class Card extends ExtendedModel(Entity, {
   onInit() {
     super.onInit();
     this.type = EntityType.Card;
+  }
+
+  onAttachedToRootStore() {
+    this.frontImageUrl && this.assetCache!.addTexture(this.frontImageUrl);
+    this.backImageUrl && this.assetCache!.addTexture(this.backImageUrl);
   }
 
   @computed get deck() {

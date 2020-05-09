@@ -75,8 +75,8 @@ const colorOptions = [
 
 const useStyles = makeStyles(theme => ({
   formControl: {
-    marginTop: theme.spacing(0.5),
-    marginBottom: theme.spacing(0.5)
+    // marginTop: theme.spacing(0.5),
+    marginBottom: theme.spacing(1)
   },
   emojiInput: {
     "& .emoji-mart": {
@@ -397,15 +397,15 @@ const PieceEditor = observer(({ entity }: { entity: Entity }) => {
   const classes = useStyles();
 
   const piece = entity as Piece;
-  const { color, shape } = piece;
+  const { imageUrl, shape } = piece;
 
   useEffect(() => {
     if (shape === Shape.Cylinder) {
-      piece.shapeParam1 = 10;
+      piece.shapeParam1 = 30;
     } else if (shape === Shape.Cone) {
-      piece.shapeParam1 = 10;
+      piece.shapeParam1 = 30;
     } else if (shape === Shape.Ring) {
-      piece.shapeParam1 = piece.shapeParam2 = 10;
+      piece.shapeParam1 = piece.shapeParam2 = 30;
     }
   }, [shape]);
 
@@ -422,7 +422,7 @@ const PieceEditor = observer(({ entity }: { entity: Entity }) => {
           onChange={(e, value) => (piece.shapeParam1 = value as number)}
           valueLabelDisplay="auto"
           min={3}
-          max={20}
+          max={30}
         />
       </FormControl>
     );
@@ -436,7 +436,7 @@ const PieceEditor = observer(({ entity }: { entity: Entity }) => {
           onChange={(e, value) => (piece.shapeParam1 = value as number)}
           valueLabelDisplay="auto"
           min={3}
-          max={20}
+          max={30}
         />
       </FormControl>
     );
@@ -451,7 +451,7 @@ const PieceEditor = observer(({ entity }: { entity: Entity }) => {
             onChange={(e, value) => (piece.shapeParam1 = value as number)}
             valueLabelDisplay="auto"
             min={3}
-            max={20}
+            max={30}
           />
         </FormControl>
         <FormControl>
@@ -462,7 +462,7 @@ const PieceEditor = observer(({ entity }: { entity: Entity }) => {
             onChange={(e, value) => (piece.shapeParam2 = value as number)}
             valueLabelDisplay="auto"
             min={3}
-            max={20}
+            max={30}
           />
         </FormControl>
       </>
@@ -471,12 +471,13 @@ const PieceEditor = observer(({ entity }: { entity: Entity }) => {
 
   return (
     <Box display="flex" flexDirection="column">
-      <FormControl className={classes.formControl} style={{ marginBottom: 20 }}>
+      <FormControl className={classes.formControl}>
         <InputLabel shrink>{t("shape")}</InputLabel>
         <Select
           fullWidth
           value={shape}
           onChange={e => (piece.shape = e.target.value as Shape)}
+          margin="dense"
         >
           {$enum(Shape)
             .getEntries()
@@ -488,6 +489,15 @@ const PieceEditor = observer(({ entity }: { entity: Entity }) => {
         </Select>
       </FormControl>
       {shapeControls}
+      <FormControl className={classes.formControl}>
+        <InputLabel>{t("imageUrl")}</InputLabel>
+        <Input
+          margin="dense"
+          value={imageUrl}
+          onChange={e => (piece.imageUrl = e.target.value)}
+          fullWidth
+        />
+      </FormControl>
       <FormControl>
         <InputLabel shrink>{t("scaleX")}</InputLabel>
         <Slider
@@ -588,7 +598,7 @@ const BoardEditor = observer(({ entity }: { entity: Entity }) => {
   const classes = useStyles();
   const theme = useTheme();
   const board = entity as Board;
-  const { frontImageUrl, scale } = board;
+  const { imageUrl, scale } = board;
 
   return (
     <Box display="flex" flexDirection="column">
@@ -596,8 +606,8 @@ const BoardEditor = observer(({ entity }: { entity: Entity }) => {
         <InputLabel>{t("imageUrl")}</InputLabel>
         <Input
           margin="dense"
-          value={frontImageUrl}
-          onChange={e => (board.frontImageUrl = e.target.value)}
+          value={imageUrl}
+          onChange={e => (board.imageUrl = e.target.value)}
           fullWidth
         />
       </FormControl>
@@ -803,7 +813,7 @@ const DeckEditor = observer(
 
     const handleBackImageUrlChange = (url: string) => {
       entitySet.containedEntities.forEach(
-        entity => (entity.backImageUrl = url)
+        entity => ((entity as Card).backImageUrl = url)
       );
       setBackImageUrl(url);
     };
