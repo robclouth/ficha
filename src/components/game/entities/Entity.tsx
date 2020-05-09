@@ -81,6 +81,8 @@ export default observer((props: EntityProps) => {
   } = entity;
   const [hovered, setHovered] = useState(false);
   const [pressed, setPressed] = useState(false);
+  const [rotating, setRotating] = useState(false);
+
   const [boundingBox, setBoundingBox] = useState<Box3 | undefined>(undefined);
 
   const [pointerDownPos, setPointerDownPos] = React.useState({ x: 0, y: 0 });
@@ -158,16 +160,9 @@ export default observer((props: EntityProps) => {
           uiState.deselectAll();
         }
 
-        clickCount++;
         if (clickCount === 1) {
-          singleClickTimer = setTimeout(() => {
-            clickCount = 0;
-            handleSingleClick(e);
-          }, 300);
-        } else if (clickCount === 2) {
-          clearTimeout(singleClickTimer);
-          clickCount = 0;
-          handleDoubleClick(e);
+          setRotating(true);
+          uiState.startUndoGroup();
         }
       }
     }
@@ -181,10 +176,24 @@ export default observer((props: EntityProps) => {
     if (e.button === 0) {
       uiState.setDraggingEntity();
       setPressed(false);
+      setRotating(false);
       e.target.releasePointerCapture(e.pointerId);
+      uiState.endUndoGroup();
 
       if (distance < 10 && !locked) {
         handleSelect();
+
+        clickCount++;
+        if (clickCount === 1) {
+          singleClickTimer = setTimeout(() => {
+            clickCount = 0;
+            handleSingleClick(e);
+          }, 300);
+        } else if (clickCount === 2) {
+          clearTimeout(singleClickTimer);
+          clickCount = 0;
+          handleDoubleClick(e);
+        }
       }
     } else if (e.button === 2 && distance < 10) {
       uiState.openContextMenu(e, allContextMenuItems, entity);
@@ -201,9 +210,14 @@ export default observer((props: EntityProps) => {
     if (distance > 20) {
       singleClickTimer && clearTimeout(singleClickTimer);
       clickCount = 0;
+      if (rotating) uiState.deselectEntity(entity);
     }
 
-    if (!isDragging && pressed) {
+    if (rotating) {
+      entity.angle += e.movementY / 100;
+    }
+
+    if (!rotating && !isDragging && pressed) {
       if (!locked) {
         e.stopPropagation();
         uiState.setDraggingEntity(entity);
@@ -217,6 +231,12 @@ export default observer((props: EntityProps) => {
           e.target.releasePointerCapture(e.pointerId);
         }
       }
+    }
+  };
+
+  const handleMouseWheel = (e: any) => {
+    if (isDragging) {
+      entity.angle += e.deltaY / 500;
     }
   };
 
@@ -295,6 +315,7 @@ export default observer((props: EntityProps) => {
         onPointerMove: !inOtherPlayersArea ? handlePointerMove : undefined,
         onPointerOver: !inOtherPlayersArea ? handlePointerHoverOver : undefined,
         onPointerOut: handlePointerHoverOut,
+        onWheel: !inOtherPlayersArea ? handleMouseWheel : undefined,
         onClick: !inOtherPlayersArea ? handleClick : undefined
       }
     : undefined;

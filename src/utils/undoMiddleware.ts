@@ -124,11 +124,13 @@ export class UndoStore extends Model({
 
   @modelAction
   groupEnded() {
-    this.isUndoGroup = false;
-    this.undoEvents.push(this.eventGroup);
-    this.eventGroup = [];
-    // once an undo event is added redo queue is no longer valid
-    this.redoEvents.length = 0;
+    if (this.isUndoGroup) {
+      this.isUndoGroup = false;
+      this.undoEvents.push(this.eventGroup);
+      this.eventGroup = [];
+      // once an undo event is added redo queue is no longer valid
+      this.redoEvents.length = 0;
+    }
   }
 }
 

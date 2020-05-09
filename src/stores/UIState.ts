@@ -187,6 +187,14 @@ export default class UIState extends Model({}) {
     this.selectionTopLeft = this.selectionBottomRight = undefined;
   }
 
+  startUndoGroup() {
+    this.undoManager?.startGroup();
+  }
+
+  endUndoGroup() {
+    this.undoManager?.endGroup();
+  }
+
   @modelAction
   openContextMenu(
     e: PointerEvent,
