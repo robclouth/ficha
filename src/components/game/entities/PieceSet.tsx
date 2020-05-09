@@ -12,10 +12,11 @@ import PieceSet from "../../../models/game/PieceSet";
 import { clone } from "mobx-keystone";
 import { take } from "lodash";
 import { useTranslation } from "react-i18next";
+import pieceSetImage from "../../../assets/piece-set.png";
 
 export type PieceSetProps = Omit<EntityProps, "geometry"> & {};
 
-const height = 0.2;
+const height = 0.001;
 
 export default observer((props: PieceSetProps) => {
   const { t } = useTranslation();
@@ -79,10 +80,14 @@ export default observer((props: PieceSetProps) => {
     clone(prototype)
   );
 
-  let materialParams: MaterialParameters = {
-    roughness: 1,
-    color: new Color(0.6, 0.6, 0.6)
-  };
+  let materialParams: MaterialParameters[] = [
+    { opacity: 0 },
+    { opacity: 0 },
+    {
+      roughness: 1,
+      map: assetCache.getTexture(pieceSetImage)
+    }
+  ];
 
   const handleDrag = (e: PointerEvent) => {
     const piece = pieceSet.take(1);
@@ -95,7 +100,7 @@ export default observer((props: PieceSetProps) => {
       pivot={[0, -height / 2, 0]}
       geometry={
         <cylinderBufferGeometry
-          args={[0.5, 0.5, height, 20]}
+          args={[0.5, 0.5, height, 30]}
           attach="geometry"
         />
       }
@@ -103,6 +108,7 @@ export default observer((props: PieceSetProps) => {
       contextMenuItems={contextMenuItems}
       dragAction={containedEntities.length > 0 ? handleDrag : undefined}
       hoverMessage={`${name} (${containedEntities.length})`}
+      castShadows={false}
     >
       {previewPrototypes &&
         previewPrototypes.map((prototype, i) => {

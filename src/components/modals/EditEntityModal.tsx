@@ -917,7 +917,8 @@ const PieceSetEditor = observer(
           childEntityName="piece"
           getNewEntity={() =>
             new Piece({
-              ownerSet: entitySetRef(entitySet)
+              ownerSet: entitySetRef(entitySet),
+              stackable: true
             })
           }
         />
@@ -973,17 +974,20 @@ export default observer(
           targetEntity = new Deck({ name: t("newDeck"), stackable: false });
         else if (type === EntityType.Card)
           targetEntity = new Card({
-            name: t("newDeck"),
+            name: t("newCard"),
             color: { r: 1, g: 1, b: 1 },
             stackable: true
           });
         else if (type === EntityType.PieceSet)
-          targetEntity = new PieceSet({ name: t("newDeck"), stackable: false });
+          targetEntity = new PieceSet({
+            name: t("newPieceSet"),
+            stackable: false
+          });
         else if (type === EntityType.Piece)
-          targetEntity = new Piece({ name: t("newDeck"), stackable: true });
+          targetEntity = new Piece({ name: t("newPiece"), stackable: true });
         else if (type === EntityType.Dice)
           targetEntity = new Dice({
-            name: t("newDeck"),
+            name: t("newDie"),
             diceType: DiceType.D6,
             scale: { x: 2, y: 2, z: 2 },
             stackable: true

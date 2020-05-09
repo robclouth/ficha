@@ -6,6 +6,7 @@ import HandArea from "../../../models/game/HandArea";
 import { useStore } from "../../../stores/RootStore";
 import { ContextMenuItem } from "../../../types";
 import Entity, { EntityProps } from "./Entity";
+import handAreaImage from "../../../assets/hand-area.png";
 
 export type HandAreaProps = Omit<EntityProps, "geometry"> & {};
 
@@ -43,7 +44,7 @@ export default observer((props: HandAreaProps) => {
       materialParams={{
         roughness: 1,
         opacity: 1,
-        map: assetCache.getTexture(require("../../../assets/hand-area.png")),
+        map: assetCache.getTexture(handAreaImage),
         color: player
           ? new Color(player.color.r, player.color.g, player.color.b)
           : new Color(0.4, 0.4, 0.4)
