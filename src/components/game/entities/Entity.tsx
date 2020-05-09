@@ -235,9 +235,9 @@ export default observer((props: EntityProps) => {
   };
 
   const handleMouseWheel = (e: any) => {
-    if (isDragging) {
-      entity.angle += e.deltaY / 500;
-    }
+    // if (isDragging) {
+    //   entity.angle += e.deltaY / 500;
+    // }
   };
 
   const handleSelect = () => {

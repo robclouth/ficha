@@ -26,8 +26,8 @@ Click [Add] to add the object to the scene.
 ## Editing objects
 Right click on an object to open the menu, and select [Edit]. This will open the object editor. Click [Save] to save the changes.
 
-## Moving objects
-Left click and drag to move objects.
+## Moving/rotating objects
+Left click and drag to move objects. Double left click and drag to rotate objects.
 
 ## Locking objects
 Right click on the object and select [Lock]. Locked objects can't be moved or selected until unlocked. 
