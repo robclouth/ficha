@@ -52,6 +52,8 @@ export default {
     name: "Name",
     type: "Type",
     stackable: "Stackable",
+    certainPropertiesMustBeEditedInTheDeck:
+      "Certain properties must be edited in the deck",
     count: "Count",
     shape: "Shape",
     add: "Add",

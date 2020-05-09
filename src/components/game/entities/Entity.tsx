@@ -70,7 +70,6 @@ export default observer((props: EntityProps) => {
   const {
     position,
     angle,
-    scale,
     ownerSet,
     locked,
     faceUp,
@@ -102,10 +101,9 @@ export default observer((props: EntityProps) => {
         label: t("contextMenu.edit"),
         type: "edit",
         target:
-          entity.ownerSet?.maybeCurrent !== undefined
-            ? entity.ownerSet?.maybeCurrent
-            : entity,
-        params: entity.ownerSet?.maybeCurrent?.prototypes.indexOf(entity)
+          entity.prototype?.maybeCurrent !== undefined
+            ? entity.prototype?.maybeCurrent
+            : entity
       },
     !gameState.locked && {
       label: t("contextMenu.duplicate"),
@@ -300,6 +298,8 @@ export default observer((props: EntityProps) => {
         onClick: !inOtherPlayersArea ? handleClick : undefined
       }
     : undefined;
+
+  const scale = entity.getScale();
 
   return (
     <>

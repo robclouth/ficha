@@ -43,6 +43,7 @@ export const entityRef = rootRef<Entity>("EntityRef", {
 export default class Entity extends Model({
   name: prop("", { setterAction: true }),
   type: prop<EntityType>(EntityType.Card, { setterAction: true }),
+  isPrototype: prop(false, { setterAction: true }),
   ownerSet: prop<Ref<EntitySet> | undefined>(undefined, { setterAction: true }),
   prototype: prop<Ref<Entity> | undefined>(undefined, { setterAction: true }),
   position: prop<Vector3>(() => ({ x: 0, y: 0, z: 0 }), { setterAction: true }),
@@ -183,6 +184,7 @@ export default class Entity extends Model({
 
     const newSnapshot = omit(snapshot, [
       "$modelId",
+      "isPrototype",
       "position",
       "angle",
       "faceUp",
@@ -213,6 +215,10 @@ export default class Entity extends Model({
   @modelAction
   setScale(scale: number) {
     this.scale.x = this.scale.y = this.scale.z = scale;
+  }
+
+  getScale() {
+    return this.scale;
   }
 
   @modelAction
@@ -251,6 +257,7 @@ export default class Entity extends Model({
   @modelAction
   removeFromSet() {
     this.ownerSet = undefined;
+    this.prototype = undefined;
   }
 
   render(props: any): JSX.Element | null {

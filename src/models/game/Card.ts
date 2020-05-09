@@ -1,4 +1,4 @@
-import { ExtendedModel, model, prop } from "mobx-keystone";
+import { ExtendedModel, model, prop, modelAction } from "mobx-keystone";
 import React from "react";
 import CardComponent, { CardProps } from "../../components/game/entities/Card";
 import Entity, { EntityType } from "./Entity";
@@ -29,6 +29,17 @@ export default class Card extends ExtendedModel(Entity, {
 
   @computed get shape() {
     return this.deck ? this.deck.shape : this.cardShape;
+  }
+
+  getScale() {
+    return this.deck ? this.deck.scale : this.scale;
+  }
+
+  @modelAction
+  removeFromSet() {
+    this.setScaleX(this.ownerSet!.current.scale.x);
+    this.setScaleZ(this.ownerSet!.current.scale.z);
+    super.removeFromSet();
   }
 
   render(props: CardProps): JSX.Element {

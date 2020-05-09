@@ -79,6 +79,7 @@ export default class EntitySet extends ExtendedModel(Entity, {
 
   @modelAction
   addPrototype(prototype: Entity) {
+    prototype.isPrototype = true;
     this.prototypes.push(prototype);
     this.setPrototypeCount(prototype, 1);
     this.addEntity(this.instantiateFromPrototype(prototype));
@@ -97,6 +98,7 @@ export default class EntitySet extends ExtendedModel(Entity, {
   instantiateFromPrototype(prototype: Entity) {
     const entity = clone(prototype);
     entity.prototype = entityRef(prototype);
+    entity.isPrototype = false;
     return entity;
   }
 
