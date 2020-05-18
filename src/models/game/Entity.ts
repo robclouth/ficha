@@ -1,5 +1,5 @@
 import { omit } from "lodash";
-import { computed, when } from "mobx";
+import { computed, when, observable } from "mobx";
 import {
   applySnapshot,
   clone,
@@ -15,11 +15,12 @@ import {
   Ref,
   rootRef
 } from "mobx-keystone";
-import { Box3, Matrix4 } from "three";
+import { Box3, Matrix4, Vector3 as ThreeVector3 } from "three";
 import RootStore from "../../stores/RootStore";
 import { Vector3 } from "../../types";
 import GameState from "../GameState";
 import EntitySet from "./EntitySet";
+import { detectSnapPoints } from "../../utils/SnapPointDetection";
 
 export enum EntityType {
   Deck,
@@ -39,6 +40,12 @@ export const entityRef = rootRef<Entity>("EntityRef", {
   }
 });
 
+export type SnapPoint = {
+  x: number;
+  z: number;
+  angle: number;
+};
+
 @model("Entity")
 export default class Entity extends Model({
   name: prop("", { setterAction: true }),
@@ -55,6 +62,7 @@ export default class Entity extends Model({
       setterAction: true
     }
   ),
+  snapPoints: prop<SnapPoint[]>(() => [], { setterAction: true }),
   locked: prop(false, { setterAction: true }),
   faceUp: prop(true, { setterAction: true }),
   stackable: prop(false, { setterAction: true }),
@@ -65,7 +73,9 @@ export default class Entity extends Model({
 
   boundingBox?: Box3;
   handArea?: Entity;
-  prevMeshMatrix?: Matrix4;
+
+  @observable
+  worldMatrix?: Matrix4;
 
   onInit() {}
 
@@ -110,6 +120,23 @@ export default class Entity extends Model({
 
   @computed get isSelected() {
     return this.uiState?.selectedEntities[this.$modelId] !== undefined;
+  }
+
+  @computed get snapPointsWorld() {
+    return this.worldMatrix
+      ? this.snapPoints.map(snapPoint => {
+          const point = new ThreeVector3(
+            snapPoint.x,
+            0,
+            snapPoint.z
+          ).applyMatrix4(this.worldMatrix!);
+          return {
+            x: point.x,
+            z: point.z,
+            angle: snapPoint.angle
+          };
+        })
+      : undefined;
   }
 
   updateBoundingBox(boundingBox: Box3) {

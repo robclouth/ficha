@@ -164,9 +164,9 @@ export default observer((props: CardProps) => {
   const { assetCache } = useStore();
   const { t } = useTranslation();
 
-  const { entity } = props;
+  const { entity, showSnapPoints = false } = props;
   const card = (entity as unknown) as Card;
-  const { ownerSet, shape, gameState } = card;
+  const { ownerSet, shape, gameState, snapPoints } = card;
 
   const contextMenuItems: Array<ContextMenuItem | false> = [
     {
@@ -233,6 +233,13 @@ export default observer((props: CardProps) => {
           />
         </Dom>
       )} */}
+      {showSnapPoints &&
+        snapPoints.map((snapPoint, i) => (
+          <mesh key={i} position={[snapPoint.x, cardHeight, snapPoint.z]}>
+            <sphereBufferGeometry args={[0.01]} attach="geometry" />
+            <meshBasicMaterial color={"red"} attach="material" />
+          </mesh>
+        ))}
     </Entity>
   );
 });

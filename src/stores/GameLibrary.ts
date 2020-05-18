@@ -20,7 +20,7 @@ import { pick } from "lodash";
 import { gameRepoUrl, serverRoot } from "../constants/constants";
 import gameList from "../constants/gameList";
 import GameState from "../models/GameState";
-import persist from "../utils/persistent";
+import persist from "../utils/Persistence";
 import { loadJson } from "../utils/Utils";
 import GameStore from "./GameStore";
 import RootStore from "./RootStore";

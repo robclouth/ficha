@@ -49,6 +49,7 @@ import { useStore } from "../../stores/RootStore";
 import Modal from "./Modal";
 import Board from "../../models/game/Board";
 import { runInAction } from "mobx";
+import { detectSnapPoints } from "../../utils/SnapPointDetection";
 
 extend({ OrbitControls });
 
@@ -134,7 +135,8 @@ const Preview = observer(
           <directionalLight position={[10, 10, 5]} intensity={1} />
           <ambientLight args={["white", 0.5]} />
           <PreviewControls />
-          {entity && entity.render({ entity, pivot: [0, 0, 0] })}
+          {entity &&
+            entity.render({ entity, pivot: [0, 0, 0], showSnapPoints: true })}
           <gridHelper args={[11, 11]} />
         </Canvas>
       </Paper>
@@ -256,6 +258,10 @@ const CardEditor = observer(
       isPrototype
     } = card;
 
+    const handleSnapImageChange = async (imageUrl: string) => {
+      card.snapPoints = await detectSnapPoints(imageUrl);
+    };
+
     return (
       <Box display="flex" flexDirection="column">
         {isPrototype && !editingDeck && (
@@ -366,6 +372,15 @@ const CardEditor = observer(
             margin="dense"
             value={frontImageUrl}
             onChange={e => (card.frontImageUrl = e.target.value)}
+            fullWidth
+          />
+        </FormControl>
+        <FormControl className={classes.formControl}>
+          <InputLabel>{t("snapImageUrl")}</InputLabel>
+          <Input
+            margin="dense"
+            value=""
+            onChange={e => handleSnapImageChange(e.target.value)}
             fullWidth
           />
         </FormControl>
@@ -600,6 +615,10 @@ const BoardEditor = observer(({ entity }: { entity: Entity }) => {
   const board = entity as Board;
   const { imageUrl, scale } = board;
 
+  const handleSnapImageChange = async (imageUrl: string) => {
+    board.snapPoints = await detectSnapPoints(imageUrl);
+  };
+
   return (
     <Box display="flex" flexDirection="column">
       <FormControl className={classes.formControl}>
@@ -608,6 +627,15 @@ const BoardEditor = observer(({ entity }: { entity: Entity }) => {
           margin="dense"
           value={imageUrl}
           onChange={e => (board.imageUrl = e.target.value)}
+          fullWidth
+        />
+      </FormControl>
+      <FormControl className={classes.formControl}>
+        <InputLabel>{t("snapImageUrl")}</InputLabel>
+        <Input
+          margin="dense"
+          value=""
+          onChange={e => handleSnapImageChange(e.target.value)}
           fullWidth
         />
       </FormControl>

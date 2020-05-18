@@ -18,7 +18,7 @@ import {
   withoutUndo,
   UndoManager,
   undoMiddleware
-} from "../utils/undoMiddleware";
+} from "../utils/UndoMiddleware";
 import GameState, { View } from "../models/GameState";
 import { OptionsObject } from "notistack";
 import CameraControls from "camera-controls";
@@ -48,6 +48,8 @@ export type Message = {
   text: string;
   options?: OptionsObject;
 };
+
+const SnapRange = 0.1;
 
 @model("UIState")
 export default class UIState extends Model({}) {
@@ -137,6 +139,29 @@ export default class UIState extends Model({}) {
 
   // @modelAction
   dragEntity(x: number, z: number) {
+    // snap to snappoint
+    const allSnapPoints = this.gameStore?.gameState.allSnapPoints;
+    if (allSnapPoints) {
+      for (let snapPoint of allSnapPoints) {
+        if (snapPoint.entity !== this.draggingEntity) {
+          if (
+            Math.abs(snapPoint.snapPoint.x - x) < SnapRange &&
+            Math.abs(snapPoint.snapPoint.z - z) < SnapRange
+          ) {
+            x = snapPoint.snapPoint.x;
+            z = snapPoint.snapPoint.z;
+            const rotationMatrix = new Matrix4();
+            snapPoint.entity.worldMatrix!.extractRotation(rotationMatrix);
+            const euler = new Euler();
+            euler.setFromRotationMatrix(rotationMatrix);
+
+            this.draggingEntity!.angle =
+              snapPoint.entity.angle - snapPoint.snapPoint.angle;
+          }
+        }
+      }
+    }
+
     this.draggingEntity!.setPosition(x, z);
 
     if (!this.draggingEntity) return;

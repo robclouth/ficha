@@ -42,6 +42,7 @@ export type EntityProps = {
     | SpringValue<[number, number, number]>;
   rotationOffset?: Quaternion | SpringValue<[number, number, number, number]>;
   blockInteraction?: boolean;
+  showSnapPoints?: boolean;
 };
 
 let clickCount = 0;
@@ -269,6 +270,7 @@ export default observer((props: EntityProps) => {
     boundingBox.setFromObject(mesh.current!);
     boundingBox.min.y = 0;
     entity.updateBoundingBox(boundingBox);
+    entity.worldMatrix = mesh.current?.matrixWorld;
     setBoundingBox(boundingBox);
   }, [
     JSON.stringify(mesh.current?.matrixWorld) +
@@ -330,11 +332,11 @@ export default observer((props: EntityProps) => {
           position={[position.x, position.y, position.z]}
           rotation={[0, angle, 0]}
           scale={[scale.x, scale.y, scale.z]}
+          ref={mesh}
         >
           <group position={[-pivot[0], -pivot[1], -pivot[2]]}>
             <group rotation={[faceUp ? Math.PI : 0, 0, 0]}>
               <a.mesh
-                ref={mesh}
                 userData={{ entity }}
                 quaternion={rotationOffset}
                 {...events}
@@ -356,7 +358,6 @@ export default observer((props: EntityProps) => {
               </a.mesh>
             </group>
           </group>
-
           {visible && children}
           {hoverMessage && hovered && visible && (
             <Dom

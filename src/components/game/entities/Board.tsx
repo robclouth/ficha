@@ -12,8 +12,8 @@ export const height = 0.01;
 
 export default observer((props: BoardProps) => {
   const { assetCache } = useStore();
-  const { entity } = props;
-  const { imageUrl } = entity as Board;
+  const { entity, showSnapPoints = false } = props;
+  const { imageUrl, snapPoints } = entity as Board;
 
   const edgeMaterial: MaterialParameters = {
     roughness: 1,
@@ -36,6 +36,14 @@ export default observer((props: BoardProps) => {
       materialParams={materialParams}
       contextMenuItems={[]}
       castShadows={false}
-    ></Entity>
+    >
+      {showSnapPoints &&
+        snapPoints.map((snapPoint, i) => (
+          <mesh key={i} position={[snapPoint.x, height, snapPoint.z]}>
+            <sphereBufferGeometry args={[0.01]} attach="geometry" />
+            <meshBasicMaterial color={"red"} attach="material" />
+          </mesh>
+        ))}
+    </Entity>
   );
 });

@@ -77,6 +77,21 @@ export default class GameState extends Model({
     return this.players.filter(p => p.isConnected);
   }
 
+  @computed get allSnapPoints() {
+    const snapPoints = [];
+    for (const entity of this.entities) {
+      if (!entity.snapPointsWorld) continue;
+
+      for (const snapPoint of entity.snapPointsWorld) {
+        snapPoints.push({
+          snapPoint,
+          entity
+        });
+      }
+    }
+    return snapPoints;
+  }
+
   @modelAction
   addPlayer(player: Player) {
     this.players.push(player);

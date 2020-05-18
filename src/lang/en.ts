@@ -23,6 +23,7 @@ export default {
     thickness: "Thickness",
     frontImageUrl: "Front image URL",
     backImageUrl: "Back image URL",
+    snapImageUrl: "Snap image URL",
     theBackImageMustBeEditedInTheDeck:
       "The back image must be edited in the deck",
     cornerTexts: "Corner texts (CSV)",
