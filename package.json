@@ -47,7 +47,7 @@
     "react-window": "^1.8.5",
     "serializr": "^2.0.3",
     "shuffle-array": "^1.0.1",
-    "three": "^0.115.0",
+    "three": "^0.137.0",
     "ts-enum-util": "^4.0.1",
     "typescript": "~3.7.2"
   },
